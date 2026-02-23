@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Brave Production Tracker</title>
+    <title>Production Tracker</title>
     
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
@@ -135,6 +135,9 @@
         .builtin-card-name { font-size: 16px; font-weight: 600; color: #1a1a2e; margin-bottom: 8px; }
         .builtin-card-category { font-size: 12px; color: #888; text-transform: uppercase; letter-spacing: 0.5px; }
 
+        /* CATEGORY DIVIDERS */
+        .category-divider { background: #f8f8f8; padding: 12px 20px; border-top: 2px solid #e0e0e0; border-bottom: 1px solid #e0e0e0; font-weight: 700; font-size: 13px; color: #555; text-transform: uppercase; letter-spacing: 0.5px; margin: 16px 0 12px 0; grid-column: 1 / -1; }
+
         /* TOAST */
         .toast-container { position: fixed; bottom: 28px; right: 28px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; }
         .toast { background: #1a1a2e; color: #fff; padding: 14px 20px; border-radius: 10px; box-shadow: 0 4px 16px rgba(0,0,0,0.25); font-size: 14px; display: flex; align-items: center; gap: 12px; min-width: 300px; animation: slideIn 0.3s ease; }
@@ -146,7 +149,7 @@
 
         /* LOGIN PAGE */
         .login-container { display: flex; align-items: center; justify-content: center; min-height: 100vh; background: white; }
-        .login-box { background: #fff; border-radius: 20px; padding: 48px; width: 90%; max-width: 420px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
+        .login-box { background: #fff; border-radius: 16px; padding: 48px; width: 90%; max-width: 420px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
         .login-logo { font-size: 32px; font-weight: 700; color: #1a1a2e; text-align: center; margin-bottom: 8px; letter-spacing: -1px; }
         .login-logo span { color: #667eea; }
         .login-subtitle { text-align: center; color: #888; font-size: 14px; margin-bottom: 32px; }
@@ -191,7 +194,7 @@
         <button class="logout-btn" onclick="handleLogout()">Logout</button>
     </div>
     <button class="nav-tab" onclick="showPage('settings', this)" style="border-left:1px solid #333;">Settings</button>
-    <button class="nav-tab" onclick="showPage('matrix', this)">Pricing Matrix</button>
+    <button class="nav-tab" onclick="showPage('matrix', this)">Pricing</button>
 </nav>
 
 <!-- ORDERS PAGE -->
@@ -199,6 +202,28 @@
     <div class="container">
         <div class="action-bar">
             <button class="btn btn-primary" onclick="openOrderModal()">+ New Order</button>
+            <div class="action-bar-right">
+                <select class="form-select" style="width:150px;" id="sort-orders" onchange="renderOrders()">
+                    <option value="id-desc">Order # (Newest)</option>
+                    <option value="id-asc">Order # (Oldest)</option>
+                    <option value="name-asc">Name (A-Z)</option>
+                    <option value="name-desc">Name (Z-A)</option>
+                    <option value="date-asc">Ship Date (Earliest)</option>
+                    <option value="date-desc">Ship Date (Latest)</option>
+                </select>
+                <select class="form-select" style="width:150px;" id="filter-status" onchange="renderOrders()">
+                    <option value="all">All Statuses</option>
+                    <option value="bid">BID</option>
+                    <option value="ordered">ORDERED</option>
+                    <option value="verified">VERIFIED</option>
+                    <option value="progress">IN PROGRESS</option>
+                    <option value="hold">ON HOLD</option>
+                    <option value="completed">COMPLETED</option>
+                    <option value="shipped">SHIPPED</option>
+                    <option value="void">VOID</option>
+                </select>
+                <input type="text" class="form-input" style="width:200px;" id="search-orders" placeholder="Search orders…" oninput="renderOrders()">
+            </div>
         </div>
         <div class="card">
             <table>
@@ -316,7 +341,7 @@
                 <div style="font-size:16px;font-weight:700;color:#1a1a2e;margin-bottom:16px;padding-bottom:10px;border-bottom:2px solid #f0f0f0;">⚙ General</div>
                 <div class="form-group">
                     <label class="form-label">Company Name</label>
-                    <input type="text" class="form-input" value="Brave">
+                    <input type="text" class="form-input" value="Your Cabinet Co.">
                 </div>
                 <div class="form-group">
                     <label class="form-label">Default Status for New Orders</label>
@@ -494,7 +519,13 @@
         </div>
         <div class="form-group">
             <label class="form-label">Category</label>
-            <input type="text" class="form-input" id="cabinet-category" placeholder="e.g., Base Cabinets">
+            <div style="display:flex;gap:8px;">
+                <select class="form-select" id="cabinet-category-select" style="flex:1;" onchange="handleCategorySelect()">
+                    <option value="">Select category...</option>
+                </select>
+                <button class="btn btn-ghost btn-sm" onclick="toggleNewCategory()" id="new-cat-btn">+ New</button>
+            </div>
+            <input type="text" class="form-input" id="cabinet-category-input" placeholder="Enter new category name" style="display:none;margin-top:8px;">
         </div>
         
         <div style="border-top:2px solid #f0f0f0;padding-top:18px;margin-top:18px;">
@@ -546,7 +577,6 @@ const firebaseConfig = {
   messagingSenderId: "221637284494",
   appId: "1:221637284494:web:c799257657182fe0496fdf"
 };
-
 
 // Initialize Firebase
 let db = null;
@@ -608,7 +638,6 @@ function handleLogin() {
     auth.signInWithEmailAndPassword(email, password)
         .then(() => {
             console.log('✅ Signed in successfully');
-             alert('LOGIN SUCCESS!'); // TEMPORARY DEBUG
         })
         .catch(error => {
             console.error('Login error:', error);
@@ -878,8 +907,42 @@ document.addEventListener('DOMContentLoaded', () => {
 // ORDERS
 function renderOrders() {
     const tbody = document.getElementById('orders-tbody');
-    const sortedOrders = [...orders].sort((a, b) => b.id - a.id);
-    tbody.innerHTML = sortedOrders.map(o => {
+    
+    // Get filter values
+    const sortBy = document.getElementById('sort-orders')?.value || 'id-desc';
+    const filterStatus = document.getElementById('filter-status')?.value || 'all';
+    const searchTerm = document.getElementById('search-orders')?.value.toLowerCase() || '';
+    
+    // Filter orders
+    let filteredOrders = orders.filter(o => {
+        // Status filter
+        if (filterStatus !== 'all' && o.status !== filterStatus) return false;
+        
+        // Search filter
+        if (searchTerm && 
+            !o.id.toString().includes(searchTerm) &&
+            !o.company.toLowerCase().includes(searchTerm) &&
+            !o.name.toLowerCase().includes(searchTerm)) {
+            return false;
+        }
+        
+        return true;
+    });
+    
+    // Sort orders
+    const sorted = [...filteredOrders].sort((a, b) => {
+        switch(sortBy) {
+            case 'id-desc': return b.id - a.id;
+            case 'id-asc': return a.id - b.id;
+            case 'name-asc': return a.name.localeCompare(b.name);
+            case 'name-desc': return b.name.localeCompare(a.name);
+            case 'date-asc': return new Date(a.ship) - new Date(b.ship);
+            case 'date-desc': return new Date(b.ship) - new Date(a.ship);
+            default: return b.id - a.id;
+        }
+    });
+    
+    tbody.innerHTML = sorted.map(o => {
         const st = STATUSES.find(s => s.key === o.status);
         const count = o.builtins.reduce((sum, bi) => sum + bi.qty, 0);
         return `<tr onclick="openOrder(${o.id})" style="cursor:pointer;">
@@ -895,7 +958,7 @@ function renderOrders() {
                 </div>
             </td>
             <td onclick="event.stopPropagation()">
-                <button class="btn btn-ghost btn-icon" onclick="editOrder(${o.id})">🖉 Edit</button>
+                <button class="btn btn-ghost btn-icon" onclick="editOrder(${o.id})">Edit</button>
             </td>
         </tr>`;
     }).join('');
@@ -962,7 +1025,7 @@ function changeStatus(e, orderId, newKey, context) {
     
     // Check if notification should be sent based on settings
     if (shouldSendNotification(oldKey, newKey)) {
-        showToast('Notification Sent', `Order #${orderId}: ${oldLabel} → ${newLabel}`);
+        showToast('📧 Notification Sent', `Order #${orderId}: ${oldLabel} → ${newLabel}`);
     }
 }
 
@@ -1128,12 +1191,30 @@ function closeBuiltinSelector() {
 
 function renderBuiltinGrid() {
     const grid = document.getElementById('builtin-grid');
-    grid.innerHTML = pricingMatrix.map(c => `
-        <div class="builtin-card" onclick="selectCabinet('${c.name}')">
-            <div class="builtin-card-name">${c.name}</div>
-            <div class="builtin-card-category">${c.category || 'Cabinet'}</div>
-        </div>
-    `).join('');
+    
+    // Group cabinets by category
+    const grouped = {};
+    pricingMatrix.forEach(c => {
+        const cat = c.category || 'Uncategorized';
+        if (!grouped[cat]) grouped[cat] = [];
+        grouped[cat].push(c);
+    });
+    
+    // Sort categories alphabetically
+    const sortedCategories = Object.keys(grouped).sort();
+    
+    // Render with category dividers
+    grid.innerHTML = sortedCategories.map(category => {
+        const cabinets = grouped[category];
+        const cabinetCards = cabinets.map(c => `
+            <div class="builtin-card" onclick="selectCabinet('${c.name}')">
+                <div class="builtin-card-name">${c.name}</div>
+                <div class="builtin-card-category">${c.category || 'Cabinet'}</div>
+            </div>
+        `).join('');
+        
+        return `<div class="category-divider">${category}</div>${cabinetCards}`;
+    }).join('');
 }
 
 function selectCabinet(name) {
@@ -1254,7 +1335,14 @@ function addNewCabinet() {
     rangeRowCount = 0;
     document.getElementById('cabinet-modal-title').textContent = 'Add Cabinet';
     document.getElementById('cabinet-name').value = '';
-    document.getElementById('cabinet-category').value = '';
+    
+    // Populate category dropdown
+    populateCategoryDropdown();
+    document.getElementById('cabinet-category-select').value = '';
+    document.getElementById('cabinet-category-input').style.display = 'none';
+    document.getElementById('cabinet-category-input').value = '';
+    document.getElementById('new-cat-btn').textContent = '+ New';
+    
     document.getElementById('range-inputs').innerHTML = '';
     addRangeRow();
     openModal('modal-cabinet');
@@ -1269,7 +1357,14 @@ function editCabinet(name) {
     document.getElementById('cabinet-modal-title').textContent = 'Edit Cabinet';
     document.getElementById('cabinet-name').value = cabinet.name;
     document.getElementById('cabinet-name').disabled = true; // Can't change name
-    document.getElementById('cabinet-category').value = cabinet.category || '';
+    
+    // Populate category dropdown
+    populateCategoryDropdown();
+    document.getElementById('cabinet-category-select').value = cabinet.category || '';
+    document.getElementById('cabinet-category-input').style.display = 'none';
+    document.getElementById('cabinet-category-input').value = '';
+    document.getElementById('new-cat-btn').textContent = '+ New';
+    
     document.getElementById('range-inputs').innerHTML = '';
     
     cabinet.ranges.forEach(range => {
@@ -1277,6 +1372,41 @@ function editCabinet(name) {
     });
     
     openModal('modal-cabinet');
+}
+
+function populateCategoryDropdown() {
+    // Get unique categories from existing cabinets
+    const categories = [...new Set(pricingMatrix.map(c => c.category).filter(Boolean))].sort();
+    
+    const select = document.getElementById('cabinet-category-select');
+    select.innerHTML = '<option value="">Select category...</option>' +
+        categories.map(cat => `<option value="${cat}">${cat}</option>`).join('');
+}
+
+function toggleNewCategory() {
+    const input = document.getElementById('cabinet-category-input');
+    const btn = document.getElementById('new-cat-btn');
+    const select = document.getElementById('cabinet-category-select');
+    
+    if (input.style.display === 'none') {
+        input.style.display = 'block';
+        btn.textContent = 'Cancel';
+        select.disabled = true;
+    } else {
+        input.style.display = 'none';
+        btn.textContent = '+ New';
+        select.disabled = false;
+        input.value = '';
+    }
+}
+
+function handleCategorySelect() {
+    const input = document.getElementById('cabinet-category-input');
+    if (input.style.display !== 'none') {
+        input.style.display = 'none';
+        document.getElementById('new-cat-btn').textContent = '+ New';
+        document.getElementById('cabinet-category-select').disabled = false;
+    }
 }
 
 let rangeRowCount = 0;
@@ -1307,10 +1437,25 @@ function removeRangeRow(idx) {
 
 function saveCabinet() {
     const name = document.getElementById('cabinet-name').value.trim();
-    const category = document.getElementById('cabinet-category').value.trim();
+    
+    // Get category from either dropdown or new input
+    const categoryInput = document.getElementById('cabinet-category-input');
+    const categorySelect = document.getElementById('cabinet-category-select');
+    let category = '';
+    
+    if (categoryInput.style.display !== 'none' && categoryInput.value.trim()) {
+        category = categoryInput.value.trim();
+    } else if (categorySelect.value) {
+        category = categorySelect.value;
+    }
     
     if (!name) {
         alert('Please enter a cabinet name');
+        return;
+    }
+    
+    if (!category) {
+        alert('Please select or create a category');
         return;
     }
     

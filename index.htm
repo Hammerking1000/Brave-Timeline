@@ -607,6 +607,7 @@ function handleLogin() {
     auth.signInWithEmailAndPassword(email, password)
         .then(() => {
             console.log('✅ Signed in successfully');
+             alert('LOGIN SUCCESS!'); // TEMPORARY DEBUG
         })
         .catch(error => {
             console.error('Login error:', error);
@@ -960,7 +961,7 @@ function changeStatus(e, orderId, newKey, context) {
     
     // Check if notification should be sent based on settings
     if (shouldSendNotification(oldKey, newKey)) {
-        showToast('📧 Notification Sent', `Order #${orderId}: ${oldLabel} → ${newLabel}`);
+        showToast('Notification Sent', `Order #${orderId}: ${oldLabel} → ${newLabel}`);
     }
 }
 

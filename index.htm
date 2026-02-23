@@ -9,6 +9,10 @@
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
+    
+    <!-- PDF.js for PDF rendering -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -137,6 +141,34 @@
 
         /* CATEGORY DIVIDERS */
         .category-divider { background: #f8f8f8; padding: 12px 20px; border-top: 2px solid #e0e0e0; border-bottom: 1px solid #e0e0e0; font-weight: 700; font-size: 13px; color: #555; text-transform: uppercase; letter-spacing: 0.5px; margin: 16px 0 12px 0; grid-column: 1 / -1; }
+
+        /* PDF VIEWER */
+        .pdf-section { margin-top: 20px; }
+        .pdf-upload-zone { border: 2px dashed #ccc; border-radius: 8px; padding: 30px; text-align: center; cursor: pointer; transition: all 0.2s; background: #fafafa; }
+        .pdf-upload-zone:hover { border-color: #2196F3; background: #f0f7ff; }
+        .pdf-upload-zone input { display: none; }
+        .pdf-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; margin-top: 16px; }
+        .pdf-item { background: #f8f8f8; border: 1px solid #e0e0e0; border-radius: 8px; padding: 12px; cursor: pointer; transition: all 0.2s; }
+        .pdf-item:hover { border-color: #2196F3; background: #f0f7ff; }
+        .pdf-item-icon { font-size: 32px; text-align: center; margin-bottom: 8px; }
+        .pdf-item-name { font-size: 13px; font-weight: 500; color: #333; text-align: center; word-break: break-word; }
+        .pdf-item-actions { display: flex; gap: 4px; margin-top: 8px; justify-content: center; }
+        
+        /* PDF VIEWER MODAL */
+        .pdf-viewer-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 1000; }
+        .pdf-viewer-modal.open { display: flex; flex-direction: column; }
+        .pdf-viewer-header { background: #1a1a2e; padding: 12px 20px; display: flex; align-items: center; gap: 12px; }
+        .pdf-viewer-title { color: #fff; font-size: 16px; font-weight: 500; flex: 1; }
+        .pdf-viewer-tools { display: flex; gap: 8px; }
+        .pdf-tool-btn { background: #333; color: #fff; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 13px; transition: background 0.2s; }
+        .pdf-tool-btn:hover { background: #555; }
+        .pdf-tool-btn.active { background: #2196F3; }
+        .pdf-viewer-close { background: #e53935; color: #fff; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 14px; }
+        .pdf-viewer-body { flex: 1; overflow: auto; display: flex; align-items: center; justify-content: center; padding: 20px; position: relative; }
+        .pdf-canvas-container { position: relative; display: inline-block; }
+        #pdf-canvas { max-width: 100%; height: auto; box-shadow: 0 4px 20px rgba(0,0,0,0.5); }
+        #pdf-annotation-canvas { position: absolute; top: 0; left: 0; cursor: crosshair; }
+        .pdf-nav { display: flex; gap: 12px; align-items: center; }
 
         /* TOAST */
         .toast-container { position: fixed; bottom: 28px; right: 28px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; }
@@ -338,7 +370,7 @@
                 </div>
             </div>
             <div class="card" style="padding:24px;">
-                <div style="font-size:16px;font-weight:700;color:#1a1a2e;margin-bottom:16px;padding-bottom:10px;border-bottom:2px solid #f0f0f0;">⚙ General</div>
+                <div style="font-size:16px;font-weight:700;color:#1a1a2e;margin-bottom:16px;padding-bottom:10px;border-bottom:2px solid #f0f0f0;">General</div>
                 <div class="form-group">
                     <label class="form-label">Company Name</label>
                     <input type="text" class="form-input" value="Your Cabinet Co.">
@@ -403,6 +435,43 @@
                     </tr>
                 </tfoot>
             </table>
+        </div>
+        
+        <div class="card" style="padding:24px;">
+            <div style="font-size:16px;font-weight:700;color:#1a1a2e;margin-bottom:18px;padding-bottom:12px;border-bottom:2px solid #f0f0f0;">📄 Documents</div>
+            <div class="pdf-upload-zone" onclick="document.getElementById('order-pdf-upload').click()">
+                <input type="file" id="order-pdf-upload" accept=".pdf" multiple onchange="handlePDFUpload(event)">
+                <div style="font-size:32px;margin-bottom:8px;">📄</div>
+                <div style="font-size:15px;font-weight:500;color:#555;">Click to upload PDFs</div>
+                <div style="font-size:12px;color:#aaa;margin-top:4px;">Shop drawings · Cut sheets · Assembly instructions</div>
+            </div>
+            <div class="pdf-list" id="order-pdf-list"></div>
+        </div>
+    </div>
+</div>
+
+<!-- PDF VIEWER MODAL -->
+<div class="pdf-viewer-modal" id="pdf-viewer-modal">
+    <div class="pdf-viewer-header">
+        <span class="pdf-viewer-title" id="pdf-viewer-title">Document.pdf</span>
+        <div class="pdf-viewer-tools">
+            <div class="pdf-nav">
+                <button class="pdf-tool-btn" onclick="prevPDFPage()">◀ Prev</button>
+                <span style="color:#fff;font-size:13px;" id="pdf-page-info">Page 1 of 1</span>
+                <button class="pdf-tool-btn" onclick="nextPDFPage()">Next ▶</button>
+            </div>
+            <button class="pdf-tool-btn" onclick="setPDFTool('pen')" id="tool-pen">Draw</button>
+            <button class="pdf-tool-btn" onclick="setPDFTool('highlighter')" id="tool-highlighter">Highlight</button>
+            <button class="pdf-tool-btn" onclick="setPDFTool('eraser')" id="tool-eraser">Erase</button>
+            <button class="pdf-tool-btn" onclick="clearPDFAnnotations()">Clear All</button>
+            <button class="pdf-tool-btn" onclick="savePDFAnnotations()">Save</button>
+        </div>
+        <button class="pdf-viewer-close" onclick="closePDFViewer()">✕ Close</button>
+    </div>
+    <div class="pdf-viewer-body">
+        <div class="pdf-canvas-container">
+            <canvas id="pdf-canvas"></canvas>
+            <canvas id="pdf-annotation-canvas"></canvas>
         </div>
     </div>
 </div>
@@ -824,14 +893,33 @@ let pricingMatrix = [
 ];
 
 let orders = [
-    {id:2225,company:'Evergreene Companies',name:'EVG FLP2 0005',ship:'04/12/26',status:'bid',builtins:[{cabinetName:'B-O1A',width:15,depth:'24',price:359.1,qty:2},{cabinetName:'B-2WF',width:18,depth:'18',price:803,qty:1}]},
-    {id:2224,company:'Evergreene Companies',name:'EVG MAN4 0068',ship:'04/12/26',status:'bid',builtins:[{cabinetName:'B-O1A',width:25,depth:'24',price:435,qty:3}]},
+    {id:2225,company:'Evergreene Companies',name:'EVG FLP2 0005',ship:'04/12/26',status:'bid',builtins:[{cabinetName:'B-O1A',width:15,depth:'24',price:359.1,qty:2},{cabinetName:'B-2WF',width:18,depth:'18',price:803,qty:1}],pdfs:[]},
+    {id:2224,company:'Evergreene Companies',name:'EVG MAN4 0068',ship:'04/12/26',status:'bid',builtins:[{cabinetName:'B-O1A',width:25,depth:'24',price:435,qty:3}],pdfs:[]},
 ];
 let orderIdCounter = 2226;
 let currentOrderId = null;
 let editingOrderId = null;
 let orderBuiltinsList = [];
 let selectedCabinetForDim = null;
+
+// PDF VIEWER VARIABLES
+let currentPDF = null;
+let currentPDFPage = 1;
+let currentPDFDoc = null;
+let pdfScale = 1.5;
+let isDrawing = false;
+let currentTool = 'pen';
+let annotationCanvas = null;
+let annotationCtx = null;
+let lastX = 0;
+let lastY = 0;
+let currentPDFData = null;
+let currentPDFAnnotations = [];
+
+// Initialize PDF.js worker
+if (typeof pdfjsLib !== 'undefined') {
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+}
 
 // UTILS
 function fmt(n) { return '$' + n.toFixed(2); }
@@ -958,7 +1046,7 @@ function renderOrders() {
                 </div>
             </td>
             <td onclick="event.stopPropagation()">
-                <button class="btn btn-ghost btn-icon" onclick="editOrder(${o.id})">Edit</button>
+                <button class="btn btn-ghost btn-icon" onclick="editOrder(${o.id})">✏️</button>
             </td>
         </tr>`;
     }).join('');
@@ -980,6 +1068,7 @@ function openOrder(id) {
     
     renderDetailStatus(o);
     renderDetailBuiltins(o);
+    renderPDFList(o);
     
     showPage('order-detail', null);
 }
@@ -1531,6 +1620,253 @@ function showToast(title, msg) {
                    <button class="toast-close" onclick="this.closest('.toast').remove()">×</button>`;
     tc.appendChild(t);
     setTimeout(() => { if (t.parentNode) t.remove(); }, 5000);
+}
+
+// PDF MANAGEMENT
+function handlePDFUpload(e) {
+    const files = Array.from(e.target.files);
+    const o = getOrder(currentOrderId);
+    if (!o) return;
+    
+    if (!o.pdfs) o.pdfs = [];
+    
+    files.forEach(file => {
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+            const pdfData = {
+                name: file.name,
+                data: ev.target.result,
+                annotations: []
+            };
+            o.pdfs.push(pdfData);
+            renderPDFList(o);
+            syncOrders();
+            showToast('✅ PDF Uploaded', file.name);
+        };
+        reader.readAsDataURL(file);
+    });
+    
+    e.target.value = ''; // Reset input
+}
+
+function renderPDFList(order) {
+    const container = document.getElementById('order-pdf-list');
+    if (!order.pdfs || order.pdfs.length === 0) {
+        container.innerHTML = '';
+        return;
+    }
+    
+    container.innerHTML = order.pdfs.map((pdf, idx) => `
+        <div class="pdf-item" onclick="openPDFViewer(${idx})">
+            <div class="pdf-item-icon">📄</div>
+            <div class="pdf-item-name">${pdf.name}</div>
+            <div class="pdf-item-actions">
+                <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation(); viewPDF(${idx})" style="font-size:11px;padding:4px 8px;">View</button>
+                <button class="btn btn-danger btn-sm" onclick="event.stopPropagation(); deletePDF(${idx})" style="font-size:11px;padding:4px 8px;">Delete</button>
+            </div>
+        </div>
+    `).join('');
+}
+
+function openPDFViewer(pdfIndex) {
+    const o = getOrder(currentOrderId);
+    if (!o || !o.pdfs || !o.pdfs[pdfIndex]) return;
+    
+    currentPDFData = o.pdfs[pdfIndex];
+    currentPDFAnnotations = currentPDFData.annotations || [];
+    
+    document.getElementById('pdf-viewer-title').textContent = currentPDFData.name;
+    document.getElementById('pdf-viewer-modal').classList.add('open');
+    
+    loadPDF(currentPDFData.data);
+}
+
+function closePDFViewer() {
+    document.getElementById('pdf-viewer-modal').classList.remove('open');
+    currentPDFDoc = null;
+    currentPDFPage = 1;
+}
+
+async function loadPDF(pdfData) {
+    try {
+        const loadingTask = pdfjsLib.getDocument(pdfData);
+        currentPDFDoc = await loadingTask.promise;
+        currentPDFPage = 1;
+        renderPDFPage(currentPDFPage);
+    } catch (error) {
+        console.error('Error loading PDF:', error);
+        showToast('❌ Error', 'Failed to load PDF');
+    }
+}
+
+async function renderPDFPage(pageNum) {
+    if (!currentPDFDoc) return;
+    
+    const page = await currentPDFDoc.getPage(pageNum);
+    const viewport = page.getViewport({ scale: pdfScale });
+    
+    const canvas = document.getElementById('pdf-canvas');
+    const context = canvas.getContext('2d');
+    canvas.width = viewport.width;
+    canvas.height = viewport.height;
+    
+    // Render PDF page
+    const renderContext = {
+        canvasContext: context,
+        viewport: viewport
+    };
+    await page.render(renderContext).promise;
+    
+    // Setup annotation canvas
+    annotationCanvas = document.getElementById('pdf-annotation-canvas');
+    annotationCtx = annotationCanvas.getContext('2d');
+    annotationCanvas.width = viewport.width;
+    annotationCanvas.height = viewport.height;
+    
+    // Restore annotations for this page
+    redrawAnnotations();
+    
+    // Update page info
+    document.getElementById('pdf-page-info').textContent = `Page ${pageNum} of ${currentPDFDoc.numPages}`;
+    
+    // Setup drawing events
+    setupAnnotationEvents();
+}
+
+function setupAnnotationEvents() {
+    annotationCanvas.onmousedown = (e) => {
+        isDrawing = true;
+        const rect = annotationCanvas.getBoundingClientRect();
+        lastX = e.clientX - rect.left;
+        lastY = e.clientY - rect.top;
+    };
+    
+    annotationCanvas.onmousemove = (e) => {
+        if (!isDrawing) return;
+        const rect = annotationCanvas.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        
+        if (currentTool === 'pen') {
+            annotationCtx.strokeStyle = '#e53935';
+            annotationCtx.lineWidth = 3;
+            annotationCtx.lineCap = 'round';
+            annotationCtx.beginPath();
+            annotationCtx.moveTo(lastX, lastY);
+            annotationCtx.lineTo(x, y);
+            annotationCtx.stroke();
+            
+            // Save to annotations
+            currentPDFAnnotations.push({
+                page: currentPDFPage,
+                tool: 'pen',
+                from: {x: lastX, y: lastY},
+                to: {x, y}
+            });
+        } else if (currentTool === 'highlighter') {
+            annotationCtx.strokeStyle = 'rgba(255, 255, 0, 0.4)';
+            annotationCtx.lineWidth = 20;
+            annotationCtx.lineCap = 'round';
+            annotationCtx.beginPath();
+            annotationCtx.moveTo(lastX, lastY);
+            annotationCtx.lineTo(x, y);
+            annotationCtx.stroke();
+            
+            currentPDFAnnotations.push({
+                page: currentPDFPage,
+                tool: 'highlighter',
+                from: {x: lastX, y: lastY},
+                to: {x, y}
+            });
+        } else if (currentTool === 'eraser') {
+            annotationCtx.clearRect(x - 10, y - 10, 20, 20);
+        }
+        
+        lastX = x;
+        lastY = y;
+    };
+    
+    annotationCanvas.onmouseup = () => {
+        isDrawing = false;
+    };
+    
+    annotationCanvas.onmouseleave = () => {
+        isDrawing = false;
+    };
+}
+
+function redrawAnnotations() {
+    annotationCtx.clearRect(0, 0, annotationCanvas.width, annotationCanvas.height);
+    
+    currentPDFAnnotations
+        .filter(ann => ann.page === currentPDFPage)
+        .forEach(ann => {
+            if (ann.tool === 'pen') {
+                annotationCtx.strokeStyle = '#e53935';
+                annotationCtx.lineWidth = 3;
+                annotationCtx.lineCap = 'round';
+                annotationCtx.beginPath();
+                annotationCtx.moveTo(ann.from.x, ann.from.y);
+                annotationCtx.lineTo(ann.to.x, ann.to.y);
+                annotationCtx.stroke();
+            } else if (ann.tool === 'highlighter') {
+                annotationCtx.strokeStyle = 'rgba(255, 255, 0, 0.4)';
+                annotationCtx.lineWidth = 20;
+                annotationCtx.lineCap = 'round';
+                annotationCtx.beginPath();
+                annotationCtx.moveTo(ann.from.x, ann.from.y);
+                annotationCtx.lineTo(ann.to.x, ann.to.y);
+                annotationCtx.stroke();
+            }
+        });
+}
+
+function setPDFTool(tool) {
+    currentTool = tool;
+    document.querySelectorAll('.pdf-tool-btn').forEach(btn => btn.classList.remove('active'));
+    document.getElementById('tool-' + tool)?.classList.add('active');
+}
+
+function clearPDFAnnotations() {
+    if (!confirm('Clear all annotations on this page?')) return;
+    currentPDFAnnotations = currentPDFAnnotations.filter(ann => ann.page !== currentPDFPage);
+    redrawAnnotations();
+}
+
+function savePDFAnnotations() {
+    if (currentPDFData) {
+        currentPDFData.annotations = currentPDFAnnotations;
+        const o = getOrder(currentOrderId);
+        syncOrders();
+        showToast('💾 Annotations Saved', 'PDF annotations saved');
+    }
+}
+
+function prevPDFPage() {
+    if (currentPDFPage > 1) {
+        currentPDFPage--;
+        renderPDFPage(currentPDFPage);
+    }
+}
+
+function nextPDFPage() {
+    if (currentPDFDoc && currentPDFPage < currentPDFDoc.numPages) {
+        currentPDFPage++;
+        renderPDFPage(currentPDFPage);
+    }
+}
+
+function deletePDF(pdfIndex) {
+    const o = getOrder(currentOrderId);
+    if (!o || !o.pdfs) return;
+    
+    const pdfName = o.pdfs[pdfIndex].name;
+    if (!confirm(`Delete "${pdfName}"?`)) return;
+    
+    o.pdfs.splice(pdfIndex, 1);
+    renderPDFList(o);
+    syncOrders();
+    showToast('🗑 PDF Deleted', pdfName);
 }
 
 // SETTINGS

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Production Tracker</title>
+    <title>Brave Production Tracker</title>
     
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
@@ -146,7 +146,7 @@
 
         /* LOGIN PAGE */
         .login-container { display: flex; align-items: center; justify-content: center; min-height: 100vh; background: white; }
-        .login-box { background: #fff; border-radius: 16px; padding: 48px; width: 90%; max-width: 420px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
+        .login-box { background: #fff; border-radius: 20px; padding: 48px; width: 90%; max-width: 420px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
         .login-logo { font-size: 32px; font-weight: 700; color: #1a1a2e; text-align: center; margin-bottom: 8px; letter-spacing: -1px; }
         .login-logo span { color: #667eea; }
         .login-subtitle { text-align: center; color: #888; font-size: 14px; margin-bottom: 32px; }
@@ -165,7 +165,7 @@
 <div id="login-container" class="login-container">
     <div class="login-box">
         <div class="login-logo">BR▲▼E<span> Timeline X</span></div>
-        <div class="login-subtitle">Production System</div>
+        <div class="login-subtitle">Production Management System</div>
         <div id="login-error" class="login-error"></div>
         <div class="form-group">
             <label class="form-label">Email</label>
@@ -185,13 +185,13 @@
 <nav>
     <div class="nav-logo">BR▲▼E<span> Timeline X</span></div>
     <button class="nav-tab active" onclick="showPage('orders', this)">Orders</button>
-    <button class="nav-tab" onclick="showPage('matrix', this)">Pricing Matrix</button>
     <div class="nav-spacer"></div>
     <div class="user-badge">
         <span id="user-email">user@email.com</span>
         <button class="logout-btn" onclick="handleLogout()">Logout</button>
     </div>
     <button class="nav-tab" onclick="showPage('settings', this)" style="border-left:1px solid #333;">Settings</button>
+    <button class="nav-tab" onclick="showPage('matrix', this)">Pricing Matrix</button>
 </nav>
 
 <!-- ORDERS PAGE -->
@@ -257,7 +257,7 @@
         <h2 style="font-size:22px;font-weight:700;color:#1a1a2e;margin-bottom:20px;">Settings</h2>
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:20px;">
             <div class="card" style="padding:24px;">
-                <div style="font-size:16px;font-weight:700;color:#1a1a2e;margin-bottom:16px;padding-bottom:10px;border-bottom:2px solid #f0f0f0;"></div>Status Change Notifications</div>
+                <div style="font-size:16px;font-weight:700;color:#1a1a2e;margin-bottom:16px;padding-bottom:10px;border-bottom:2px solid #f0f0f0;">Status Change Notifications</div>
                 <p style="font-size:13px;color:#888;margin-bottom:16px;">An email is sent to the addresses below whenever an order's status changes.</p>
                 <label class="form-label">Notification Emails</label>
                 <div id="email-tags" style="margin-bottom:12px;min-height:36px;">
@@ -313,10 +313,10 @@
                 </div>
             </div>
             <div class="card" style="padding:24px;">
-                <div style="font-size:16px;font-weight:700;color:#1a1a2e;margin-bottom:16px;padding-bottom:10px;border-bottom:2px solid #f0f0f0;">General</div>
+                <div style="font-size:16px;font-weight:700;color:#1a1a2e;margin-bottom:16px;padding-bottom:10px;border-bottom:2px solid #f0f0f0;">⚙ General</div>
                 <div class="form-group">
                     <label class="form-label">Company Name</label>
-                    <input type="text" class="form-input" value="Your Cabinet Co.">
+                    <input type="text" class="form-input" value="Brave">
                 </div>
                 <div class="form-group">
                     <label class="form-label">Default Status for New Orders</label>
@@ -511,20 +511,40 @@
     </div>
 </div>
 
+<!-- ADMIN PASSWORD MODAL -->
+<div class="modal" id="modal-admin-password">
+    <div class="modal-box" style="max-width:400px;">
+        <div class="modal-header">
+            <h2 class="modal-title">Admin Access</h2>
+            <button class="modal-close" onclick="closeModal('modal-admin-password')">×</button>
+        </div>
+        <p style="font-size:14px;color:#666;margin-bottom:20px;">Enter admin password to access settings and pricing matrix.</p>
+        <div class="form-group">
+            <label class="form-label">Password</label>
+            <input type="password" class="form-input" id="admin-password-input" placeholder="Enter password">
+        </div>
+        <div id="admin-password-error" style="display:none;color:#e53935;font-size:13px;margin-bottom:12px;">Incorrect password</div>
+        <div class="form-actions">
+            <button class="btn btn-primary" onclick="checkAdminPassword()">Access Admin Panel</button>
+            <button class="btn btn-ghost" onclick="closeModal('modal-admin-password')">Cancel</button>
+        </div>
+    </div>
+</div>
+
 <script>
 // ═══════════════════════════════════════════════════════════════
 // FIREBASE CONFIGURATION
 // ═══════════════════════════════════════════════════════════════
-// Replace with Firebase config from Firebase Console
+// TODO: Replace this with your Firebase config from Firebase Console
 // Go to: Firebase Console → Project Settings → General → Your apps → Web app
 const firebaseConfig = {
-  apiKey: "AIzaSyCTpfKPoMnylDHmDHzkcNFjsol1ryn893E",
-  authDomain: "brave-timeline.firebaseapp.com",
-  databaseURL: "https://brave-timeline-default-rtdb.firebaseio.com",
-  projectId: "brave-timeline",
-  storageBucket: "brave-timeline.firebasestorage.app",
-  messagingSenderId: "221637284494",
-  appId: "1:221637284494:web:c799257657182fe0496fdf"
+    apiKey: "YOUR_API_KEY_HERE",
+    authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+    databaseURL: "https://YOUR_PROJECT_ID-default-rtdb.firebaseio.com",
+    projectId: "YOUR_PROJECT_ID",
+    storageBucket: "YOUR_PROJECT_ID.appspot.com",
+    messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+    appId: "YOUR_APP_ID"
 };
 
 // Initialize Firebase
@@ -804,13 +824,54 @@ function calculateOrderTotal(builtinsList) {
 }
 
 // NAV
+let isAdminAuthenticated = false;
+
 function showPage(page, btn) {
+    // Check if trying to access admin-only pages
+    if ((page === 'settings' || page === 'matrix') && !isAdminAuthenticated) {
+        openAdminAccess();
+        return;
+    }
+    
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     document.getElementById('page-' + page).classList.add('active');
     document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
-    if (btn) btn.classList.add('active');
+    if (btn && btn.classList.contains('nav-tab')) {
+        btn.classList.add('active');
+    }
     if (page === 'matrix') renderMatrix();
 }
+
+function openAdminAccess() {
+    document.getElementById('admin-password-input').value = '';
+    document.getElementById('admin-password-error').style.display = 'none';
+    openModal('modal-admin-password');
+}
+
+function checkAdminPassword() {
+    const password = document.getElementById('admin-password-input').value;
+    const ADMIN_PASSWORD = '1234'; // Change this to your desired password
+    
+    if (password === ADMIN_PASSWORD) {
+        isAdminAuthenticated = true;
+        closeModal('modal-admin-password');
+        // Show settings page after successful authentication
+        showPage('settings', null);
+        showToast('✅ Admin Access Granted', 'You can now access settings and pricing matrix');
+    } else {
+        document.getElementById('admin-password-error').style.display = 'block';
+    }
+}
+
+// Allow Enter key on admin password
+document.addEventListener('DOMContentLoaded', () => {
+    const adminPwInput = document.getElementById('admin-password-input');
+    if (adminPwInput) {
+        adminPwInput.addEventListener('keydown', e => {
+            if (e.key === 'Enter') checkAdminPassword();
+        });
+    }
+});
 
 // ORDERS
 function renderOrders() {
@@ -832,7 +893,7 @@ function renderOrders() {
                 </div>
             </td>
             <td onclick="event.stopPropagation()">
-                <button class="btn btn-ghost btn-icon" onclick="editOrder(${o.id})">Edit</button>
+                <button class="btn btn-ghost btn-icon" onclick="editOrder(${o.id})">✏️</button>
             </td>
         </tr>`;
     }).join('');

@@ -225,8 +225,8 @@
         <span id="user-email">user@email.com</span>
         <button class="logout-btn" onclick="handleLogout()">Logout</button>
     </div>
-    <button class="nav-tab" onclick="showPage('settings', this)" style="border-left:1px solid #333;">Settings</button>
-    <button class="nav-tab" onclick="showPage('matrix', this)">Pricing</button>
+    <button class="nav-tab" onclick="showPage('settings', this)" style="border-left:1px solid #333;">ADMIN</button>
+    <button class="nav-tab" onclick="showPage('matrix', this)">PRICE M▲TRIX</button>
 </nav>
 
 <!-- ORDERS PAGE -->
@@ -1046,7 +1046,7 @@ function renderOrders() {
                 </div>
             </td>
             <td onclick="event.stopPropagation()">
-                <button class="btn btn-ghost btn-icon" onclick="editOrder(${o.id})">Edit</button>
+                <button class="btn btn-ghost btn-icon" onclick="editOrder(${o.id})">▲ Edit</button>
             </td>
         </tr>`;
     }).join('');

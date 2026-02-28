@@ -516,7 +516,7 @@
                 + Select Built-ins from Catalog
             </button>
             <div class="selected-builtins" id="order-builtins-list">
-                <div class="empty-state">No built-ins added yet</div>
+                <div class="empty-state">No built-ins added yet!</div>
             </div>
             <div class="order-total-box">
                 <span class="order-total-label">Order Total</span>
@@ -1114,7 +1114,7 @@ function changeStatus(e, orderId, newKey, context) {
     
     // Check if notification should be sent based on settings
     if (shouldSendNotification(oldKey, newKey)) {
-        showToast('📧 Notification Sent', `Order #${orderId}: ${oldLabel} → ${newLabel}`);
+        showToast('Notification Sent', `Order #${orderId}: ${oldLabel} → ${newLabel}`);
     }
 }
 
@@ -1180,7 +1180,7 @@ function deleteCurrentOrder() {
     renderOrders();
     syncOrders(); // Sync to Firebase
     backToOrders();
-    showToast('🗑 Order Deleted', `Order #${currentOrderId} removed`);
+    showToast('Order Deleted', `Order #${currentOrderId} removed`);
 }
 
 // ORDER MODAL
@@ -1658,7 +1658,7 @@ function renderPDFList(order) {
     
     container.innerHTML = order.pdfs.map((pdf, idx) => `
         <div class="pdf-item" onclick="openPDFViewer(${idx})">
-            <div class="pdf-item-icon">📄</div>
+            <div class="pdf-item-icon">▲</div>
             <div class="pdf-item-name">${pdf.name}</div>
             <div class="pdf-item-actions">
                 <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation(); viewPDF(${idx})" style="font-size:11px;padding:4px 8px;">View</button>
@@ -1838,7 +1838,7 @@ function savePDFAnnotations() {
         currentPDFData.annotations = currentPDFAnnotations;
         const o = getOrder(currentOrderId);
         syncOrders();
-        showToast('💾 Annotations Saved', 'PDF annotations saved');
+        showToast('Annotations Saved', 'PDF annotations saved');
     }
 }
 
@@ -1866,7 +1866,7 @@ function deletePDF(pdfIndex) {
     o.pdfs.splice(pdfIndex, 1);
     renderPDFList(o);
     syncOrders();
-    showToast('🗑 PDF Deleted', pdfName);
+    showToast('PDF Deleted', pdfName);
 }
 
 // SETTINGS

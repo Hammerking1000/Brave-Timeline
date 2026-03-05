@@ -422,6 +422,8 @@
         <div><div style="font-size:11px;color:#aaa;text-transform:uppercase;font-weight:600;letter-spacing:0.5px;margin-bottom:5px;">Hardware</div><div style="font-size:15px;color:#222;font-weight:500;" id="di-hardware">–</div></div>
         <div><div style="font-size:11px;color:#aaa;text-transform:uppercase;font-weight:600;letter-spacing:0.5px;margin-bottom:5px;">Countertops</div><div style="font-size:15px;color:#222;font-weight:500;" id="di-countertops">–</div></div>
         <div><div style="font-size:11px;color:#aaa;text-transform:uppercase;font-weight:600;letter-spacing:0.5px;margin-bottom:5px;">Installation</div><div style="font-size:15px;color:#222;font-weight:500;" id="di-installation">–</div></div>
+        <div><div style="font-size:11px;color:#aaa;text-transform:uppercase;font-weight:600;letter-spacing:0.5px;margin-bottom:5px;">Doors</div><div style="font-size:15px;color:#222;font-weight:500;" id="di-doors">–</div></div>
+        <div><div style="font-size:11px;color:#aaa;text-transform:uppercase;font-weight:600;letter-spacing:0.5px;margin-bottom:5px;">Drawer Fronts</div><div style="font-size:15px;color:#222;font-weight:500;" id="di-drawer-fronts">–</div></div>
     </div>
 </div>
 
@@ -602,6 +604,47 @@
         <option value="None">None</option>
         <option value="Simple">Simple</option>
         <option value="Complex">Complex</option>
+    </select>
+</div>
+        <div class="form-group">
+    <label class="form-label">Doors</label>
+    <select class="form-select" id="order-doors">
+        <option value="">Select...</option>
+        <option value="Slab">Slab</option>
+        <option value="Chesapeake 586">Chesapeake 586</option>
+        <option value="Square Raised Panel 151">Square Raised Panel 151</option>
+        <option value="Artesia 406">Artesia 406</option>
+        <option value="Baldwin 962">Baldwin 962</option>
+        <option value="Campbell 385">Campbell 385</option>
+        <option value="Cascade 858">Cascade 858</option>
+        <option value="Chapman 297">Chapman 297</option>
+        <option value="Dalton 286">Dalton 286</option>
+        <option value="Estrella 354">Estrella 354</option>
+        <option value="Newbury 520">Newbury 520</option>
+        <option value="San Marino 580">San Marino 580</option>
+        <option value="Saratoga 831">Saratoga 831</option>
+        <option value="Victoria 833">Victoria 833</option>
+    </select>
+</div>
+
+<div class="form-group">
+    <label class="form-label">Drawer Fronts</label>
+    <select class="form-select" id="order-drawer-fronts">
+        <option value="">Select...</option>
+        <option value="Slab">Slab</option>
+        <option value="Chesapeake 586">Chesapeake 586</option>
+        <option value="Square Raised Panel 151">Square Raised Panel 151</option>
+        <option value="Artesia 406">Artesia 406</option>
+        <option value="Baldwin 962">Baldwin 962</option>
+        <option value="Campbell 385">Campbell 385</option>
+        <option value="Cascade 858">Cascade 858</option>
+        <option value="Chapman 297">Chapman 297</option>
+        <option value="Dalton 286">Dalton 286</option>
+        <option value="Estrella 354">Estrella 354</option>
+        <option value="Newbury 520">Newbury 520</option>
+        <option value="San Marino 580">San Marino 580</option>
+        <option value="Saratoga 831">Saratoga 831</option>
+        <option value="Victoria 833">Victoria 833</option>
     </select>
 </div>
         <div style="margin-bottom:18px;">
@@ -1160,11 +1203,13 @@ function openOrder(id) {
     const count = o.builtins.reduce((sum, bi) => sum + bi.qty, 0);
     document.getElementById('di-count').textContent = count + ' items';
     document.getElementById('di-construction').textContent = o.construction || '–';
-document.getElementById('di-materials').textContent = o.materials + (o.stainSpecies ? ` (${o.stainSpecies})` : '') || '–';
-document.getElementById('di-drawers').textContent = o.drawers + (o.drawerSpecial ? ` - ${o.drawerSpecial}` : '') || '–';
-document.getElementById('di-hardware').textContent = o.hardware || '–';
-document.getElementById('di-countertops').textContent = o.countertops === 'Yes' ? `Yes - ${o.countertopMaterial || ''}` : 'No';
-document.getElementById('di-installation').textContent = o.installation || '–';
+    document.getElementById('di-materials').textContent = o.materials + (o.stainSpecies ? ` (${o.stainSpecies})` : '') || '–';
+    document.getElementById('di-drawers').textContent = o.drawers + (o.drawerSpecial ? ` - ${o.drawerSpecial}` : '') || '–';
+    document.getElementById('di-hardware').textContent = o.hardware || '–';
+    document.getElementById('di-countertops').textContent = o.countertops === 'Yes' ? `Yes - ${o.countertopMaterial || ''}` : 'No';
+    document.getElementById('di-installation').textContent = o.installation || '–';
+    document.getElementById('di-doors').textContent = o.doors || '–';
+    document.getElementById('di-drawer-fronts').textContent = o.drawerFronts || '–';
     
     renderDetailStatus(o);
     renderDetailBuiltins(o);
@@ -1341,6 +1386,9 @@ function openOrderModal() {
     document.getElementById('order-countertop-material').value = '';
     document.getElementById('countertop-material-group').style.display = 'none';
     document.getElementById('order-installation').value = 'None';
+    document.getElementById('order-installation').value = 'None';
+    document.getElementById('order-doors').value = '';
+    document.getElementById('order-drawer-fronts').value = '';
     
     renderOrderBuiltinsList();
     openModal('modal-order');
@@ -1357,14 +1405,16 @@ function editOrder(id) {
     document.getElementById('order-status').value = o.status;
     document.getElementById('order-ship').value = o.ship;
     document.getElementById('order-construction').value = o.construction || '';
-document.getElementById('order-materials').value = o.materials || '';
-document.getElementById('order-stain-species').value = o.stainSpecies || '';
-document.getElementById('order-drawers').value = o.drawers || '';
-document.getElementById('order-drawer-special').value = o.drawerSpecial || '';
-document.getElementById('order-hardware').value = o.hardware || '';
-document.getElementById('order-countertops').value = o.countertops || 'No';
-document.getElementById('order-countertop-material').value = o.countertopMaterial || '';
-document.getElementById('order-installation').value = o.installation || 'None';
+    document.getElementById('order-materials').value = o.materials || '';
+    document.getElementById('order-stain-species').value = o.stainSpecies || '';
+    document.getElementById('order-drawers').value = o.drawers || '';
+    document.getElementById('order-drawer-special').value = o.drawerSpecial || '';
+    document.getElementById('order-hardware').value = o.hardware || '';
+    document.getElementById('order-countertops').value = o.countertops || 'No';
+    document.getElementById('order-countertop-material').value = o.countertopMaterial || '';
+    document.getElementById('order-installation').value = o.installation || 'None';
+    document.getElementById('order-doors').value = o.doors || '';
+    document.getElementById('order-drawer-fronts').value = o.drawerFronts || '';
 
 // Show/hide conditional fields
 handleMaterialsChange();
@@ -1420,6 +1470,8 @@ function saveOrder() {
     const countertops = document.getElementById('order-countertops').value;
     const countertopMaterial = document.getElementById('order-countertop-material').value;
     const installation = document.getElementById('order-installation').value;
+    const doors = document.getElementById('order-doors').value;
+    const drawerFronts = document.getElementById('order-drawer-fronts').value;
     
     if (!num || !company || !name) {
         alert('Please fill in all required fields');
@@ -1429,17 +1481,36 @@ function saveOrder() {
     if (editingOrderId) {
         const o = getOrder(editingOrderId);
         Object.assign(o, {id:num, company, name, status, ship, construction, materials, stainSpecies, drawers, drawerSpecial, 
-hardware, countertops, countertopMaterial, installation, builtins:orderBuiltinsList});
+hardware, countertops, countertopMaterial, installation, doors, drawerFronts, builtins:orderBuiltinsList});
         showToast('✅ Order Updated', `Order #${num} saved`);
     } else {
         orders.push({id:num, company, name, status, ship, construction, materials, stainSpecies, drawers, drawerSpecial, 
-hardware, countertops, countertopMaterial, installation, builtins:orderBuiltinsList});
+hardware, countertops, countertopMaterial, installation, doors, drawerFronts, builtins:orderBuiltinsList});
         orderIdCounter = Math.max(orderIdCounter, num + 1);
         showToast('✅ Order Created', `Order #${num} created`);
     }
     
     renderOrders();
     syncOrders(); // Sync to Firebase
+   
+    // If editing an existing order and currently viewing its detail page, refresh the detail view
+if (editingOrderId && currentOrderId === editingOrderId) {
+    const updatedOrder = getOrder(editingOrderId);
+    if (updatedOrder) {
+        // Refresh all detail displays
+        document.getElementById('di-construction').textContent = updatedOrder.construction || '–';
+        document.getElementById('di-materials').textContent = updatedOrder.materials + (updatedOrder.stainSpecies ? ` (${updatedOrder.stainSpecies})` : '') || '–';
+        document.getElementById('di-drawers').textContent = updatedOrder.drawers + (updatedOrder.drawerSpecial ? ` - ${updatedOrder.drawerSpecial}` : '') || '–';
+        document.getElementById('di-hardware').textContent = updatedOrder.hardware || '–';
+        document.getElementById('di-countertops').textContent = updatedOrder.countertops === 'Yes' ? `Yes - ${updatedOrder.countertopMaterial || ''}` : 'No';
+        document.getElementById('di-installation').textContent = updatedOrder.installation || '–';
+        document.getElementById('di-doors').textContent = updatedOrder.doors || '–';
+        document.getElementById('di-drawer-fronts').textContent = updatedOrder.drawerFronts || '–';
+        renderDetailBuiltins(updatedOrder);
+    }
+}
+
+closeModal('modal-order');
     closeModal('modal-order');
 }
 

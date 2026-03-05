@@ -410,6 +410,22 @@
                 <div><div style="font-size:11px;color:#aaa;text-transform:uppercase;font-weight:600;letter-spacing:0.5px;margin-bottom:5px;">Company</div><div style="font-size:15px;color:#222;font-weight:500;" id="di-company">–</div></div>
                 <div><div style="font-size:11px;color:#aaa;text-transform:uppercase;font-weight:600;letter-spacing:0.5px;margin-bottom:5px;">Project Name</div><div style="font-size:15px;color:#222;font-weight:500;" id="di-name">–</div></div>
                 <div><div style="font-size:11px;color:#aaa;text-transform:uppercase;font-weight:600;letter-spacing:0.5px;margin-bottom:5px;">Ship Date</div><div style="font-size:15px;color:#222;font-weight:500;" id="di-ship">–</div></div>
+                </div>
+</div>
+
+<div class="card" style="padding:24px;margin-bottom:20px;">
+    <div style="font-size:16px;font-weight:700;color:#1a1a2e;margin-bottom:16px;padding-bottom:10px;border-bottom:2px solid #f0f0f0;">📋 Specifications</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;">
+        <div><div style="font-size:11px;color:#aaa;text-transform:uppercase;font-weight:600;letter-spacing:0.5px;margin-bottom:5px;">Construction</div><div style="font-size:15px;color:#222;font-weight:500;" id="di-construction">–</div></div>
+        <div><div style="font-size:11px;color:#aaa;text-transform:uppercase;font-weight:600;letter-spacing:0.5px;margin-bottom:5px;">Materials</div><div style="font-size:15px;color:#222;font-weight:500;" id="di-materials">–</div></div>
+        <div><div style="font-size:11px;color:#aaa;text-transform:uppercase;font-weight:600;letter-spacing:0.5px;margin-bottom:5px;">Drawers & Rollouts</div><div style="font-size:15px;color:#222;font-weight:500;" id="di-drawers">–</div></div>
+        <div><div style="font-size:11px;color:#aaa;text-transform:uppercase;font-weight:600;letter-spacing:0.5px;margin-bottom:5px;">Hardware</div><div style="font-size:15px;color:#222;font-weight:500;" id="di-hardware">–</div></div>
+        <div><div style="font-size:11px;color:#aaa;text-transform:uppercase;font-weight:600;letter-spacing:0.5px;margin-bottom:5px;">Countertops</div><div style="font-size:15px;color:#222;font-weight:500;" id="di-countertops">–</div></div>
+        <div><div style="font-size:11px;color:#aaa;text-transform:uppercase;font-weight:600;letter-spacing:0.5px;margin-bottom:5px;">Installation</div><div style="font-size:15px;color:#222;font-weight:500;" id="di-installation">–</div></div>
+    </div>
+</div>
+
+<div class="card" style="padding:24px;">
                 <div><div style="font-size:11px;color:#aaa;text-transform:uppercase;font-weight:600;letter-spacing:0.5px;margin-bottom:5px;">Total Built-ins</div><div style="font-size:15px;color:#222;font-weight:500;" id="di-count">–</div></div>
             </div>
         </div>
@@ -510,6 +526,84 @@
             <label class="form-label">Ship Date</label>
             <input type="date" class="form-input" id="order-ship">
         </div>
+        <div class="form-group">
+    <label class="form-label">Construction Type</label>
+    <select class="form-select" id="order-construction">
+        <option value="">Select...</option>
+        <option value="CW Express">CW Express</option>
+        <option value="Brave Kitchens">Brave Kitchens</option>
+        <option value="Mclean">Mclean</option>
+        <option value="Walmer">Walmer</option>
+    </select>
+</div>
+
+<div class="form-group">
+    <label class="form-label">Materials</label>
+    <select class="form-select" id="order-materials" onchange="handleMaterialsChange()">
+        <option value="">Select...</option>
+        <option value="MDF Melamine">MDF Melamine</option>
+        <option value="PB Melamine">PB Melamine</option>
+        <option value="Prefinished Maple">Prefinished Maple</option>
+        <option value="Paint Grade">Paint Grade</option>
+        <option value="Stain Grade">Stain Grade</option>
+    </select>
+</div>
+
+<div class="form-group" id="stain-species-group" style="display:none;">
+    <label class="form-label">Stain Species</label>
+    <input type="text" class="form-input" id="order-stain-species" placeholder="e.g., White Oak, Walnut">
+</div>
+
+<div class="form-group">
+    <label class="form-label">Drawers & Rollouts</label>
+    <select class="form-select" id="order-drawers" onchange="handleDrawersChange()">
+        <option value="">Select...</option>
+        <option value="Dovetail Birch Ply">Dovetail Birch Ply</option>
+        <option value="Dovetail Solid Maple">Dovetail Solid Maple</option>
+        <option value="Dovetail Special">Dovetail Special</option>
+    </select>
+</div>
+
+<div class="form-group" id="drawer-special-group" style="display:none;">
+    <label class="form-label">Drawer Special Description</label>
+    <input type="text" class="form-input" id="order-drawer-special" placeholder="Describe special drawer requirements">
+</div>
+
+<div class="form-group">
+    <label class="form-label">Hardware</label>
+    <select class="form-select" id="order-hardware">
+        <option value="">Select...</option>
+        <option value="Overlay">Overlay</option>
+        <option value="Insert">Insert</option>
+    </select>
+</div>
+
+<div class="form-group">
+    <label class="form-label">Countertops</label>
+    <select class="form-select" id="order-countertops" onchange="handleCountertopsChange()">
+        <option value="No">No</option>
+        <option value="Yes">Yes</option>
+    </select>
+</div>
+
+<div class="form-group" id="countertop-material-group" style="display:none;">
+    <label class="form-label">Countertop Material</label>
+    <select class="form-select" id="order-countertop-material">
+        <option value="">Select...</option>
+        <option value="Paint Grade">Paint Grade</option>
+        <option value="Stain Grade Maple">Stain Grade Maple</option>
+        <option value="Stain Grade White Oak">Stain Grade White Oak</option>
+    </select>
+</div>
+
+<div class="form-group">
+    <label class="form-label">Installation Type</label>
+    <select class="form-select" id="order-installation">
+        <option value="None">None</option>
+        <option value="Simple">Simple</option>
+        <option value="Complex">Complex</option>
+    </select>
+</div>
         <div style="margin-bottom:18px;">
             <label class="form-label">Built-ins</label>
             <button class="btn btn-primary" style="width:100%; justify-content:center; margin-bottom:12px;" onclick="openBuiltinSelector()">
@@ -1065,6 +1159,12 @@ function openOrder(id) {
     document.getElementById('di-ship').textContent = o.ship;
     const count = o.builtins.reduce((sum, bi) => sum + bi.qty, 0);
     document.getElementById('di-count').textContent = count + ' items';
+    document.getElementById('di-construction').textContent = o.construction || '–';
+document.getElementById('di-materials').textContent = o.materials + (o.stainSpecies ? ` (${o.stainSpecies})` : '') || '–';
+document.getElementById('di-drawers').textContent = o.drawers + (o.drawerSpecial ? ` - ${o.drawerSpecial}` : '') || '–';
+document.getElementById('di-hardware').textContent = o.hardware || '–';
+document.getElementById('di-countertops').textContent = o.countertops === 'Yes' ? `Yes - ${o.countertopMaterial || ''}` : 'No';
+document.getElementById('di-installation').textContent = o.installation || '–';
     
     renderDetailStatus(o);
     renderDetailBuiltins(o);
@@ -1183,6 +1283,41 @@ function deleteCurrentOrder() {
     showToast('Order Deleted', `Order #${currentOrderId} removed`);
 }
 
+    function handleMaterialsChange() {
+    const materials = document.getElementById('order-materials').value;
+    const stainGroup = document.getElementById('stain-species-group');
+    
+    if (materials === 'Stain Grade') {
+        stainGroup.style.display = 'block';
+    } else {
+        stainGroup.style.display = 'none';
+        document.getElementById('order-stain-species').value = '';
+    }
+}
+
+function handleDrawersChange() {
+    const drawers = document.getElementById('order-drawers').value;
+    const specialGroup = document.getElementById('drawer-special-group');
+    
+    if (drawers === 'Dovetail Special') {
+        specialGroup.style.display = 'block';
+    } else {
+        specialGroup.style.display = 'none';
+        document.getElementById('order-drawer-special').value = '';
+    }
+}
+
+function handleCountertopsChange() {
+    const countertops = document.getElementById('order-countertops').value;
+    const materialGroup = document.getElementById('countertop-material-group');
+    
+    if (countertops === 'Yes') {
+        materialGroup.style.display = 'block';
+    } else {
+        materialGroup.style.display = 'none';
+        document.getElementById('order-countertop-material').value = '';
+    }
+}
 // ORDER MODAL
 function openOrderModal() {
     editingOrderId = null;
@@ -1192,6 +1327,21 @@ function openOrderModal() {
     document.getElementById('order-name').value = '';
     document.getElementById('order-status').value = 'bid';
     document.getElementById('order-ship').value = '';
+    
+    // Reset new fields
+    document.getElementById('order-construction').value = '';
+    document.getElementById('order-materials').value = '';
+    document.getElementById('order-stain-species').value = '';
+    document.getElementById('stain-species-group').style.display = 'none';
+    document.getElementById('order-drawers').value = '';
+    document.getElementById('order-drawer-special').value = '';
+    document.getElementById('drawer-special-group').style.display = 'none';
+    document.getElementById('order-hardware').value = '';
+    document.getElementById('order-countertops').value = 'No';
+    document.getElementById('order-countertop-material').value = '';
+    document.getElementById('countertop-material-group').style.display = 'none';
+    document.getElementById('order-installation').value = 'None';
+    
     renderOrderBuiltinsList();
     openModal('modal-order');
 }
@@ -1206,6 +1356,20 @@ function editOrder(id) {
     document.getElementById('order-name').value = o.name;
     document.getElementById('order-status').value = o.status;
     document.getElementById('order-ship').value = o.ship;
+    document.getElementById('order-construction').value = o.construction || '';
+document.getElementById('order-materials').value = o.materials || '';
+document.getElementById('order-stain-species').value = o.stainSpecies || '';
+document.getElementById('order-drawers').value = o.drawers || '';
+document.getElementById('order-drawer-special').value = o.drawerSpecial || '';
+document.getElementById('order-hardware').value = o.hardware || '';
+document.getElementById('order-countertops').value = o.countertops || 'No';
+document.getElementById('order-countertop-material').value = o.countertopMaterial || '';
+document.getElementById('order-installation').value = o.installation || 'None';
+
+// Show/hide conditional fields
+handleMaterialsChange();
+handleDrawersChange();
+handleCountertopsChange();
     renderOrderBuiltinsList();
     openModal('modal-order');
 }
@@ -1247,6 +1411,15 @@ function saveOrder() {
     const name = document.getElementById('order-name').value.trim();
     const status = document.getElementById('order-status').value;
     const ship = document.getElementById('order-ship').value;
+    const construction = document.getElementById('order-construction').value;
+    const materials = document.getElementById('order-materials').value;
+    const stainSpecies = document.getElementById('order-stain-species').value;
+    const drawers = document.getElementById('order-drawers').value;
+    const drawerSpecial = document.getElementById('order-drawer-special').value;
+    const hardware = document.getElementById('order-hardware').value;
+    const countertops = document.getElementById('order-countertops').value;
+    const countertopMaterial = document.getElementById('order-countertop-material').value;
+    const installation = document.getElementById('order-installation').value;
     
     if (!num || !company || !name) {
         alert('Please fill in all required fields');
@@ -1255,10 +1428,12 @@ function saveOrder() {
     
     if (editingOrderId) {
         const o = getOrder(editingOrderId);
-        Object.assign(o, {id:num, company, name, status, ship, builtins:orderBuiltinsList});
+        Object.assign(o, {id:num, company, name, status, ship, construction, materials, stainSpecies, drawers, drawerSpecial, 
+hardware, countertops, countertopMaterial, installation, builtins:orderBuiltinsList});
         showToast('✅ Order Updated', `Order #${num} saved`);
     } else {
-        orders.push({id:num, company, name, status, ship, builtins:orderBuiltinsList});
+        orders.push({id:num, company, name, status, ship, construction, materials, stainSpecies, drawers, drawerSpecial, 
+hardware, countertops, countertopMaterial, installation, builtins:orderBuiltinsList});
         orderIdCounter = Math.max(orderIdCounter, num + 1);
         showToast('✅ Order Created', `Order #${num} created`);
     }

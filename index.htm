@@ -10,6 +10,11 @@
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-functions-compat.js"></script>
     
     <!--PDF.js for PDF rendering-->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
@@ -794,6 +799,7 @@ try {
     firebase.initializeApp(firebaseConfig);
     db = firebase.database();
     auth = firebase.auth();
+    const functions = firebase.functions();
     firebaseInitialized = true;
     console.log('✅ Firebase connected successfully');
 } catch (error) {
@@ -1255,12 +1261,44 @@ function changeStatus(e, orderId, newKey, context) {
     renderOrders();
     if (context === 'detail') renderDetailStatus(o);
     
-    syncOrders(); // Sync to Firebase
+    syncOrders();
     
-    // Check if notification should be sent based on settings
     if (shouldSendNotification(oldKey, newKey)) {
-        showToast('Notification Sent', `Order #${orderId}: ${oldLabel} → ${newLabel}`);
+        sendEmailNotification(orderId, o.name, oldLabel, newLabel);
     }
+}
+
+// Add this NEW function anywhere in your JavaScript
+function sendEmailNotification(orderNumber, orderName, oldStatus, newStatus) {
+    const emailTags = document.querySelectorAll('#email-tags span');
+    const recipients = Array.from(emailTags).map(span => 
+        span.textContent.replace('×', '').trim()
+    ).filter(email => email.includes('@'));
+    
+    if (recipients.length === 0) {
+        showToast('⚠️ No Recipients', 'No email addresses configured');
+        return;
+    }
+    
+    // Call Firebase Function
+    const sendNotification = firebase.functions().httpsCallable('sendStatusNotification');
+    
+    sendNotification({
+        orderNumber: orderNumber,
+        orderName: orderName,
+        oldStatus: oldStatus,
+        newStatus: newStatus,
+        recipients: recipients
+    })
+    .then(result => {
+        if (result.data.success) {
+            showToast('📧 Email Sent', `Notification sent to ${recipients.length} recipient(s)`);
+        }
+    })
+    .catch(error => {
+        showToast('❌ Email Failed', error.message);
+        console.error('Email error:', error);
+    });
 }
 
 function shouldSendNotification(oldStatus, newStatus) {

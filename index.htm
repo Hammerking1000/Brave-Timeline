@@ -1268,7 +1268,6 @@ function changeStatus(e, orderId, newKey, context) {
     }
 }
 
-// Add this NEW function anywhere in your JavaScript
 function sendEmailNotification(orderNumber, orderName, oldStatus, newStatus) {
     const emailTags = document.querySelectorAll('#email-tags span');
     const recipients = Array.from(emailTags).map(span => 
@@ -1280,26 +1279,45 @@ function sendEmailNotification(orderNumber, orderName, oldStatus, newStatus) {
         return;
     }
     
-    // Call Firebase Function
-    const sendNotification = firebase.functions().httpsCallable('sendStatusNotification');
+    // Get the Firebase function URL
+    // After deployment, check Firebase Console → Functions to get the exact URL
+    const functionUrl = 'https://us-central1-brave-timeline.cloudfunctions.net/sendStatusNotification';
     
-    sendNotification({
-        orderNumber: orderNumber,
-        orderName: orderName,
-        oldStatus: oldStatus,
-        newStatus: newStatus,
-        recipients: recipients
+    fetch(functionUrl, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            orderNumber: orderNumber,
+            orderName: orderName,
+            oldStatus: oldStatus,
+            newStatus: newStatus,
+            recipients: recipients
+        })
     })
-    .then(result => {
-        if (result.data.success) {
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
             showToast('📧 Email Sent', `Notification sent to ${recipients.length} recipient(s)`);
+        } else {
+            showToast('❌ Email Failed', data.error || 'Unknown error');
         }
     })
     .catch(error => {
-        showToast('❌ Email Failed', error.message);
+        showToast('❌ Email Failed', 'Could not connect to server');
         console.error('Email error:', error);
     });
 }
+```
+
+---
+
+## **🔍 GET YOUR EXACT FUNCTION URL**
+
+After deploying, the terminal will show you the URL. It will look like:
+```
+Function URL (sendStatusNotification): https://us-central1-brave-timeline.cloudfunctions.net/sendStatusNotification
 
 function shouldSendNotification(oldStatus, newStatus) {
     // Map of transitions to toggle data attributes

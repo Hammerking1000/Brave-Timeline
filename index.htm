@@ -1305,15 +1305,6 @@ function sendEmailNotification(orderNumber, orderName, oldStatus, newStatus) {
         console.error('Email error:', error);
     });
 }
-```
-
----
-
-## **🔍 GET YOUR EXACT FUNCTION URL**
-
-After deploying, the terminal will show you the URL. It will look like:
-```
-Function URL (sendStatusNotification): https://us-central1-brave-timeline.cloudfunctions.net/sendStatusNotification
 
 function shouldSendNotification(oldStatus, newStatus) {
     // Map of transitions to toggle data attributes

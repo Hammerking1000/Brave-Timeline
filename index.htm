@@ -741,6 +741,7 @@ tbody tr:last-child td { border-bottom: none; }
     <select class="form-select" id="order-doors">
         <option value="">Select...</option>
         <option value="Slab">Slab</option>
+        <option value="Shaker 831">Shaker 831</option>
         <option value="Chesapeake 586">Chesapeake 586</option>
         <option value="Square Raised Panel 151">Square Raised Panel 151</option>
         <option value="Artesia 406">Artesia 406</option>
@@ -762,6 +763,7 @@ tbody tr:last-child td { border-bottom: none; }
     <select class="form-select" id="order-drawer-fronts">
         <option value="">Select...</option>
         <option value="Slab">Slab</option>
+        <option value="Shaker 831">Shaker 831</option>
         <option value="Chesapeake 586">Chesapeake 586</option>
         <option value="Square Raised Panel 151">Square Raised Panel 151</option>
         <option value="Artesia 406">Artesia 406</option>
@@ -1404,8 +1406,6 @@ function sendEmailNotification(orderNumber, orderName, oldStatus, newStatus) {
         return;
     }
     
-    // Get the Firebase function URL
-    // After deployment, check Firebase Console → Functions to get the exact URL
     const functionUrl = 'https://us-central1-brave-timeline.cloudfunctions.net/sendStatusNotification';
     
     fetch(functionUrl, {
@@ -1424,13 +1424,13 @@ function sendEmailNotification(orderNumber, orderName, oldStatus, newStatus) {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            showToast('📧 Email Sent', `Notification sent to ${recipients.length} recipient(s)`);
+            showToast('Email Sent', `Notification sent to ${recipients.length} recipient(s)`);
         } else {
-            showToast('❌ Email Failed', data.error || 'Unknown error');
+            showToast('Email Failed', data.error || 'Unknown error');
         }
     })
     .catch(error => {
-        showToast('❌ Email Failed', 'Could not connect to server');
+        showToast('Email Failed', 'Could not connect to server');
         console.error('Email error:', error);
     });
 }
@@ -1654,12 +1654,12 @@ function saveOrder() {
         const o = getOrder(editingOrderId);
         Object.assign(o, {id:num, company, name, status, ship, construction, materials, stainSpecies, drawers, drawerSpecial, 
 hardware, countertops, countertopMaterial, installation, doors, drawerFronts, builtins:orderBuiltinsList});
-        showToast('✅ Order Updated', `Order #${num} saved`);
+        showToast('Order Updated', `Order #${num} saved`);
     } else {
         orders.push({id:num, company, name, status, ship, construction, materials, stainSpecies, drawers, drawerSpecial, 
 hardware, countertops, countertopMaterial, installation, doors, drawerFronts, builtins:orderBuiltinsList});
         orderIdCounter = Math.max(orderIdCounter, num + 1);
-        showToast('✅ Order Created', `Order #${num} created`);
+        showToast('Order Created', `Order #${num} created`);
     }
     
     renderOrders();
@@ -2002,12 +2002,12 @@ function saveCabinet() {
         if (cabinet) {
             cabinet.category = category;
             cabinet.ranges = ranges;
-            showToast('✅ Cabinet Updated', name);
+            showToast('Cabinet Updated', name);
         }
     } else {
         // Add new
         pricingMatrix.push({ name, category, ranges });
-        showToast('✅ Cabinet Added', name);
+        showToast('Cabinet Added', name);
     }
     
     renderMatrix();
@@ -2112,7 +2112,7 @@ async function loadPDF(pdfData) {
         renderPDFPage(currentPDFPage);
     } catch (error) {
         console.error('Error loading PDF:', error);
-        showToast('❌ Error', 'Failed to load PDF');
+        showToast('Error', 'Failed to load PDF');
     }
 }
 

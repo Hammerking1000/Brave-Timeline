@@ -1082,9 +1082,9 @@ try {
     auth = firebase.auth();
     const functions = firebase.functions();
     firebaseInitialized = true;
-    console.log('✅ Firebase connected successfully');
+    console.log('Firebase connected successfully');
 } catch (error) {
-    console.error('❌ Firebase initialization error:', error);
+    console.error('Firebase initialization error:', error);
     alert('Please update Firebase configuration in the code. See instructions at the top of the script section.');
 }
 
@@ -1130,7 +1130,7 @@ function handleLogin() {
     
     auth.signInWithEmailAndPassword(email, password)
         .then(() => {
-            console.log('✅ Signed in successfully');
+            console.log('Signed in successfully');
         })
         .catch(error => {
             console.error('Login error:', error);
@@ -1150,7 +1150,7 @@ function handleLogin() {
 function handleLogout() {
     if (confirm('Sign out?')) {
         auth.signOut().then(() => {
-            console.log('✅ Signed out');
+            console.log('Signed out');
         });
     }
 }
@@ -1213,7 +1213,7 @@ function saveTaxRate() {
     taxRate = newRate;
     saveToFirebase('settings/taxRate', taxRate)
         .then(() => {
-            showToast('✅ Tax Rate Saved', `Tax rate set to ${taxRate.toFixed(2)}%`);
+            showToast('Tax Rate Saved', `Tax rate set to ${taxRate.toFixed(2)}%`);
             // Refresh current order detail
             if (currentOrderId) {
                 const o = getOrder(currentOrderId);
@@ -1222,7 +1222,7 @@ function saveTaxRate() {
         })
         .catch(err => {
             console.error('Error saving tax rate:', err);
-            showToast('❌ Error', 'Failed to save tax rate');
+            showToast('Error', 'Failed to save tax rate');
         });
 }
 
@@ -1238,14 +1238,14 @@ async function loadFromFirebaseOnStartup() {
         const loadedOrders = await loadFromFirebase('orders');
         if (loadedOrders) {
             orders = loadedOrders;
-            console.log('✅ Loaded orders from Firebase');
+            console.log('Loaded orders from Firebase');
         }
         
         // Load pricing matrix
         const loadedMatrix = await loadFromFirebase('pricingMatrix');
         if (loadedMatrix) {
             pricingMatrix = loadedMatrix;
-            console.log('✅ Loaded pricing matrix from Firebase');
+            console.log('Loaded pricing matrix from Firebase');
         }
         
         // Load settings
@@ -1266,7 +1266,7 @@ async function loadFromFirebaseOnStartup() {
             if (loadedTaxRate !== null && loadedTaxRate !== undefined) {
                 taxRate = loadedTaxRate;
                 document.getElementById('tax-rate-input').value = taxRate;
-                console.log('✅ Loaded tax rate:', taxRate);
+                console.log('Loaded tax rate:', taxRate);
             }
             
             // Restore toggle states
@@ -1280,7 +1280,7 @@ async function loadFromFirebaseOnStartup() {
                 });
             }
             
-            console.log('✅ Loaded settings from Firebase');
+            console.log('Loaded settings from Firebase');
         }
         
         // Render UI with loaded data
@@ -1342,7 +1342,6 @@ let orders = [
     {id:2224,company:'Evergreene Companies',name:'EVG MAN4 0068',ship:'04/12/26',status:'bid',builtins:[{cabinetName:'B-O1A',width:25,depth:'24',price:435,qty:3}],pdfs:[]},
 ];
 let taxRate = 6.0;
-let orderIdCounter = 2226;
 let currentOrderId = null;
 let editingOrderId = null;
 let orderBuiltinsList = [];
@@ -1770,7 +1769,9 @@ function handleShippingSameAsBilling() {
 function openOrderModal() {
     editingOrderId = null;
     orderBuiltinsList = [];
-    document.getElementById('order-number').value = orderIdCounter;
+    const maxOrderId = orders.length > 0 ? Math.max(...orders.map(o => o.id)) : 2226;
+    document.getElementById('order-number').value = maxOrderId + 1;
+    
     document.getElementById('order-company').value = '';
     document.getElementById('order-name').value = '';
     document.getElementById('order-status').value = 'bid';
@@ -1958,7 +1959,7 @@ function saveOrder() {
             shipInstructions,
             builtins: orderBuiltinsList
         });
-        showToast('✅ Order Updated', `Order #${orderNumber} saved`);
+        showToast('Order Updated', `Order #${orderNumber} saved`);
     } else {
         orders.push({
             id: orderNumber, 
@@ -1992,7 +1993,6 @@ function saveOrder() {
             builtins: orderBuiltinsList, 
             pdfs: []
         });
-        orderIdCounter = Math.max(orderIdCounter, orderNumber + 1);
         showToast('✅ Order Created', `Order #${orderNumber} created`);
     }
     

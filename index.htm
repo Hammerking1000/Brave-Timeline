@@ -547,6 +547,16 @@ tbody tr:last-child td { border-bottom: none; }
                 </div>
                 <button class="btn btn-primary" style="margin-top:8px;">Save Settings</button>
             </div>
+            <!-- tax controller settings -->
+            <div class="card" style="padding:24px;">
+                <div style="font-size:16px;font-weight:700;color:white;margin-bottom:16px;padding-bottom:10px;border-bottom:2px solid #f0f0f0;">Tax Settings</div>
+                <div class="form-group">
+                    <label class="form-label">Sales Tax Rate (%)</label>
+                    <input type="number" class="form-input" id="tax-rate-input" placeholder="e.g., 6.5" step="0.01" min="0" max="100" value="6.0">
+                    <p style="font-size:12px;color:#aaa;margin-top:6px;">Enter the tax percentage (e.g., 6.5 for 6.5%)</p>
+                </div>
+                <button class="btn btn-primary" style="margin-top:8px;" onclick="saveTaxRate()">Save Tax Rate</button>
+            </div>
         </div>
     </div>
 </div>
@@ -618,8 +628,7 @@ tbody tr:last-child td { border-bottom: none; }
 <div class="card" style="padding:24px;margin-bottom:20px;">
     <div style="font-size:16px;font-weight:700;color:white;margin-bottom:16px;padding-bottom:10px;border-bottom:2px solid #f0f0f0;">Summary</div>
     <div><div style="font-size:11px;color:#aaa;text-transform:uppercase;font-weight:600;letter-spacing:0.5px;margin-bottom:5px;">Total Built-ins</div><div style="font-size:15px;color:white;font-weight:500;" id="di-count">–</div></div>
-</div>
-        
+</div>   
         <div class="card" style="padding:24px;">
             <div style="font-size:16px;font-weight:700;color:white;margin-bottom:18px;padding-bottom:12px;border-bottom:2px solid #f0f0f0;">Built-ins Breakdown</div>
             <table>
@@ -633,15 +642,25 @@ tbody tr:last-child td { border-bottom: none; }
                         <th class="num-right">Total</th>
                     </tr>
                 </thead>
-                <tbody id="detail-builtins-tbody"></tbody>
-                <tfoot>
-                    <tr style="background:#adadad;">
-                        <td colspan="5" style="text-align:right;color:white;font-weight:700;padding:14px;">ORDER TOTAL</td>
-                        <td class="num-right" style="font-weight:700;color:white;" id="detail-total">$0.00</td>
-                    </tr>
-                </tfoot>
-            </table>
-        </div>
+                    <tbody id="detail-builtins-tbody"></tbody>
+                        <tfoot>
+                            <tr style="background:#2a2a2a;">
+                                <td colspan="5" style="text-align:right;color:#d0d0d0;font-weight:600;padding:14px;">SUBTOTAL</td>
+                                <td class="num-right" style="font-weight:600;color:#d0d0d0;" id="detail-subtotal">$0.00</td>
+                            </tr>
+                            <tr style="background:#2a2a2a;">
+                                <td colspan="5" style="text-align:right;color:#d0d0d0;font-weight:600;padding:14px;">
+                                    TAX (<span id="detail-tax-rate">6.0</span>%)
+                                </td>
+                                <td class="num-right" style="font-weight:600;color:#d0d0d0;" id="detail-tax">$0.00</td>
+                            </tr>
+                            <tr style="background:#0090ff;">
+                                <td colspan="5" style="text-align:right;color:white;font-weight:700;padding:14px;">ORDER TOTAL</td>
+                                <td class="num-right" style="font-weight:700;color:white;" id="detail-total">$0.00</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
         
         <div class="card" style="padding:24px;">
             <div style="font-size:16px;font-weight:700;color:white;margin-bottom:18px;padding-bottom:12px;border-bottom:2px solid #f0f0f0;">Documents</div>
@@ -1148,10 +1167,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-// ═══════════════════════════════════════════════════════════════
 // FIREBASE SYNC FUNCTIONS
-// ═══════════════════════════════════════════════════════════════
-
 function saveToFirebase(path, data) {
     if (!firebaseInitialized) return Promise.resolve();
     return db.ref(path).set(data);
@@ -1169,23 +1185,24 @@ function listenToFirebase(path, callback) {
     });
 }
 
-// Save orders to Firebase
+// Saves orders to Firebase
 function syncOrders() {
     saveToFirebase('orders', orders).catch(err => console.error('Error saving orders:', err));
 }
 
-// Save pricing matrix to Firebase
+// Saves pricing matrix
 function syncPricingMatrix() {
     saveToFirebase('pricingMatrix', pricingMatrix).catch(err => console.error('Error saving pricing matrix:', err));
 }
 
-// Save notification settings
+// Saves notifications and tax rates
 function syncNotificationSettings() {
     const settings = {
         emails: Array.from(document.querySelectorAll('#email-tags span')).map(span => 
             span.textContent.replace('×', '').trim()
         ),
-        transitions: {}
+        transitions: {},
+        taxRate: taxRate
     };
     
     document.querySelectorAll('[data-transition]').forEach(toggle => {
@@ -1196,15 +1213,40 @@ function syncNotificationSettings() {
     saveToFirebase('settings', settings).catch(err => console.error('Error saving settings:', err));
 }
 
-// Load all data from Firebase on startup
+// Saves tax rate
+function saveTaxRate() {
+    const newRate = parseFloat(document.getElementById('tax-rate-input').value);
+    
+    if (isNaN(newRate) || newRate < 0 || newRate > 100) {
+        alert('Please enter a valid tax rate between 0 and 100');
+        return;
+    }
+    
+    taxRate = newRate;
+    saveToFirebase('settings/taxRate', taxRate)
+        .then(() => {
+            showToast('✅ Tax Rate Saved', `Tax rate set to ${taxRate.toFixed(2)}%`);
+            // Refresh current order detail
+            if (currentOrderId) {
+                const o = getOrder(currentOrderId);
+                if (o) renderDetailBuiltins(o);
+            }
+        })
+        .catch(err => {
+            console.error('Error saving tax rate:', err);
+            showToast('❌ Error', 'Failed to save tax rate');
+        });
+}
+
+// Load all data from Firebase when opening up
 async function loadFromFirebaseOnStartup() {
     if (!firebaseInitialized) {
-        console.log('⚠️ Firebase not initialized, using local data');
+        console.log('Firebase not initialized, using local data');
         return;
     }
     
     try {
-        // Load orders
+        // Loads orders
         const loadedOrders = await loadFromFirebase('orders');
         if (loadedOrders) {
             orders = loadedOrders;
@@ -1230,7 +1272,12 @@ async function loadFromFirebaseOnStartup() {
                     </span>`
                 ).join('');
             }
-            
+          const loadedTaxRate = await loadFromFirebase('settings/taxRate');
+if (loadedTaxRate !== null && loadedTaxRate !== undefined) {
+    taxRate = loadedTaxRate;
+    document.getElementById('tax-rate-input').value = taxRate;
+    console.log('Loaded tax rate:', taxRate);
+}  
             // Restore toggle states
             if (loadedSettings.transitions) {
                 Object.entries(loadedSettings.transitions).forEach(([transition, isOn]) => {
@@ -1242,7 +1289,7 @@ async function loadFromFirebaseOnStartup() {
                 });
             }
             
-            console.log('✅ Loaded settings from Firebase');
+            console.log('Loaded settings from Firebase');
         }
         
         // Render UI with loaded data
@@ -1303,6 +1350,7 @@ let orders = [
     {id:2225,company:'Evergreene Companies',name:'EVG FLP2 0005',ship:'04/12/26',status:'bid',builtins:[{cabinetName:'B-O1A',width:15,depth:'24',price:359.1,qty:2},{cabinetName:'B-2WF',width:18,depth:'18',price:803,qty:1}],pdfs:[]},
     {id:2224,company:'Evergreene Companies',name:'EVG MAN4 0068',ship:'04/12/26',status:'bid',builtins:[{cabinetName:'B-O1A',width:25,depth:'24',price:435,qty:3}],pdfs:[]},
 ];
+let taxRate = 6.0;
 let orderIdCounter = 2226;
 let currentOrderId = null;
 let editingOrderId = null;
@@ -1481,8 +1529,6 @@ function openOrder(id) {
     document.getElementById('di-doors').textContent = o.doors || '–';
     document.getElementById('di-drawer-fronts').textContent = o.drawerFronts || '–';
 
-// Add this after your existing field population (around line where you set di-drawer-fronts):
-
 // Format and display billing address
 if (o.billName || o.billAddress) {
     const billingLines = [];
@@ -1513,7 +1559,7 @@ if (o.shipSameAsBilling) {
     document.getElementById('di-shipping').textContent = '–';
 }
 
-// Display shipping instructions if present
+// Display shipping instructions
 if (o.shipInstructions) {
     document.getElementById('di-shipping-instructions-wrapper').style.display = 'block';
     document.getElementById('di-shipping-instructions').textContent = o.shipInstructions;
@@ -1579,7 +1625,7 @@ function sendEmailNotification(orderNumber, orderName, oldStatus, newStatus) {
     ).filter(email => email.includes('@'));
     
     if (recipients.length === 0) {
-        showToast('⚠️ No Recipients', 'No email addresses configured');
+        showToast('No Recipients', 'No email addresses configured');
         return;
     }
     
@@ -1613,7 +1659,6 @@ function sendEmailNotification(orderNumber, orderName, oldStatus, newStatus) {
 }
 
 function shouldSendNotification(oldStatus, newStatus) {
-    // Map of transitions to toggle data attributes
     const transitions = {
         'bid-ordered': { from: 'bid', to: 'ordered' },
         'ordered-verified': { from: 'ordered', to: 'verified' },
@@ -1630,7 +1675,7 @@ function shouldSendNotification(oldStatus, newStatus) {
         
         // Check if this transition matches
         if (rule.from) {
-            // Specific transition (e.g., bid → ordered)
+            // Specific transition (example: bid → ordered)
             if (oldStatus === rule.from && newStatus === rule.to) return true;
         } else {
             // Any → specific status
@@ -1654,8 +1699,15 @@ function renderDetailBuiltins(o) {
             <td class="num-right">${fmt(total)}</td>
         </tr>`;
     }).join('');
-    const orderTotal = calculateOrderTotal(o.builtins);
-    document.getElementById('detail-total').textContent = fmt(orderTotal);
+    
+    const subtotal = calculateOrderTotal(o.builtins);
+    const tax = subtotal * (taxRate / 100);
+    const total = subtotal + tax;
+    
+    document.getElementById('detail-subtotal').textContent = fmt(subtotal);
+    document.getElementById('detail-tax-rate').textContent = taxRate.toFixed(2);
+    document.getElementById('detail-tax').textContent = fmt(tax);
+    document.getElementById('detail-total').textContent = fmt(total);
 }
 
 function backToOrders() {
@@ -1672,7 +1724,7 @@ function deleteCurrentOrder() {
     if (!confirm(`Delete Order #${currentOrderId}?`)) return;
     orders = orders.filter(o => o.id !== currentOrderId);
     renderOrders();
-    syncOrders(); // Sync to Firebase
+    syncOrders();
     backToOrders();
     showToast('Order Deleted', `Order #${currentOrderId} removed`);
 }
@@ -1719,17 +1771,14 @@ function handleShippingSameAsBilling() {
     const shippingFields = document.getElementById('shipping-address-fields');
     
     if (checkbox.checked) {
-        // Hide shipping address fields and copy billing info
         shippingFields.style.display = 'none';
         
-        // Copy billing info to shipping (silently in background)
         document.getElementById('order-ship-name').value = document.getElementById('order-bill-name').value;
         document.getElementById('order-ship-address').value = document.getElementById('order-bill-address').value;
         document.getElementById('order-ship-city').value = document.getElementById('order-bill-city').value;
         document.getElementById('order-ship-state').value = document.getElementById('order-bill-state').value;
         document.getElementById('order-ship-zip').value = document.getElementById('order-bill-zip').value;
     } else {
-        // Show shipping address fields
         shippingFields.style.display = 'block';
     }
 }
@@ -1814,7 +1863,7 @@ function editOrder(id) {
     document.getElementById('order-ship-state').value = o.shipState || '';
     document.getElementById('order-ship-zip').value = o.shipZip || '';
     document.getElementById('order-ship-instructions').value = o.shipInstructions || '';
-// Show/hide conditional fields
+// Show/hide fields
 handleMaterialsChange();
 handleDrawersChange();
 handleCountertopsChange();
@@ -1913,7 +1962,7 @@ function saveOrder() {
 if (editingOrderId && currentOrderId === editingOrderId) {
     const updatedOrder = getOrder(editingOrderId);
     if (updatedOrder) {
-        // Refresh all detail displays
+        // Refreshes all detail displays
         document.getElementById('di-construction').textContent = updatedOrder.construction || '–';
         document.getElementById('di-materials').textContent = updatedOrder.materials + (updatedOrder.stainSpecies ? ` (${updatedOrder.stainSpecies})` : '') || '–';
         document.getElementById('di-drawers').textContent = updatedOrder.drawers + (updatedOrder.drawerSpecial ? ` - ${updatedOrder.drawerSpecial}` : '') || '–';
@@ -2544,7 +2593,6 @@ function addEmailTag() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Setup email input handler
     const emailInput = document.getElementById('new-email-input');
     if (emailInput) {
         emailInput.addEventListener('keydown', e => {
@@ -2552,14 +2600,17 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
     
-    // Setup toggle sync handlers
+    const taxRateInput = document.getElementById('tax-rate-input');
+    if (taxRateInput) {
+        taxRateInput.value = taxRate;
+    }
+    
     document.querySelectorAll('[data-transition]').forEach(toggle => {
         toggle.addEventListener('click', () => {
-            setTimeout(syncNotificationSettings, 100); // Sync after toggle animation
+            setTimeout(syncNotificationSettings, 100);
         });
     });
     
-    // Load data from Firebase and setup real-time sync
     loadFromFirebaseOnStartup().then(() => {
         setupRealtimeListeners();
     });

@@ -1060,8 +1060,6 @@ tbody tr:last-child td { border-bottom: none; }
 // ═══════════════════════════════════════════════════════════════
 // FIREBASE CONFIGURATION
 // ═══════════════════════════════════════════════════════════════
-// TODO: Replace this with your Firebase config from Firebase Console
-// Go to: Firebase Console → Project Settings → General → Your apps → Web app
 const firebaseConfig = {
   apiKey: "AIzaSyCTpfKPoMnylDHmDHzkcNFjsol1ryn893E",
   authDomain: "brave-timeline.firebaseapp.com",
@@ -1130,13 +1128,6 @@ function handleLogin() {
     
     errorDiv.classList.remove('show');
     
-    // Check if auth is initialized
-    if (!auth) {
-        errorDiv.textContent = 'Authentication system not ready. Please refresh the page.';
-        errorDiv.classList.add('show');
-        return;
-    }
-    
     auth.signInWithEmailAndPassword(email, password)
         .then(() => {
             console.log('✅ Signed in successfully');
@@ -1155,7 +1146,7 @@ function handleLogin() {
             errorDiv.classList.add('show');
         });
 }
-    
+
 function handleLogout() {
     if (confirm('Sign out?')) {
         auth.signOut().then(() => {
@@ -1163,16 +1154,6 @@ function handleLogout() {
         });
     }
 }
-
-// Allow Enter key to submit login
-document.addEventListener('DOMContentLoaded', () => {
-    const passwordInput = document.getElementById('login-password');
-    if (passwordInput) {
-        passwordInput.addEventListener('keydown', e => {
-            if (e.key === 'Enter') handleLogin();
-        });
-    }
-});
 
 // FIREBASE SYNC FUNCTIONS
 function saveToFirebase(path, data) {
@@ -1279,12 +1260,15 @@ async function loadFromFirebaseOnStartup() {
                     </span>`
                 ).join('');
             }
-          const loadedTaxRate = await loadFromFirebase('settings/taxRate');
-if (loadedTaxRate !== null && loadedTaxRate !== undefined) {
-    taxRate = loadedTaxRate;
-    document.getElementById('tax-rate-input').value = taxRate;
-    console.log('Loaded tax rate:', taxRate);
-}  
+          
+            // Load tax rate
+            const loadedTaxRate = await loadFromFirebase('settings/taxRate');
+            if (loadedTaxRate !== null && loadedTaxRate !== undefined) {
+                taxRate = loadedTaxRate;
+                document.getElementById('tax-rate-input').value = taxRate;
+                console.log('✅ Loaded tax rate:', taxRate);
+            }
+            
             // Restore toggle states
             if (loadedSettings.transitions) {
                 Object.entries(loadedSettings.transitions).forEach(([transition, isOn]) => {
@@ -1296,7 +1280,7 @@ if (loadedTaxRate !== null && loadedTaxRate !== undefined) {
                 });
             }
             
-            console.log('Loaded settings from Firebase');
+            console.log('✅ Loaded settings from Firebase');
         }
         
         // Render UI with loaded data
@@ -1401,6 +1385,7 @@ function findPrice(cabinetName, width, depth) {
 }
 
 function calculateOrderTotal(builtinsList) {
+    if (!builtinsList) return 0;
     return builtinsList.reduce((sum, item) => sum + (item.price * item.qty), 0);
 }
 
@@ -1431,28 +1416,17 @@ function openAdminAccess() {
 
 function checkAdminPassword() {
     const password = document.getElementById('admin-password-input').value;
-    const ADMIN_PASSWORD = '1234'; // Change this to your desired password
+    const ADMIN_PASSWORD = '1234';
     
     if (password === ADMIN_PASSWORD) {
         isAdminAuthenticated = true;
         closeModal('modal-admin-password');
-        // This shows settings page after successful authentication
         showPage('settings', null);
         showToast('✅ Admin Access Granted', 'You can now access settings and pricing matrix');
     } else {
         document.getElementById('admin-password-error').style.display = 'block';
     }
 }
-
-// Allow Enter key on admin password (can also just continue to use the button, of course)
-document.addEventListener('DOMContentLoaded', () => {
-    const adminPwInput = document.getElementById('admin-password-input');
-    if (adminPwInput) {
-        adminPwInput.addEventListener('keydown', e => {
-            if (e.key === 'Enter') checkAdminPassword();
-        });
-    }
-});
 
 // ORDERS
 function renderOrders() {
@@ -1519,6 +1493,9 @@ function openOrder(id) {
     const o = getOrder(id);
     if (!o) return;
     
+    // Ensure builtins exists
+    if (!o.builtins) o.builtins = [];
+    
     document.getElementById('detail-title').textContent = `Order #${o.id} – ${o.name}`;
     document.getElementById('detail-subtitle').textContent = `${o.company} · Ship: ${o.ship}`;
     document.getElementById('di-order').textContent = '#' + o.id;
@@ -1536,43 +1513,43 @@ function openOrder(id) {
     document.getElementById('di-doors').textContent = o.doors || '–';
     document.getElementById('di-drawer-fronts').textContent = o.drawerFronts || '–';
 
-// Format and display billing address
-if (o.billName || o.billAddress) {
-    const billingLines = [];
-    if (o.billName) billingLines.push(o.billName);
-    if (o.billAddress) billingLines.push(o.billAddress);
-    if (o.billCity || o.billState || o.billZip) {
-        const cityStateZip = [o.billCity, o.billState, o.billZip].filter(Boolean).join(', ');
-        if (cityStateZip) billingLines.push(cityStateZip);
+    // Format and display billing address
+    if (o.billName || o.billAddress) {
+        const billingLines = [];
+        if (o.billName) billingLines.push(o.billName);
+        if (o.billAddress) billingLines.push(o.billAddress);
+        if (o.billCity || o.billState || o.billZip) {
+            const cityStateZip = [o.billCity, o.billState, o.billZip].filter(Boolean).join(', ');
+            if (cityStateZip) billingLines.push(cityStateZip);
+        }
+        document.getElementById('di-billing').innerHTML = billingLines.join('<br>');
+    } else {
+        document.getElementById('di-billing').textContent = '–';
     }
-    document.getElementById('di-billing').innerHTML = billingLines.join('<br>');
-} else {
-    document.getElementById('di-billing').textContent = '–';
-}
 
-// Format and display shipping address
-if (o.shipSameAsBilling) {
-    document.getElementById('di-shipping').innerHTML = '<em style="color:#0090ff;">Same as billing</em>';
-} else if (o.shipName || o.shipAddress) {
-    const shippingLines = [];
-    if (o.shipName) shippingLines.push(o.shipName);
-    if (o.shipAddress) shippingLines.push(o.shipAddress);
-    if (o.shipCity || o.shipState || o.shipZip) {
-        const cityStateZip = [o.shipCity, o.shipState, o.shipZip].filter(Boolean).join(', ');
-        if (cityStateZip) shippingLines.push(cityStateZip);
+    // Format and display shipping address
+    if (o.shipSameAsBilling) {
+        document.getElementById('di-shipping').innerHTML = '<em style="color:#0090ff;">Same as billing</em>';
+    } else if (o.shipName || o.shipAddress) {
+        const shippingLines = [];
+        if (o.shipName) shippingLines.push(o.shipName);
+        if (o.shipAddress) shippingLines.push(o.shipAddress);
+        if (o.shipCity || o.shipState || o.shipZip) {
+            const cityStateZip = [o.shipCity, o.shipState, o.shipZip].filter(Boolean).join(', ');
+            if (cityStateZip) shippingLines.push(cityStateZip);
+        }
+        document.getElementById('di-shipping').innerHTML = shippingLines.join('<br>');
+    } else {
+        document.getElementById('di-shipping').textContent = '–';
     }
-    document.getElementById('di-shipping').innerHTML = shippingLines.join('<br>');
-} else {
-    document.getElementById('di-shipping').textContent = '–';
-}
 
-// Display shipping instructions
-if (o.shipInstructions) {
-    document.getElementById('di-shipping-instructions-wrapper').style.display = 'block';
-    document.getElementById('di-shipping-instructions').textContent = o.shipInstructions;
-} else {
-    document.getElementById('di-shipping-instructions-wrapper').style.display = 'none';
-}
+    // Display shipping instructions
+    if (o.shipInstructions) {
+        document.getElementById('di-shipping-instructions-wrapper').style.display = 'block';
+        document.getElementById('di-shipping-instructions').textContent = o.shipInstructions;
+    } else {
+        document.getElementById('di-shipping-instructions-wrapper').style.display = 'none';
+    }
     
     renderDetailStatus(o);
     renderDetailBuiltins(o);
@@ -1654,13 +1631,13 @@ function sendEmailNotification(orderNumber, orderName, oldStatus, newStatus) {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            showToast('Email Sent', `Notification sent to ${recipients.length} recipient(s)`);
+            showToast('✅ Email Sent', `Notification sent to ${recipients.length} recipient(s)`);
         } else {
-            showToast('Email Failed', data.error || 'Unknown error');
+            showToast('❌ Email Failed', data.error || 'Unknown error');
         }
     })
     .catch(error => {
-        showToast('Email Failed', 'Could not connect to server');
+        showToast('❌ Email Failed', 'Could not connect to server');
         console.error('Email error:', error);
     });
 }
@@ -1675,17 +1652,13 @@ function shouldSendNotification(oldStatus, newStatus) {
         'any-shipped': { to: 'shipped' }
     };
     
-    // Check each transition rule
     for (const [toggleName, rule] of Object.entries(transitions)) {
         const toggle = document.querySelector(`[data-transition="${toggleName}"]`);
         if (!toggle || !toggle.classList.contains('on')) continue;
         
-        // Check if this transition matches
         if (rule.from) {
-            // Specific transition (example: bid → ordered)
             if (oldStatus === rule.from && newStatus === rule.to) return true;
         } else {
-            // Any → specific status
             if (newStatus === rule.to) return true;
         }
     }
@@ -1696,7 +1669,7 @@ function shouldSendNotification(oldStatus, newStatus) {
 function renderDetailBuiltins(o) {
     const tbody = document.getElementById('detail-builtins-tbody');
     
-    // Safety check - ensure builtins exists
+    // Safety check
     if (!o.builtins) o.builtins = [];
     
     tbody.innerHTML = o.builtins.map(bi => {
@@ -1711,18 +1684,16 @@ function renderDetailBuiltins(o) {
         </tr>`;
     }).join('');
     
-    // Calculate subtotal, tax, and total
     const subtotal = calculateOrderTotal(o.builtins);
     const tax = subtotal * (taxRate / 100);
     const total = subtotal + tax;
     
-    // Update display
     document.getElementById('detail-subtotal').textContent = fmt(subtotal);
     document.getElementById('detail-tax-rate').textContent = taxRate.toFixed(2);
     document.getElementById('detail-tax').textContent = fmt(tax);
     document.getElementById('detail-total').textContent = fmt(total);
 }
-    
+
 function backToOrders() {
     currentOrderId = null;
     showPage('orders', document.querySelectorAll('.nav-tab')[0]);
@@ -1739,10 +1710,10 @@ function deleteCurrentOrder() {
     renderOrders();
     syncOrders();
     backToOrders();
-    showToast('Order Deleted', `Order #${currentOrderId} removed`);
+    showToast('🗑 Order Deleted', `Order #${currentOrderId} removed`);
 }
 
-    function handleMaterialsChange() {
+function handleMaterialsChange() {
     const materials = document.getElementById('order-materials').value;
     const stainGroup = document.getElementById('stain-species-group');
     
@@ -1778,7 +1749,6 @@ function handleCountertopsChange() {
     }
 }
 
-// Handle "Same as Billing" checkbox
 function handleShippingSameAsBilling() {
     const checkbox = document.getElementById('order-ship-same');
     const shippingFields = document.getElementById('shipping-address-fields');
@@ -1842,11 +1812,12 @@ function openOrderModal() {
     renderOrderBuiltinsList();
     openModal('modal-order');
 }
+
 function editOrder(id) {
     const o = getOrder(id);
     if (!o) return;
     editingOrderId = id;
-    orderBuiltinsList = JSON.parse(JSON.stringify(o.builtins));
+    orderBuiltinsList = JSON.parse(JSON.stringify(o.builtins || []));
     document.getElementById('order-number').value = o.id;
     document.getElementById('order-company').value = o.company;
     document.getElementById('order-name').value = o.name;
@@ -1876,10 +1847,11 @@ function editOrder(id) {
     document.getElementById('order-ship-state').value = o.shipState || '';
     document.getElementById('order-ship-zip').value = o.shipZip || '';
     document.getElementById('order-ship-instructions').value = o.shipInstructions || '';
-// Show/hide fields
-handleMaterialsChange();
-handleDrawersChange();
-handleCountertopsChange();
+    
+    handleMaterialsChange();
+    handleDrawersChange();
+    handleCountertopsChange();
+    
     renderOrderBuiltinsList();
     openModal('modal-order');
 }
@@ -1918,8 +1890,8 @@ function removeBuiltinFromOrder(idx) {
 function saveOrder() {
     // Ensure orderBuiltinsList is always an array
     if (!orderBuiltinsList) orderBuiltinsList = [];
-    const num = parseInt(document.getElementById('order-number').value);
-    const num = parseInt(document.getElementById('order-number').value);
+    
+    const orderNumber = parseInt(document.getElementById('order-number').value);
     const company = document.getElementById('order-company').value.trim();
     const name = document.getElementById('order-name').value.trim();
     const status = document.getElementById('order-status').value;
@@ -1948,50 +1920,101 @@ function saveOrder() {
     const shipZip = document.getElementById('order-ship-zip').value.trim();
     const shipInstructions = document.getElementById('order-ship-instructions').value.trim();
     
-    if (!num || !company || !name) {
+    if (!orderNumber || !company || !name) {
         alert('Please fill in all required fields');
         return;
     }
     
     if (editingOrderId) {
         const o = getOrder(editingOrderId);
-        Object.assign(o, {id:num, company, name, status, ship, construction, materials, stainSpecies, drawers, drawerSpecial, 
-        hardware, countertops, countertopMaterial, installation, doors, drawerFronts,
-        billName, billAddress, billCity, billState, billZip,
-        shipSameAsBilling, shipName, shipAddress, shipCity, shipState, shipZip, shipInstructions,
-        builtins:orderBuiltinsList});
-        showToast('Order Updated', `Order #${num} saved`);
+        Object.assign(o, {
+            id: orderNumber, 
+            company, 
+            name, 
+            status, 
+            ship, 
+            construction, 
+            materials, 
+            stainSpecies, 
+            drawers, 
+            drawerSpecial, 
+            hardware, 
+            countertops, 
+            countertopMaterial, 
+            installation, 
+            doors, 
+            drawerFronts,
+            billName, 
+            billAddress, 
+            billCity, 
+            billState, 
+            billZip,
+            shipSameAsBilling, 
+            shipName, 
+            shipAddress, 
+            shipCity, 
+            shipState, 
+            shipZip, 
+            shipInstructions,
+            builtins: orderBuiltinsList
+        });
+        showToast('✅ Order Updated', `Order #${orderNumber} saved`);
     } else {
-        orders.push({id:num, company, name, status, ship, construction, materials, stainSpecies, drawers, drawerSpecial, 
-        hardware, countertops, countertopMaterial, installation, doors, drawerFronts,
-        billName, billAddress, billCity, billState, billZip,
-        shipSameAsBilling, shipName, shipAddress, shipCity, shipState, shipZip, shipInstructions,
-        builtins:orderBuiltinsList, pdfs:[]});
-        orderIdCounter = Math.max(orderIdCounter, num + 1);
-        showToast('Order Created', `Order #${num} created`);
+        orders.push({
+            id: orderNumber, 
+            company, 
+            name, 
+            status, 
+            ship, 
+            construction, 
+            materials, 
+            stainSpecies, 
+            drawers, 
+            drawerSpecial, 
+            hardware, 
+            countertops, 
+            countertopMaterial, 
+            installation, 
+            doors, 
+            drawerFronts,
+            billName, 
+            billAddress, 
+            billCity, 
+            billState, 
+            billZip,
+            shipSameAsBilling, 
+            shipName, 
+            shipAddress, 
+            shipCity, 
+            shipState, 
+            shipZip, 
+            shipInstructions,
+            builtins: orderBuiltinsList, 
+            pdfs: []
+        });
+        orderIdCounter = Math.max(orderIdCounter, orderNumber + 1);
+        showToast('✅ Order Created', `Order #${orderNumber} created`);
     }
     
     renderOrders();
-    syncOrders(); // Sync to Firebase
+    syncOrders();
    
-    // If editing an existing order and currently viewing its detail page, refresh the detail view
-if (editingOrderId && currentOrderId === editingOrderId) {
-    const updatedOrder = getOrder(editingOrderId);
-    if (updatedOrder) {
-        // Refreshes all detail displays
-        document.getElementById('di-construction').textContent = updatedOrder.construction || '–';
-        document.getElementById('di-materials').textContent = updatedOrder.materials + (updatedOrder.stainSpecies ? ` (${updatedOrder.stainSpecies})` : '') || '–';
-        document.getElementById('di-drawers').textContent = updatedOrder.drawers + (updatedOrder.drawerSpecial ? ` - ${updatedOrder.drawerSpecial}` : '') || '–';
-        document.getElementById('di-hardware').textContent = updatedOrder.hardware || '–';
-        document.getElementById('di-countertops').textContent = updatedOrder.countertops === 'Yes' ? `Yes - ${updatedOrder.countertopMaterial || ''}` : 'No';
-        document.getElementById('di-installation').textContent = updatedOrder.installation || '–';
-        document.getElementById('di-doors').textContent = updatedOrder.doors || '–';
-        document.getElementById('di-drawer-fronts').textContent = updatedOrder.drawerFronts || '–';
-        renderDetailBuiltins(updatedOrder);
+    if (editingOrderId && currentOrderId === editingOrderId) {
+        const updatedOrder = getOrder(editingOrderId);
+        if (updatedOrder) {
+            document.getElementById('di-construction').textContent = updatedOrder.construction || '–';
+            document.getElementById('di-materials').textContent = updatedOrder.materials + (updatedOrder.stainSpecies ? ` (${updatedOrder.stainSpecies})` : '') || '–';
+            document.getElementById('di-drawers').textContent = updatedOrder.drawers + (updatedOrder.drawerSpecial ? ` - ${updatedOrder.drawerSpecial}` : '') || '–';
+            document.getElementById('di-hardware').textContent = updatedOrder.hardware || '–';
+            document.getElementById('di-countertops').textContent = updatedOrder.countertops === 'Yes' ? `Yes - ${updatedOrder.countertopMaterial || ''}` : 'No';
+            document.getElementById('di-installation').textContent = updatedOrder.installation || '–';
+            document.getElementById('di-doors').textContent = updatedOrder.doors || '–';
+            document.getElementById('di-drawer-fronts').textContent = updatedOrder.drawerFronts || '–';
+            renderDetailBuiltins(updatedOrder);
+        }
     }
-}
 
-closeModal('modal-order');
+    closeModal('modal-order');
 }
 
 // BUILTIN SELECTOR
@@ -2007,7 +2030,6 @@ function closeBuiltinSelector() {
 function renderBuiltinGrid() {
     const grid = document.getElementById('builtin-grid');
     
-    // Group cabinets by category
     const grouped = {};
     pricingMatrix.forEach(c => {
         const cat = c.category || 'Uncategorized';
@@ -2015,10 +2037,8 @@ function renderBuiltinGrid() {
         grouped[cat].push(c);
     });
     
-    // Sort categories alphabetically
     const sortedCategories = Object.keys(grouped).sort();
     
-    // Render with category dividers
     grid.innerHTML = sortedCategories.map(category => {
         const cabinets = grouped[category];
         const cabinetCards = cabinets.map(c => `
@@ -2048,40 +2068,6 @@ function openDimensionsModal(cabinetName) {
     document.getElementById('dim-range-hint').textContent = 'Enter the exact width';
     openModal('modal-dimensions');
 }
-
-// Live price calculation as user types
-document.addEventListener('DOMContentLoaded', () => {
-    const widthInput = document.getElementById('dim-width');
-    const depthSelect = document.getElementById('dim-depth');
-    
-    function updateLivePrice() {
-        if (!selectedCabinetForDim) return;
-        const width = parseFloat(widthInput.value);
-        const depth = depthSelect.value;
-        
-        if (width && width > 0) {
-            const price = findPrice(selectedCabinetForDim, width, depth);
-            document.getElementById('dim-price').textContent = fmt(price);
-            
-            const cabinet = getCabinet(selectedCabinetForDim);
-            if (cabinet) {
-                for (const range of cabinet.ranges) {
-                    if (width >= range.minWidth && width <= range.maxWidth) {
-                        document.getElementById('dim-range-hint').textContent = `Falls in range: ${range.label}`;
-                        return;
-                    }
-                }
-                document.getElementById('dim-range-hint').textContent = '⚠️ Width outside available ranges';
-            }
-        } else {
-            document.getElementById('dim-price').textContent = '$0.00';
-            document.getElementById('dim-range-hint').textContent = 'Enter the exact width';
-        }
-    }
-    
-    widthInput?.addEventListener('input', updateLivePrice);
-    depthSelect?.addEventListener('change', updateLivePrice);
-});
 
 function confirmDimensions() {
     const width = parseFloat(document.getElementById('dim-width').value);
@@ -2139,7 +2125,7 @@ function updatePrice(cabinetName, rangeIdx, depth, value) {
         const price = parseFloat(value);
         if (!isNaN(price) && price >= 0) {
             cabinet.ranges[rangeIdx].prices[depth] = price;
-            syncPricingMatrix(); // Sync to Firebase
+            syncPricingMatrix();
             showToast('✅ Price Updated', `${cabinetName} - ${depth}" depth`);
         }
     }
@@ -2151,7 +2137,6 @@ function addNewCabinet() {
     document.getElementById('cabinet-modal-title').textContent = 'Add Cabinet';
     document.getElementById('cabinet-name').value = '';
     
-    // Populate category dropdown
     populateCategoryDropdown();
     document.getElementById('cabinet-category-select').value = '';
     document.getElementById('cabinet-category-input').style.display = 'none';
@@ -2171,9 +2156,8 @@ function editCabinet(name) {
     rangeRowCount = 0;
     document.getElementById('cabinet-modal-title').textContent = 'Edit Cabinet';
     document.getElementById('cabinet-name').value = cabinet.name;
-    document.getElementById('cabinet-name').disabled = true; // Can't change name
+    document.getElementById('cabinet-name').disabled = true;
     
-    // Populate category dropdown
     populateCategoryDropdown();
     document.getElementById('cabinet-category-select').value = cabinet.category || '';
     document.getElementById('cabinet-category-input').style.display = 'none';
@@ -2190,7 +2174,6 @@ function editCabinet(name) {
 }
 
 function populateCategoryDropdown() {
-    // Get unique categories from existing cabinets
     const categories = [...new Set(pricingMatrix.map(c => c.category).filter(Boolean))].sort();
     
     const select = document.getElementById('cabinet-category-select');
@@ -2253,7 +2236,6 @@ function removeRangeRow(idx) {
 function saveCabinet() {
     const name = document.getElementById('cabinet-name').value.trim();
     
-    // Get category from either dropdown or new input
     const categoryInput = document.getElementById('cabinet-category-input');
     const categorySelect = document.getElementById('cabinet-category-select');
     let category = '';
@@ -2274,7 +2256,6 @@ function saveCabinet() {
         return;
     }
     
-    // Collect ranges
     const ranges = [];
     for (let i = 0; i < rangeRowCount; i++) {
         const labelEl = document.getElementById(`range-label-${i}`);
@@ -2306,21 +2287,19 @@ function saveCabinet() {
     }
     
     if (editingCabinetName) {
-        // Update existing
         const cabinet = getCabinet(editingCabinetName);
         if (cabinet) {
             cabinet.category = category;
             cabinet.ranges = ranges;
-            showToast('Cabinet Updated', name);
+            showToast('✅ Cabinet Updated', name);
         }
     } else {
-        // Add new
         pricingMatrix.push({ name, category, ranges });
-        showToast('Cabinet Added', name);
+        showToast('✅ Cabinet Added', name);
     }
     
     renderMatrix();
-    syncPricingMatrix(); // Sync to Firebase
+    syncPricingMatrix();
     closeModal('modal-cabinet');
     document.getElementById('cabinet-name').disabled = false;
 }
@@ -2329,7 +2308,7 @@ function deleteCabinet(name) {
     if (!confirm(`Delete cabinet "${name}" and all its pricing data?`)) return;
     pricingMatrix = pricingMatrix.filter(c => c.name !== name);
     renderMatrix();
-    syncPricingMatrix(); // Sync to Firebase
+    syncPricingMatrix();
     showToast('🗑 Cabinet Deleted', name);
 }
 
@@ -2372,7 +2351,7 @@ function handlePDFUpload(e) {
         reader.readAsDataURL(file);
     });
     
-    e.target.value = ''; // Reset input
+    e.target.value = '';
 }
 
 function renderPDFList(order) {
@@ -2421,7 +2400,7 @@ async function loadPDF(pdfData) {
         renderPDFPage(currentPDFPage);
     } catch (error) {
         console.error('Error loading PDF:', error);
-        showToast('Error', 'Failed to load PDF');
+        showToast('❌ Error', 'Failed to load PDF');
     }
 }
 
@@ -2436,26 +2415,21 @@ async function renderPDFPage(pageNum) {
     canvas.width = viewport.width;
     canvas.height = viewport.height;
     
-    // Render PDF page
     const renderContext = {
         canvasContext: context,
         viewport: viewport
     };
     await page.render(renderContext).promise;
     
-    // Setup annotation canvas
     annotationCanvas = document.getElementById('pdf-annotation-canvas');
     annotationCtx = annotationCanvas.getContext('2d');
     annotationCanvas.width = viewport.width;
     annotationCanvas.height = viewport.height;
     
-    // Restore annotations for this page
     redrawAnnotations();
     
-    // Update page info
     document.getElementById('pdf-page-info').textContent = `Page ${pageNum} of ${currentPDFDoc.numPages}`;
     
-    // Setup drawing events
     setupAnnotationEvents();
 }
 
@@ -2482,7 +2456,6 @@ function setupAnnotationEvents() {
             annotationCtx.lineTo(x, y);
             annotationCtx.stroke();
             
-            // Save to annotations
             currentPDFAnnotations.push({
                 page: currentPDFPage,
                 tool: 'pen',
@@ -2564,7 +2537,7 @@ function savePDFAnnotations() {
         currentPDFData.annotations = currentPDFAnnotations;
         const o = getOrder(currentOrderId);
         syncOrders();
-        showToast('Annotations Saved', 'PDF annotations saved');
+        showToast('✅ Annotations Saved', 'PDF annotations saved');
     }
 }
 
@@ -2592,7 +2565,7 @@ function deletePDF(pdfIndex) {
     o.pdfs.splice(pdfIndex, 1);
     renderPDFList(o);
     syncOrders();
-    showToast('PDF Deleted', pdfName);
+    showToast('🗑 PDF Deleted', pdfName);
 }
 
 // SETTINGS
@@ -2605,32 +2578,8 @@ function addEmailTag() {
     tag.innerHTML = `${email} <button onclick="this.closest('span').remove();syncNotificationSettings();" style="background:none;border:none;cursor:pointer;color:#1565c0;font-size:16px;line-height:1;">×</button>`;
     document.getElementById('email-tags').appendChild(tag);
     input.value = '';
-    syncNotificationSettings(); // Sync to Firebase
+    syncNotificationSettings();
 }
-
-document.addEventListener('DOMContentLoaded', () => {
-    const emailInput = document.getElementById('new-email-input');
-    if (emailInput) {
-        emailInput.addEventListener('keydown', e => {
-            if (e.key === 'Enter') { e.preventDefault(); addEmailTag(); }
-        });
-    }
-    
-    const taxRateInput = document.getElementById('tax-rate-input');
-    if (taxRateInput) {
-        taxRateInput.value = taxRate;
-    }
-    
-    document.querySelectorAll('[data-transition]').forEach(toggle => {
-        toggle.addEventListener('click', () => {
-            setTimeout(syncNotificationSettings, 100);
-        });
-    });
-    
-    loadFromFirebaseOnStartup().then(() => {
-        setupRealtimeListeners();
-    });
-});
 
 // MODAL
 function openModal(id) { document.getElementById(id).classList.add('open'); }
@@ -2646,9 +2595,73 @@ document.addEventListener('click', () => {
 });
 
 // INIT
-renderOrders();
+document.addEventListener('DOMContentLoaded', () => {
+    const emailInput = document.getElementById('new-email-input');
+    if (emailInput) {
+        emailInput.addEventListener('keydown', e => {
+            if (e.key === 'Enter') { e.preventDefault(); addEmailTag(); }
+        });
+    }
+    
+    const taxRateInput = document.getElementById('tax-rate-input');
+    if (taxRateInput) {
+        taxRateInput.value = taxRate;
+    }
+    
+    const widthInput = document.getElementById('dim-width');
+    const depthSelect = document.getElementById('dim-depth');
+    
+    function updateLivePrice() {
+        if (!selectedCabinetForDim) return;
+        const width = parseFloat(widthInput.value);
+        const depth = depthSelect.value;
+        
+        if (width && width > 0) {
+            const price = findPrice(selectedCabinetForDim, width, depth);
+            document.getElementById('dim-price').textContent = fmt(price);
+            
+            const cabinet = getCabinet(selectedCabinetForDim);
+            if (cabinet) {
+                for (const range of cabinet.ranges) {
+                    if (width >= range.minWidth && width <= range.maxWidth) {
+                        document.getElementById('dim-range-hint').textContent = `Falls in range: ${range.label}`;
+                        return;
+                    }
+                }
+                document.getElementById('dim-range-hint').textContent = '⚠️ Width outside available ranges';
+            }
+        } else {
+            document.getElementById('dim-price').textContent = '$0.00';
+            document.getElementById('dim-range-hint').textContent = 'Enter the exact width';
+        }
+    }
+    
+    widthInput?.addEventListener('input', updateLivePrice);
+    depthSelect?.addEventListener('change', updateLivePrice);
+    
+    const passwordInput = document.getElementById('login-password');
+    if (passwordInput) {
+        passwordInput.addEventListener('keydown', e => {
+            if (e.key === 'Enter') handleLogin();
+        });
+    }
+    
+    const adminPwInput = document.getElementById('admin-password-input');
+    if (adminPwInput) {
+        adminPwInput.addEventListener('keydown', e => {
+            if (e.key === 'Enter') checkAdminPassword();
+        });
+    }
+    
+    document.querySelectorAll('[data-transition]').forEach(toggle => {
+        toggle.addEventListener('click', () => {
+            setTimeout(syncNotificationSettings, 100);
+        });
+    });
+    
+    renderOrders();
+});
 </script>
-
 </div><!-- /app-container -->
 
 </body>

@@ -581,6 +581,28 @@ tbody tr:last-child td { border-bottom: none; }
 
 <div class="card" style="padding:24px;margin-bottom:20px;">
     <div style="font-size:16px;font-weight:700;color:white;margin-bottom:16px;padding-bottom:10px;border-bottom:2px solid #f0f0f0;">Specifications</div>
+<div class="card" style="padding:24px;margin-bottom:20px;">
+    <div style="font-size:16px;font-weight:700;color:white;margin-bottom:16px;padding-bottom:10px;border-bottom:2px solid #f0f0f0;">Billing & Shipping</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:24px;">
+        <!-- Billing  -->
+        <div>
+            <div style="font-size:13px;color:#0090ff;text-transform:uppercase;font-weight:600;letter-spacing:0.5px;margin-bottom:10px;">Billing Address</div>
+            <div style="font-size:14px;color:white;line-height:1.6;" id="di-billing">–</div>
+        </div>
+        
+        <!-- Shipping  -->
+        <div>
+            <div style="font-size:13px;color:#0090ff;text-transform:uppercase;font-weight:600;letter-spacing:0.5px;margin-bottom:10px;">Shipping Address</div>
+            <div style="font-size:14px;color:white;line-height:1.6;" id="di-shipping">–</div>
+        </div>
+    </div>
+    
+    <!-- Shipping Instructions -->
+    <div id="di-shipping-instructions-wrapper" style="display:none;margin-top:20px;padding-top:20px;border-top:1px solid #444;">
+        <div style="font-size:13px;color:#0090ff;text-transform:uppercase;font-weight:600;letter-spacing:0.5px;margin-bottom:8px;">Shipping Instructions</div>
+        <div style="font-size:14px;color:#888;font-style:italic;" id="di-shipping-instructions">–</div>
+    </div>
+</div>
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;">
         <div><div style="font-size:11px;color:#aaa;text-transform:uppercase;font-weight:600;letter-spacing:0.5px;margin-bottom:5px;">Construction</div><div style="font-size:15px;color:white;font-weight:500;" id="di-construction">–</div></div>
         <div><div style="font-size:11px;color:#aaa;text-transform:uppercase;font-weight:600;letter-spacing:0.5px;margin-bottom:5px;">Materials</div><div style="font-size:15px;color:white;font-weight:500;" id="di-materials">–</div></div>
@@ -593,10 +615,10 @@ tbody tr:last-child td { border-bottom: none; }
     </div>
 </div>
 
-<div class="card" style="padding:24px;">
-                <div><div style="font-size:11px;color:#aaa;text-transform:uppercase;font-weight:600;letter-spacing:0.5px;margin-bottom:5px;">Total Built-ins</div><div style="font-size:15px;color:white;font-weight:500;" id="di-count">–</div></div>
-            </div>
-        </div>
+<div class="card" style="padding:24px;margin-bottom:20px;">
+    <div style="font-size:16px;font-weight:700;color:white;margin-bottom:16px;padding-bottom:10px;border-bottom:2px solid #f0f0f0;">Summary</div>
+    <div><div style="font-size:11px;color:#aaa;text-transform:uppercase;font-weight:600;letter-spacing:0.5px;margin-bottom:5px;">Total Built-ins</div><div style="font-size:15px;color:white;font-weight:500;" id="di-count">–</div></div>
+</div>
         
         <div class="card" style="padding:24px;">
             <div style="font-size:16px;font-weight:700;color:white;margin-bottom:18px;padding-bottom:12px;border-bottom:2px solid #f0f0f0;">Built-ins Breakdown</div>
@@ -1458,6 +1480,46 @@ function openOrder(id) {
     document.getElementById('di-installation').textContent = o.installation || '–';
     document.getElementById('di-doors').textContent = o.doors || '–';
     document.getElementById('di-drawer-fronts').textContent = o.drawerFronts || '–';
+
+// Add this after your existing field population (around line where you set di-drawer-fronts):
+
+// Format and display billing address
+if (o.billName || o.billAddress) {
+    const billingLines = [];
+    if (o.billName) billingLines.push(o.billName);
+    if (o.billAddress) billingLines.push(o.billAddress);
+    if (o.billCity || o.billState || o.billZip) {
+        const cityStateZip = [o.billCity, o.billState, o.billZip].filter(Boolean).join(', ');
+        if (cityStateZip) billingLines.push(cityStateZip);
+    }
+    document.getElementById('di-billing').innerHTML = billingLines.join('<br>');
+} else {
+    document.getElementById('di-billing').textContent = '–';
+}
+
+// Format and display shipping address
+if (o.shipSameAsBilling) {
+    document.getElementById('di-shipping').innerHTML = '<em style="color:#0090ff;">Same as billing</em>';
+} else if (o.shipName || o.shipAddress) {
+    const shippingLines = [];
+    if (o.shipName) shippingLines.push(o.shipName);
+    if (o.shipAddress) shippingLines.push(o.shipAddress);
+    if (o.shipCity || o.shipState || o.shipZip) {
+        const cityStateZip = [o.shipCity, o.shipState, o.shipZip].filter(Boolean).join(', ');
+        if (cityStateZip) shippingLines.push(cityStateZip);
+    }
+    document.getElementById('di-shipping').innerHTML = shippingLines.join('<br>');
+} else {
+    document.getElementById('di-shipping').textContent = '–';
+}
+
+// Display shipping instructions if present
+if (o.shipInstructions) {
+    document.getElementById('di-shipping-instructions-wrapper').style.display = 'block';
+    document.getElementById('di-shipping-instructions').textContent = o.shipInstructions;
+} else {
+    document.getElementById('di-shipping-instructions-wrapper').style.display = 'none';
+}
     
     renderDetailStatus(o);
     renderDetailBuiltins(o);
@@ -1650,6 +1712,28 @@ function handleCountertopsChange() {
         document.getElementById('order-countertop-material').value = '';
     }
 }
+
+// Handle "Same as Billing" checkbox
+function handleShippingSameAsBilling() {
+    const checkbox = document.getElementById('order-ship-same');
+    const shippingFields = document.getElementById('shipping-address-fields');
+    
+    if (checkbox.checked) {
+        // Hide shipping address fields and copy billing info
+        shippingFields.style.display = 'none';
+        
+        // Copy billing info to shipping (silently in background)
+        document.getElementById('order-ship-name').value = document.getElementById('order-bill-name').value;
+        document.getElementById('order-ship-address').value = document.getElementById('order-bill-address').value;
+        document.getElementById('order-ship-city').value = document.getElementById('order-bill-city').value;
+        document.getElementById('order-ship-state').value = document.getElementById('order-bill-state').value;
+        document.getElementById('order-ship-zip').value = document.getElementById('order-bill-zip').value;
+    } else {
+        // Show shipping address fields
+        shippingFields.style.display = 'block';
+    }
+}
+
 // ORDER MODAL
 function openOrderModal() {
     editingOrderId = null;
@@ -1660,7 +1744,7 @@ function openOrderModal() {
     document.getElementById('order-status').value = 'bid';
     document.getElementById('order-ship').value = '';
     
-    // Reset new fields
+    // Reset specification fields
     document.getElementById('order-construction').value = '';
     document.getElementById('order-materials').value = '';
     document.getElementById('order-stain-species').value = '';
@@ -1673,14 +1757,29 @@ function openOrderModal() {
     document.getElementById('order-countertop-material').value = '';
     document.getElementById('countertop-material-group').style.display = 'none';
     document.getElementById('order-installation').value = 'None';
-    document.getElementById('order-installation').value = 'None';
     document.getElementById('order-doors').value = '';
     document.getElementById('order-drawer-fronts').value = '';
+    
+    // Reset billing fields
+    document.getElementById('order-bill-name').value = '';
+    document.getElementById('order-bill-address').value = '';
+    document.getElementById('order-bill-city').value = '';
+    document.getElementById('order-bill-state').value = '';
+    document.getElementById('order-bill-zip').value = '';
+    
+    // Reset shipping fields
+    document.getElementById('order-ship-same').checked = false;
+    document.getElementById('shipping-address-fields').style.display = 'block';
+    document.getElementById('order-ship-name').value = '';
+    document.getElementById('order-ship-address').value = '';
+    document.getElementById('order-ship-city').value = '';
+    document.getElementById('order-ship-state').value = '';
+    document.getElementById('order-ship-zip').value = '';
+    document.getElementById('order-ship-instructions').value = '';
     
     renderOrderBuiltinsList();
     openModal('modal-order');
 }
-
 function editOrder(id) {
     const o = getOrder(id);
     if (!o) return;
@@ -1702,7 +1801,19 @@ function editOrder(id) {
     document.getElementById('order-installation').value = o.installation || 'None';
     document.getElementById('order-doors').value = o.doors || '';
     document.getElementById('order-drawer-fronts').value = o.drawerFronts || '';
-
+    document.getElementById('order-bill-name').value = o.billName || '';
+    document.getElementById('order-bill-address').value = o.billAddress || '';
+    document.getElementById('order-bill-city').value = o.billCity || '';
+    document.getElementById('order-bill-state').value = o.billState || '';
+    document.getElementById('order-bill-zip').value = o.billZip || '';
+    document.getElementById('order-ship-same').checked = o.shipSameAsBilling || false;
+    document.getElementById('shipping-address-fields').style.display = o.shipSameAsBilling ? 'none' : 'block';
+    document.getElementById('order-ship-name').value = o.shipName || '';
+    document.getElementById('order-ship-address').value = o.shipAddress || '';
+    document.getElementById('order-ship-city').value = o.shipCity || '';
+    document.getElementById('order-ship-state').value = o.shipState || '';
+    document.getElementById('order-ship-zip').value = o.shipZip || '';
+    document.getElementById('order-ship-instructions').value = o.shipInstructions || '';
 // Show/hide conditional fields
 handleMaterialsChange();
 handleDrawersChange();
@@ -1759,6 +1870,18 @@ function saveOrder() {
     const installation = document.getElementById('order-installation').value;
     const doors = document.getElementById('order-doors').value;
     const drawerFronts = document.getElementById('order-drawer-fronts').value;
+    const billName = document.getElementById('order-bill-name').value.trim();
+    const billAddress = document.getElementById('order-bill-address').value.trim();
+    const billCity = document.getElementById('order-bill-city').value.trim();
+    const billState = document.getElementById('order-bill-state').value.trim();
+    const billZip = document.getElementById('order-bill-zip').value.trim();
+    const shipSameAsBilling = document.getElementById('order-ship-same').checked;
+    const shipName = document.getElementById('order-ship-name').value.trim();
+    const shipAddress = document.getElementById('order-ship-address').value.trim();
+    const shipCity = document.getElementById('order-ship-city').value.trim();
+    const shipState = document.getElementById('order-ship-state').value.trim();
+    const shipZip = document.getElementById('order-ship-zip').value.trim();
+    const shipInstructions = document.getElementById('order-ship-instructions').value.trim();
     
     if (!num || !company || !name) {
         alert('Please fill in all required fields');
@@ -1768,11 +1891,17 @@ function saveOrder() {
     if (editingOrderId) {
         const o = getOrder(editingOrderId);
         Object.assign(o, {id:num, company, name, status, ship, construction, materials, stainSpecies, drawers, drawerSpecial, 
-hardware, countertops, countertopMaterial, installation, doors, drawerFronts, builtins:orderBuiltinsList});
+        hardware, countertops, countertopMaterial, installation, doors, drawerFronts,
+        billName, billAddress, billCity, billState, billZip,
+        shipSameAsBilling, shipName, shipAddress, shipCity, shipState, shipZip, shipInstructions,
+        builtins:orderBuiltinsList});
         showToast('Order Updated', `Order #${num} saved`);
     } else {
         orders.push({id:num, company, name, status, ship, construction, materials, stainSpecies, drawers, drawerSpecial, 
-hardware, countertops, countertopMaterial, installation, doors, drawerFronts, builtins:orderBuiltinsList});
+        hardware, countertops, countertopMaterial, installation, doors, drawerFronts,
+        billName, billAddress, billCity, billState, billZip,
+        shipSameAsBilling, shipName, shipAddress, shipCity, shipState, shipZip, shipInstructions,
+        builtins:orderBuiltinsList, pdfs:[]});
         orderIdCounter = Math.max(orderIdCounter, num + 1);
         showToast('Order Created', `Order #${num} created`);
     }

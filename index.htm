@@ -1130,6 +1130,13 @@ function handleLogin() {
     
     errorDiv.classList.remove('show');
     
+    // Check if auth is initialized
+    if (!auth) {
+        errorDiv.textContent = 'Authentication system not ready. Please refresh the page.';
+        errorDiv.classList.add('show');
+        return;
+    }
+    
     auth.signInWithEmailAndPassword(email, password)
         .then(() => {
             console.log('✅ Signed in successfully');
@@ -1148,7 +1155,7 @@ function handleLogin() {
             errorDiv.classList.add('show');
         });
 }
-
+    
 function handleLogout() {
     if (confirm('Sign out?')) {
         auth.signOut().then(() => {

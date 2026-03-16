@@ -1487,7 +1487,7 @@ function renderOrders() {
     
     tbody.innerHTML = sorted.map(o => {
         const st = STATUSES.find(s => s.key === o.status);
-        const count = o.builtins.reduce((sum, bi) => sum + bi.qty, 0);
+        const count = (o.builtins || []).reduce((sum, bi) => sum + bi.qty, 0);
         return `<tr onclick="openOrder(${o.id})" style="cursor:pointer;">
             <td><span class="order-num-badge">${o.id}</span></td>
             <td>${o.company}</td>
@@ -1518,7 +1518,7 @@ function openOrder(id) {
     document.getElementById('di-company').textContent = o.company;
     document.getElementById('di-name').textContent = o.name;
     document.getElementById('di-ship').textContent = o.ship;
-    const count = o.builtins.reduce((sum, bi) => sum + bi.qty, 0);
+    const count = (o.builtins || []).reduce((sum, bi) => sum + bi.qty, 0);
     document.getElementById('di-count').textContent = count + ' items';
     document.getElementById('di-construction').textContent = o.construction || '–';
     document.getElementById('di-materials').textContent = o.materials + (o.stainSpecies ? ` (${o.stainSpecies})` : '') || '–';
@@ -1688,6 +1688,10 @@ function shouldSendNotification(oldStatus, newStatus) {
 
 function renderDetailBuiltins(o) {
     const tbody = document.getElementById('detail-builtins-tbody');
+    
+    // Safety check - ensure builtins exists
+    if (!o.builtins) o.builtins = [];
+    
     tbody.innerHTML = o.builtins.map(bi => {
         const total = bi.price * bi.qty;
         return `<tr>
@@ -1700,16 +1704,18 @@ function renderDetailBuiltins(o) {
         </tr>`;
     }).join('');
     
+    // Calculate subtotal, tax, and total
     const subtotal = calculateOrderTotal(o.builtins);
     const tax = subtotal * (taxRate / 100);
     const total = subtotal + tax;
     
+    // Update display
     document.getElementById('detail-subtotal').textContent = fmt(subtotal);
     document.getElementById('detail-tax-rate').textContent = taxRate.toFixed(2);
     document.getElementById('detail-tax').textContent = fmt(tax);
     document.getElementById('detail-total').textContent = fmt(total);
 }
-
+    
 function backToOrders() {
     currentOrderId = null;
     showPage('orders', document.querySelectorAll('.nav-tab')[0]);
@@ -1903,6 +1909,9 @@ function removeBuiltinFromOrder(idx) {
 }
 
 function saveOrder() {
+    // Ensure orderBuiltinsList is always an array
+    if (!orderBuiltinsList) orderBuiltinsList = [];
+    const num = parseInt(document.getElementById('order-number').value);
     const num = parseInt(document.getElementById('order-number').value);
     const company = document.getElementById('order-company').value.trim();
     const name = document.getElementById('order-name').value.trim();

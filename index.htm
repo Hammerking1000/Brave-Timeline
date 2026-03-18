@@ -967,10 +967,10 @@ tbody tr:last-child td { border-bottom: none; }
             <button class="modal-close" onclick="closeModal('modal-dimensions')">×</button>
         </div>
         <p style="font-size:14px;color:#666;margin-bottom:20px;" id="dim-cabinet-name"></p>
-        <div class="form-group">
-            <label class="form-label">Width (inches)</label>
-            <input type="number" class="form-input" id="dim-width" placeholder="e.g., 27.5" step="0.125" min="0">
-            <p class="form-hint" style="margin-top:6px;" id="dim-range-hint">Enter the exact width</p>
+       <div class="form-group">
+    <label class="form-label">Width (inches)</label>
+    <input type="text" class="form-input" id="dim-width" placeholder="e.g., 27.5 or 27 1/2" step="0.125" min="0">
+    <p class="form-hint" style="margin-top:6px;font-size:12px;color:#888;" id="dim-range-hint">Enter the exact width (decimals or fractions)</p>
         </div>
         <div class="form-group">
             <label class="form-label">Depth (inches)</label>
@@ -1373,7 +1373,39 @@ if (typeof pdfjsLib !== 'undefined') {
 // UTILS
 function fmt(n) { return '$' + n.toFixed(2); }
 function getOrder(id) { return orders.find(o => o.id === id); }
-function getCabinet(name) { return pricingMatrix.find(c => c.name === name); }
+function getCabinet(name) { return pricingMatrix.find(c => c.name === name); 
+                          // Convert fractions to decimals (e.g., "15 1/2" → 15.5, "3/4" → 0.75)
+function parseFraction(input) {
+    if (!input) return 0;
+    
+    // Convert to string and trim
+    const str = input.toString().trim();
+    
+    // If it's already a valid decimal, return it
+    if (!isNaN(str) && !str.includes('/')) {
+        return parseFloat(str);
+    }
+    
+    // Handle mixed fractions like "15 1/2" or "15-1/2"
+    const mixedMatch = str.match(/^(\d+)[\s-]+(\d+)\/(\d+)$/);
+    if (mixedMatch) {
+        const whole = parseFloat(mixedMatch[1]);
+        const numerator = parseFloat(mixedMatch[2]);
+        const denominator = parseFloat(mixedMatch[3]);
+        return whole + (numerator / denominator);
+    }
+    
+    // Handle simple fractions like "1/2" or "3/4"
+    const fractionMatch = str.match(/^(\d+)\/(\d+)$/);
+    if (fractionMatch) {
+        const numerator = parseFloat(fractionMatch[1]);
+        const denominator = parseFloat(fractionMatch[2]);
+        return numerator / denominator;
+    }
+    
+    // If we can't parse it, return the original as a number
+    return parseFloat(str) || 0;
+}
 
 function findPrice(cabinetName, width, depth) {
     const cabinet = getCabinet(cabinetName);
@@ -1934,12 +1966,11 @@ function renderOrderBuiltinsList() {
                     <div style="display:flex;gap:12px;align-items:center;">
                         <div style="display:flex;align-items:center;gap:4px;">
                             <label style="font-size:11px;color:#888;text-transform:uppercase;">Width:</label>
-                            <input type="number" 
+                           <input type="text" 
                                    value="${bi.width}" 
-                                   step="0.125" 
-                                   min="0"
                                    style="width:70px;padding:4px 6px;border:1px solid #444;border-radius:4px;background:#1a1a1a;color:#d0d0d0;font-size:13px;text-align:right;"
-                                   onchange="updateModalBuiltinDimension(${idx}, 'width', parseFloat(this.value))">
+                                   onblur="this.value = parseFraction(this.value); updateModalBuiltinDimension(${idx}, 'width', parseFraction(this.value))"
+                                   placeholder="e.g., 15 1/2">
                             <span style="color:#888;font-size:12px;">"</span>
                         </div>
                         <div style="display:flex;align-items:center;gap:4px;">
@@ -1955,12 +1986,12 @@ function renderOrderBuiltinsList() {
                         <div style="display:flex;align-items:center;gap:4px;">
                             <label style="font-size:11px;color:#888;text-transform:uppercase;">Qty:</label>
                             <input type="number" 
-                                   class="selected-builtin-qty" 
-                                   value="${bi.qty}" 
-                                   min="1"
-                                   style="width:50px;"
-                                   onchange="updateModalBuiltinDimension(${idx}, 'qty', parseInt(this.value))">
-                        </div>
+                             <input type="text" 
+                               value="${bi.width}" 
+                               style="width:70px;padding:4px 6px;border:1px solid #444;border-radius:4px;background:#1a1a1a;color:#d0d0d0;font-size:13px;text-align:right;"
+                               onblur="this.value = parseFraction(this.value); updateModalBuiltinDimension(${idx}, 'width', parseFraction(this.value))"
+                               placeholder="e.g., 15 1/2">
+                        <span style="color:#888;font-size:12px;">"</span>
                     </div>
                 </div>
                 <span class="selected-builtin-price">${fmt(total)}</span>
@@ -2192,7 +2223,8 @@ function openDimensionsModal(cabinetName) {
 }
 
 function confirmDimensions() {
-    const width = parseFloat(document.getElementById('dim-width').value);
+    const widthInput = document.getElementById('dim-width').value.trim();
+    const width = parseFraction(widthInput);
     const depth = document.getElementById('dim-depth').value;
     
     if (!width || width <= 0) {
@@ -2733,33 +2765,42 @@ document.addEventListener('DOMContentLoaded', () => {
     const widthInput = document.getElementById('dim-width');
     const depthSelect = document.getElementById('dim-depth');
     
-    function updateLivePrice() {
-        if (!selectedCabinetForDim) return;
-        const width = parseFloat(widthInput.value);
-        const depth = depthSelect.value;
-        
-        if (width && width > 0) {
-            const price = findPrice(selectedCabinetForDim, width, depth);
-            document.getElementById('dim-price').textContent = fmt(price);
-            
-            const cabinet = getCabinet(selectedCabinetForDim);
-            if (cabinet) {
-                for (const range of cabinet.ranges) {
-                    if (width >= range.minWidth && width <= range.maxWidth) {
-                        document.getElementById('dim-range-hint').textContent = `Falls in range: ${range.label}`;
-                        return;
-                    }
-                }
-                document.getElementById('dim-range-hint').textContent = 'Width outside available ranges';
-            }
-        } else {
-            document.getElementById('dim-price').textContent = '$0.00';
-            document.getElementById('dim-range-hint').textContent = 'Enter the exact width';
-        }
-    }
+   function updateLivePrice() {
+    if (!selectedCabinetForDim) return;
+    const widthInput = document.getElementById('dim-width');
+    const widthValue = widthInput.value.trim();
+    const width = parseFraction(widthValue);
+    const depth = depthSelect.value;
     
-    widthInput?.addEventListener('input', updateLivePrice);
-    depthSelect?.addEventListener('change', updateLivePrice);
+    if (width && width > 0) {
+        const price = findPrice(selectedCabinetForDim, width, depth);
+        document.getElementById('dim-price').textContent = fmt(price);
+        
+        const cabinet = getCabinet(selectedCabinetForDim);
+        if (cabinet) {
+            for (const range of cabinet.ranges) {
+                if (width >= range.minWidth && width <= range.maxWidth) {
+                    document.getElementById('dim-range-hint').textContent = `Falls in range: ${range.label} (${width}")`;
+                    return;
+                }
+            }
+            document.getElementById('dim-range-hint').textContent = '⚠️ Width outside available ranges';
+        }
+    } else {
+        document.getElementById('dim-price').textContent = '$0.00';
+        document.getElementById('dim-range-hint').textContent = 'Enter the exact width (decimals or fractions)';
+    }
+}
+
+widthInput?.addEventListener('blur', () => {
+    const parsed = parseFraction(widthInput.value);
+    if (parsed > 0) {
+        widthInput.value = parsed;
+    }
+    updateLivePrice();
+});
+widthInput?.addEventListener('input', updateLivePrice);
+depthSelect?.addEventListener('change', updateLivePrice);
     
     const passwordInput = document.getElementById('login-password');
     if (passwordInput) {

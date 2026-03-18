@@ -1675,17 +1675,51 @@ function renderDetailBuiltins(o) {
     // Safety check
     if (!o.builtins) o.builtins = [];
     
-    tbody.innerHTML = o.builtins.map(bi => {
-        const total = bi.price * bi.qty;
-        return `<tr>
-            <td>${bi.cabinetName}</td>
-            <td>${bi.width}"</td>
-            <td>${bi.depth}"</td>
-            <td class="num-right">${bi.qty}</td>
-            <td class="num-right">${fmt(bi.price)}</td>
-            <td class="num-right">${fmt(total)}</td>
-        </tr>`;
-    }).join('');
+  tbody.innerHTML = o.builtins.map((bi, idx) => {
+    const total = bi.price * bi.qty;
+    return `<tr>
+        <td>${bi.cabinetName}</td>
+        <td>
+            <input type="number" 
+                   value="${bi.width}" 
+                   step="0.125" 
+                   min="0"
+                   style="width:70px;padding:4px 8px;border:1px solid #444;border-radius:4px;background:#1a1a1a;color:#d0d0d0;text-align:right;"
+                   onchange="updateBuiltinDimension(${o.id}, ${idx}, 'width', parseFloat(this.value))"
+                   onclick="event.stopPropagation()">
+            <span style="color:#888;margin-left:2px;">"</span>
+        </td>
+        <td>
+            <select 
+                style="width:70px;padding:4px 8px;border:1px solid #444;border-radius:4px;background:#1a1a1a;color:#d0d0d0;"
+                onchange="updateBuiltinDimension(${o.id}, ${idx}, 'depth', this.value)"
+                onclick="event.stopPropagation()">
+                <option value="12" ${bi.depth == '12' ? 'selected' : ''}>12"</option>
+                <option value="18" ${bi.depth == '18' ? 'selected' : ''}>18"</option>
+                <option value="24" ${bi.depth == '24' ? 'selected' : ''}>24"</option>
+            </select>
+        </td>
+        <td class="num-right">
+            <input type="number" 
+                   value="${bi.qty}" 
+                   min="1"
+                   style="width:60px;padding:4px 8px;border:1px solid #444;border-radius:4px;background:#1a1a1a;color:#d0d0d0;text-align:right;"
+                   onchange="updateBuiltinDimension(${o.id}, ${idx}, 'qty', parseInt(this.value))"
+                   onclick="event.stopPropagation()">
+        </td>
+        <td class="num-right">${fmt(bi.price)}</td>
+        <td class="num-right">
+            ${fmt(total)}
+            <button 
+                class="btn btn-danger btn-sm" 
+                style="margin-left:8px;padding:4px 8px;font-size:11px;"
+                onclick="deleteBuiltinFromOrder(${o.id}, ${idx})"
+                title="Delete this built-in">
+                ×
+            </button>
+        </td>
+    </tr>`;
+}).join('');
     
     const subtotal = calculateOrderTotal(o.builtins);
     const tax = subtotal * (taxRate / 100);
@@ -1696,6 +1730,58 @@ function renderDetailBuiltins(o) {
     document.getElementById('detail-tax').textContent = fmt(tax);
     document.getElementById('detail-total').textContent = fmt(total);
 }
+
+function deleteBuiltinFromOrder(orderId, builtinIndex) {
+    const o = getOrder(orderId);
+    if (!o || !o.builtins || !o.builtins[builtinIndex]) return;
+    
+    const builtinName = o.builtins[builtinIndex].cabinetName;
+    
+    if (!confirm(`Delete ${builtinName} from this order?`)) return;
+    
+    o.builtins.splice(builtinIndex, 1);
+    
+    // Save to Firebase
+    syncOrders();
+    
+    // Re-render the table
+    renderDetailBuiltins(o);
+    
+    // Update the count
+    const count = (o.builtins || []).reduce((sum, bi) => sum + bi.qty, 0);
+    document.getElementById('di-count').textContent = count + ' items';
+    
+    showToast('🗑 Deleted', `${builtinName} removed from order`);
+}
+    
+ function updateBuiltinDimension(orderId, builtinIndex, field, value) {
+    const o = getOrder(orderId);
+    if (!o || !o.builtins || !o.builtins[builtinIndex]) return;
+    
+    const builtin = o.builtins[builtinIndex];
+    
+    // Update the field
+    if (field === 'width') {
+        builtin.width = value;
+        // Recalculate price based on new width
+        builtin.price = findPrice(builtin.cabinetName, builtin.width, builtin.depth);
+    } else if (field === 'depth') {
+        builtin.depth = value;
+        // Recalculate price based on new depth
+        builtin.price = findPrice(builtin.cabinetName, builtin.width, builtin.depth);
+    } else if (field === 'qty') {
+        builtin.qty = Math.max(1, value);
+    }
+    
+    // Save to Firebase
+    syncOrders();
+    
+    // Re-render the table
+    renderDetailBuiltins(o);
+    
+    // Show toast notification
+    showToast('✅ Updated', `${builtin.cabinetName} ${field} changed`);
+}   
 
 function backToOrders() {
     currentOrderId = null;

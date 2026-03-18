@@ -1373,8 +1373,7 @@ if (typeof pdfjsLib !== 'undefined') {
 // UTILS
 function fmt(n) { return '$' + n.toFixed(2); }
 function getOrder(id) { return orders.find(o => o.id === id); }
-function getCabinet(name) { return pricingMatrix.find(c => c.name === name); 
-                          // Convert fractions to decimals (e.g., "15 1/2" → 15.5, "3/4" → 0.75)
+function getCabinet(name) { return pricingMatrix.find(c => c.name === name); }
 function parseFraction(input) {
     if (!input) return 0;
     
@@ -1966,7 +1965,7 @@ function renderOrderBuiltinsList() {
                     <div style="display:flex;gap:12px;align-items:center;">
                         <div style="display:flex;align-items:center;gap:4px;">
                             <label style="font-size:11px;color:#888;text-transform:uppercase;">Width:</label>
-                           <input type="text" 
+                            <input type="text" 
                                    value="${bi.width}" 
                                    style="width:70px;padding:4px 6px;border:1px solid #444;border-radius:4px;background:#1a1a1a;color:#d0d0d0;font-size:13px;text-align:right;"
                                    onblur="this.value = parseFraction(this.value); updateModalBuiltinDimension(${idx}, 'width', parseFraction(this.value))"
@@ -1986,12 +1985,11 @@ function renderOrderBuiltinsList() {
                         <div style="display:flex;align-items:center;gap:4px;">
                             <label style="font-size:11px;color:#888;text-transform:uppercase;">Qty:</label>
                             <input type="number" 
-                             <input type="text" 
-                               value="${bi.width}" 
-                               style="width:70px;padding:4px 6px;border:1px solid #444;border-radius:4px;background:#1a1a1a;color:#d0d0d0;font-size:13px;text-align:right;"
-                               onblur="this.value = parseFraction(this.value); updateModalBuiltinDimension(${idx}, 'width', parseFraction(this.value))"
-                               placeholder="e.g., 15 1/2">
-                        <span style="color:#888;font-size:12px;">"</span>
+                                   value="${bi.qty}" 
+                                   min="1"
+                                   style="width:50px;padding:4px 6px;border:1px solid #444;border-radius:4px;background:#1a1a1a;color:#d0d0d0;font-size:13px;text-align:right;"
+                                   onchange="updateModalBuiltinDimension(${idx}, 'qty', parseInt(this.value))">
+                        </div>
                     </div>
                 </div>
                 <span class="selected-builtin-price">${fmt(total)}</span>

@@ -763,6 +763,11 @@ tbody tr:last-child td { border-bottom: none; }
     <input type="text" class="form-input" id="order-stain-species" placeholder="e.g., White Oak, Walnut">
 </div>
 
+<div class="form-group" id="paint-color-group" style="display:none;">
+    <label class="form-label">Paint Color</label>
+    <input type="text" class="form-input" id="order-paint-color" placeholder="e.g., SW 7006 Extra White, BM Simply White">
+</div>
+        
 <div class="form-group">
     <label class="form-label">Drawers & Rollouts</label>
     <select class="form-select" id="order-drawers" onchange="handleDrawersChange()">
@@ -1504,7 +1509,7 @@ function openOrder(id) {
     const count = (o.builtins || []).reduce((sum, bi) => sum + bi.qty, 0);
     document.getElementById('di-count').textContent = count + ' items';
     document.getElementById('di-construction').textContent = o.construction || '–';
-    document.getElementById('di-materials').textContent = o.materials + (o.stainSpecies ? ` (${o.stainSpecies})` : '') || '–';
+    document.getElementById('di-materials').textContent =  o.materials + (o.stainSpecies ? ` (${o.stainSpecies})` : '') + (o.paintColor ? ` (${o.paintColor})` : '') || '–';
     document.getElementById('di-drawers').textContent = o.drawers + (o.drawerSpecial ? ` - ${o.drawerSpecial}` : '') || '–';
     document.getElementById('di-hardware').textContent = o.hardware || '–';
     document.getElementById('di-countertops').textContent = o.countertops === 'Yes' ? `Yes - ${o.countertopMaterial || ''}` : 'No';
@@ -1715,12 +1720,17 @@ function deleteCurrentOrder() {
 function handleMaterialsChange() {
     const materials = document.getElementById('order-materials').value;
     const stainGroup = document.getElementById('stain-species-group');
+    const paintGroup = document.getElementById('paint-color-group');
+    
+    stainGroup.style.display = 'none';
+    paintGroup.style.display = 'none';
+    document.getElementById('order-stain-species').value = '';
+    document.getElementById('order-paint-color').value = '';
     
     if (materials === 'Stain Grade') {
         stainGroup.style.display = 'block';
-    } else {
-        stainGroup.style.display = 'none';
-        document.getElementById('order-stain-species').value = '';
+    } else if (materials === 'Paint Grade') {
+        paintGroup.style.display = 'block';
     }
 }
 
@@ -1782,6 +1792,8 @@ function openOrderModal() {
     document.getElementById('order-materials').value = '';
     document.getElementById('order-stain-species').value = '';
     document.getElementById('stain-species-group').style.display = 'none';
+    document.getElementById('order-paint-color').value = '';
+    document.getElementById('paint-color-group').style.display = 'none';   
     document.getElementById('order-drawers').value = '';
     document.getElementById('order-drawer-special').value = '';
     document.getElementById('drawer-special-group').style.display = 'none';
@@ -1827,6 +1839,7 @@ function editOrder(id) {
     document.getElementById('order-construction').value = o.construction || '';
     document.getElementById('order-materials').value = o.materials || '';
     document.getElementById('order-stain-species').value = o.stainSpecies || '';
+    document.getElementById('order-paint-color').value = o.paintColor || '';
     document.getElementById('order-drawers').value = o.drawers || '';
     document.getElementById('order-drawer-special').value = o.drawerSpecial || '';
     document.getElementById('order-hardware').value = o.hardware || '';
@@ -1900,6 +1913,7 @@ function saveOrder() {
     const construction = document.getElementById('order-construction').value;
     const materials = document.getElementById('order-materials').value;
     const stainSpecies = document.getElementById('order-stain-species').value;
+    const paintColor = document.getElementById('order-paint-color').value;
     const drawers = document.getElementById('order-drawers').value;
     const drawerSpecial = document.getElementById('order-drawer-special').value;
     const hardware = document.getElementById('order-hardware').value;
@@ -1936,7 +1950,8 @@ function saveOrder() {
             ship, 
             construction, 
             materials, 
-            stainSpecies, 
+            stainSpecies,
+            paintColor,
             drawers, 
             drawerSpecial, 
             hardware, 
@@ -1969,7 +1984,8 @@ function saveOrder() {
             ship, 
             construction, 
             materials, 
-            stainSpecies, 
+            stainSpecies,
+            paintColor,
             drawers, 
             drawerSpecial, 
             hardware, 
@@ -1993,17 +2009,18 @@ function saveOrder() {
             builtins: orderBuiltinsList, 
             pdfs: []
         });
-        showToast('✅ Order Created', `Order #${orderNumber} created`);
+        showToast('Order Created', `Order #${orderNumber} created`);
     }
     
     renderOrders();
     syncOrders();
    
-    if (editingOrderId && currentOrderId === editingOrderId) {
-        const updatedOrder = getOrder(editingOrderId);
-        if (updatedOrder) {
+   if (editingOrderId && currentOrderId === editingOrderId) {
+    const updatedOrder = getOrder(editingOrderId);
+    if (updatedOrder) {
             document.getElementById('di-construction').textContent = updatedOrder.construction || '–';
-            document.getElementById('di-materials').textContent = updatedOrder.materials + (updatedOrder.stainSpecies ? ` (${updatedOrder.stainSpecies})` : '') || '–';
+            document.getElementById('di-materials').textContent = 
+            updatedOrder.materials + (updatedOrder.stainSpecies ? ` (${updatedOrder.stainSpecies})` : '') + (updatedOrder.paintColor ? ` (${updatedOrder.paintColor})` : '') || '–';
             document.getElementById('di-drawers').textContent = updatedOrder.drawers + (updatedOrder.drawerSpecial ? ` - ${updatedOrder.drawerSpecial}` : '') || '–';
             document.getElementById('di-hardware').textContent = updatedOrder.hardware || '–';
             document.getElementById('di-countertops').textContent = updatedOrder.countertops === 'Yes' ? `Yes - ${updatedOrder.countertopMaterial || ''}` : 'No';
@@ -2126,7 +2143,7 @@ function updatePrice(cabinetName, rangeIdx, depth, value) {
         if (!isNaN(price) && price >= 0) {
             cabinet.ranges[rangeIdx].prices[depth] = price;
             syncPricingMatrix();
-            showToast('✅ Price Updated', `${cabinetName} - ${depth}" depth`);
+            showToast('Price Updated', `${cabinetName} - ${depth}" depth`);
         }
     }
 }
@@ -2291,11 +2308,11 @@ function saveCabinet() {
         if (cabinet) {
             cabinet.category = category;
             cabinet.ranges = ranges;
-            showToast('✅ Cabinet Updated', name);
+            showToast('Cabinet Updated', name);
         }
     } else {
         pricingMatrix.push({ name, category, ranges });
-        showToast('✅ Cabinet Added', name);
+        showToast('Cabinet Added', name);
     }
     
     renderMatrix();
@@ -2346,7 +2363,7 @@ function handlePDFUpload(e) {
             o.pdfs.push(pdfData);
             renderPDFList(o);
             syncOrders();
-            showToast('✅ PDF Uploaded', file.name);
+            showToast('PDF Uploaded', file.name);
         };
         reader.readAsDataURL(file);
     });
@@ -2400,7 +2417,7 @@ async function loadPDF(pdfData) {
         renderPDFPage(currentPDFPage);
     } catch (error) {
         console.error('Error loading PDF:', error);
-        showToast('❌ Error', 'Failed to load PDF');
+        showToast('Error', 'Failed to load PDF');
     }
 }
 
@@ -2537,7 +2554,7 @@ function savePDFAnnotations() {
         currentPDFData.annotations = currentPDFAnnotations;
         const o = getOrder(currentOrderId);
         syncOrders();
-        showToast('✅ Annotations Saved', 'PDF annotations saved');
+        showToast('Annotations Saved', 'PDF annotations saved');
     }
 }
 
@@ -2565,7 +2582,7 @@ function deletePDF(pdfIndex) {
     o.pdfs.splice(pdfIndex, 1);
     renderPDFList(o);
     syncOrders();
-    showToast('🗑 PDF Deleted', pdfName);
+    showToast('PDF Deleted', pdfName);
 }
 
 // SETTINGS
@@ -2628,7 +2645,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         return;
                     }
                 }
-                document.getElementById('dim-range-hint').textContent = '⚠️ Width outside available ranges';
+                document.getElementById('dim-range-hint').textContent = 'Width outside available ranges';
             }
         } else {
             document.getElementById('dim-price').textContent = '$0.00';

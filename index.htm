@@ -1675,51 +1675,17 @@ function renderDetailBuiltins(o) {
     // Safety check
     if (!o.builtins) o.builtins = [];
     
-  tbody.innerHTML = o.builtins.map((bi, idx) => {
-    const total = bi.price * bi.qty;
-    return `<tr>
-        <td>${bi.cabinetName}</td>
-        <td>
-            <input type="number" 
-                   value="${bi.width}" 
-                   step="0.125" 
-                   min="0"
-                   style="width:70px;padding:4px 8px;border:1px solid #444;border-radius:4px;background:#1a1a1a;color:#d0d0d0;text-align:right;"
-                   onchange="updateBuiltinDimension(${o.id}, ${idx}, 'width', parseFloat(this.value))"
-                   onclick="event.stopPropagation()">
-            <span style="color:#888;margin-left:2px;">"</span>
-        </td>
-        <td>
-            <select 
-                style="width:70px;padding:4px 8px;border:1px solid #444;border-radius:4px;background:#1a1a1a;color:#d0d0d0;"
-                onchange="updateBuiltinDimension(${o.id}, ${idx}, 'depth', this.value)"
-                onclick="event.stopPropagation()">
-                <option value="12" ${bi.depth == '12' ? 'selected' : ''}>12"</option>
-                <option value="18" ${bi.depth == '18' ? 'selected' : ''}>18"</option>
-                <option value="24" ${bi.depth == '24' ? 'selected' : ''}>24"</option>
-            </select>
-        </td>
-        <td class="num-right">
-            <input type="number" 
-                   value="${bi.qty}" 
-                   min="1"
-                   style="width:60px;padding:4px 8px;border:1px solid #444;border-radius:4px;background:#1a1a1a;color:#d0d0d0;text-align:right;"
-                   onchange="updateBuiltinDimension(${o.id}, ${idx}, 'qty', parseInt(this.value))"
-                   onclick="event.stopPropagation()">
-        </td>
-        <td class="num-right">${fmt(bi.price)}</td>
-        <td class="num-right">
-            ${fmt(total)}
-            <button 
-                class="btn btn-danger btn-sm" 
-                style="margin-left:8px;padding:4px 8px;font-size:11px;"
-                onclick="deleteBuiltinFromOrder(${o.id}, ${idx})"
-                title="Delete this built-in">
-                ×
-            </button>
-        </td>
-    </tr>`;
-}).join('');
+    tbody.innerHTML = o.builtins.map(bi => {
+        const total = bi.price * bi.qty;
+        return `<tr>
+            <td>${bi.cabinetName}</td>
+            <td>${bi.width}"</td>
+            <td>${bi.depth}"</td>
+            <td class="num-right">${bi.qty}</td>
+            <td class="num-right">${fmt(bi.price)}</td>
+            <td class="num-right">${fmt(total)}</td>
+        </tr>`;
+    }).join('');
     
     const subtotal = calculateOrderTotal(o.builtins);
     const tax = subtotal * (taxRate / 100);
@@ -1963,8 +1929,40 @@ function renderOrderBuiltinsList() {
         container.innerHTML = orderBuiltinsList.map((bi, idx) => {
             const total = bi.price * bi.qty;
             return `<div class="selected-builtin-item">
-                <span class="selected-builtin-name">${bi.cabinetName} (${bi.width}" W × ${bi.depth}" D)</span>
-                <input type="number" class="selected-builtin-qty" value="${bi.qty}" min="1" onchange="updateBuiltinQty(${idx}, parseInt(this.value))">
+                <div style="flex:1;">
+                    <div style="font-weight:600;color:#0090ff;margin-bottom:4px;">${bi.cabinetName}</div>
+                    <div style="display:flex;gap:12px;align-items:center;">
+                        <div style="display:flex;align-items:center;gap:4px;">
+                            <label style="font-size:11px;color:#888;text-transform:uppercase;">Width:</label>
+                            <input type="number" 
+                                   value="${bi.width}" 
+                                   step="0.125" 
+                                   min="0"
+                                   style="width:70px;padding:4px 6px;border:1px solid #444;border-radius:4px;background:#1a1a1a;color:#d0d0d0;font-size:13px;text-align:right;"
+                                   onchange="updateModalBuiltinDimension(${idx}, 'width', parseFloat(this.value))">
+                            <span style="color:#888;font-size:12px;">"</span>
+                        </div>
+                        <div style="display:flex;align-items:center;gap:4px;">
+                            <label style="font-size:11px;color:#888;text-transform:uppercase;">Depth:</label>
+                            <select 
+                                style="width:70px;padding:4px 6px;border:1px solid #444;border-radius:4px;background:#1a1a1a;color:#d0d0d0;font-size:13px;"
+                                onchange="updateModalBuiltinDimension(${idx}, 'depth', this.value)">
+                                <option value="12" ${bi.depth == '12' ? 'selected' : ''}>12"</option>
+                                <option value="18" ${bi.depth == '18' ? 'selected' : ''}>18"</option>
+                                <option value="24" ${bi.depth == '24' ? 'selected' : ''}>24"</option>
+                            </select>
+                        </div>
+                        <div style="display:flex;align-items:center;gap:4px;">
+                            <label style="font-size:11px;color:#888;text-transform:uppercase;">Qty:</label>
+                            <input type="number" 
+                                   class="selected-builtin-qty" 
+                                   value="${bi.qty}" 
+                                   min="1"
+                                   style="width:50px;"
+                                   onchange="updateModalBuiltinDimension(${idx}, 'qty', parseInt(this.value))">
+                        </div>
+                    </div>
+                </div>
                 <span class="selected-builtin-price">${fmt(total)}</span>
                 <button class="selected-builtin-remove" onclick="removeBuiltinFromOrder(${idx})">×</button>
             </div>`;
@@ -1973,6 +1971,28 @@ function renderOrderBuiltinsList() {
     const total = calculateOrderTotal(orderBuiltinsList);
     document.getElementById('order-modal-total').textContent = fmt(total);
 }
+
+function updateModalBuiltinDimension(builtinIndex, field, value) {
+    if (!orderBuiltinsList[builtinIndex]) return;
+    
+    const builtin = orderBuiltinsList[builtinIndex];
+    
+    // Update the field
+    if (field === 'width') {
+        builtin.width = value;
+        // Recalculate price based on new width
+        builtin.price = findPrice(builtin.cabinetName, builtin.width, builtin.depth);
+    } else if (field === 'depth') {
+        builtin.depth = value;
+        // Recalculate price based on new depth
+        builtin.price = findPrice(builtin.cabinetName, builtin.width, builtin.depth);
+    } else if (field === 'qty') {
+        builtin.qty = Math.max(1, value);
+    }
+    
+    // Re-render the list to show updated prices
+    renderOrderBuiltinsList();
+}  
 
 function updateBuiltinQty(idx, qty) {
     if (orderBuiltinsList[idx]) {

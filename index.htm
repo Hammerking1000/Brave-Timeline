@@ -2005,6 +2005,13 @@ if (o.trimItems && o.trimItems.length > 0) {
         if (displayDiv) displayDiv.style.display = 'none';
     });
 }
+    
+    renderDetailStatus(o);
+    renderDetailBuiltins(o);
+    renderPDFList(o);
+    
+    showPage('order-detail', null);
+}
 
 function renderDetailStatus(o) {
     const st = STATUSES.find(s => s.key === o.status);

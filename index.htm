@@ -10,19 +10,16 @@
     <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
     
-    <!--Firebase SDK-->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BR▲▼E TIMELINE X</title>
     
-    <!--Firebase SDK-->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-functions-compat.js"></script>
     
-    <!--PDF.js for PDF rendering-->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     
     <style>
@@ -35,7 +32,7 @@ body {
     line-height: 1.6;
 }
 
-/* NAVIGATION */
+/* Nav */
 nav { 
     background: linear-gradient(to bottom, #2e2e2e 0%, #1a1a1a 100%);
     padding: 0 24px; 
@@ -65,15 +62,15 @@ nav {
     font-weight: 500; 
     border-bottom: 3px solid transparent; 
     transition: all 0.2s; 
-}
-        .nav-tab:hover { color: #fff; }
-        .nav-tab.active { color: #fff; border-bottom-color: #0090ff; }
-        .nav-spacer { flex: 1; }
-        /* LAYOUT */
-        .page { display: none; padding: 28px; background: #151515; min-height: calc(100vh - 56px); }
-        .page.active { display: block; }
-        .container { max-width: 1400px; margin: 0 auto; }
-       /* BUTTONS */
+} 
+.nav-tab:hover { color: #fff; }
+.nav-tab.active { color: #fff; border-bottom-color: #0090ff; }
+.nav-spacer { flex: 1; }
+.page { display: none; padding: 28px; background: #151515; min-height: calc(100vh - 56px); }
+.page.active { display: block; }
+.container { max-width: 1400px; margin: 0 auto; } 
+
+/* buttons */
 .action-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
 .btn { 
     padding: 9px 18px; 
@@ -109,7 +106,7 @@ nav {
 .btn-sm { padding: 6px 12px; font-size: 13px; align-items: center; }
 .btn-icon { padding: 6px 10px; font-size: 16px; }
 
-       /* CARDS & TABLES */
+/* cards and tables */
 .card { 
     background: #252525; 
     border-radius: 6px; 
@@ -151,48 +148,48 @@ tbody tr:last-child td { border-bottom: none; }
     min-width: 72px; 
     text-align: center; 
 }
-        /* STATUS */
-        .status-wrap { position: relative; display: inline-block; }
-        .status-badge { padding: 5px 14px; border-radius: 20px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; border: none; transition: opacity 0.15s; white-space: nowrap; }
-        .status-badge:hover { opacity: 0.82; }
-        .status-badge::after { content: ' ▾'; font-size: 10px; }
-        .status-bid { background: #fff3e0; color: #e65100; }
-        .status-ordered { background: #e3f2fd; color: #0d47a1; }
-        .status-verified { background: #e0f2f1; color: #00695c; }
-        .status-progress { background: #ede7f6; color: #4527a0; }
-        .status-hold { background: #fce4ec; color: #880e4f; }
-        .status-completed { background: #e8f5e9; color: #1b5e20; }
-        .status-shipped { background: #f3e5f5; color: #6a1b9a; }
-        .status-void { background: #eeeeee; color: #616161; }
-        
-        .status-menu { display: none; position: absolute; top: calc(100% + 4px); left: 0; background: #fff; border-radius: 8px; box-shadow: 0 6px 24px rgba(0,0,0,0.15); z-index: 1000; min-width: 170px; overflow: visible; border: 1px solid #eee; }
-        .status-menu.open { display: block; }
-        .status-menu-item { padding: 10px 16px; cursor: pointer; font-size: 13px; display: flex; align-items: center; gap: 10px; transition: background 0.1s; }
-        .status-menu-item:hover { background: #f5f5f5; }
-        .status-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
 
-        /* TOGGLE ON/OFF SWITCHES */
-        .toggle-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #f5f5f5; }
-        .toggle-row:last-child { border-bottom: none; }
-        .toggle-label { font-size: 14px; color: white; }
-        .toggle { position: relative; width: 42px; height: 24px; background: #ccc; border-radius: 12px; cursor: pointer; transition: background 0.2s; flex-shrink: 0; }
-        .toggle.on { background: #2196F3; }
-        .toggle-knob { position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; background: #fff; border-radius: 50%; transition: left 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
-        .toggle.on .toggle-knob { left: 21px; }
+/* status css */
+.status-wrap { position: relative; display: inline-block; }
+.status-badge { padding: 5px 14px; border-radius: 20px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; border: none; transition: opacity 0.15s; white-space: nowrap; }
+.status-badge:hover { opacity: 0.82; }
+.status-badge::after { content: ' ▾'; font-size: 10px; }
+.status-bid { background: #fff3e0; color: #e65100; }
+.status-ordered { background: #e3f2fd; color: #0d47a1; }
+.status-verified { background: #e0f2f1; color: #00695c; }
+.status-progress { background: #ede7f6; color: #4527a0; }
+.status-hold { background: #fce4ec; color: #880e4f; }
+.status-completed { background: #e8f5e9; color: #1b5e20; }
+.status-shipped { background: #f3e5f5; color: #6a1b9a; }
+.status-void { background: #eeeeee; color: #616161; }     
+.status-menu { display: none; position: absolute; top: calc(100% + 4px); left: 0; background: #fff; border-radius: 8px; box-shadow: 0 6px 24px rgba(0,0,0,0.15); z-index: 1000; min-width: 170px; overflow: visible; border: 1px solid #eee; }
+.status-menu.open { display: block; }
+.status-menu-item { padding: 10px 16px; cursor: pointer; font-size: 13px; display: flex; align-items: center; gap: 10px; transition: background 0.1s; }
+.status-menu-item:hover { background: #f5f5f5; }
+.status-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
 
-        /* PRICING MATRIX PAGE */
-        .matrix-table-wrapper { overflow-x: auto; }
-        .matrix-table { width: 100%; min-width: 1000px; }
-        .matrix-table th { position: sticky; top: 0; z-index: 10; }
-        .matrix-table td { position: relative; }
-        .matrix-table input { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 13px; text-align: right; }
-        .matrix-table input:focus { outline: none; border-color: #2196F3; background: #f0f7ff; }
-        .matrix-header { background: #2196F3; color: white; text-align: center; }
-        .range-label { font-weight: 600; color: #333; background: #f8f8f8; }
-        .num-center { text-align: center; }
-        .num-right { text-align: right; }
+/* switches on admin page */
+.toggle-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #f5f5f5; }
+.toggle-row:last-child { border-bottom: none; }
+.toggle-label { font-size: 14px; color: white; }
+.toggle { position: relative; width: 42px; height: 24px; background: #ccc; border-radius: 12px; cursor: pointer; transition: background 0.2s; flex-shrink: 0; }
+.toggle.on { background: #2196F3; }
+.toggle-knob { position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; background: #fff; border-radius: 50%; transition: left 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
+.toggle.on .toggle-knob { left: 21px; }
 
-       /* MODAL */
+/* Price matrix page */
+.matrix-table-wrapper { overflow-x: auto; }
+.matrix-table { width: 100%; min-width: 1000px; }
+.matrix-table th { position: sticky; top: 0; z-index: 10; }
+.matrix-table td { position: relative; }
+.matrix-table input { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 13px; text-align: right; }
+.matrix-table input:focus { outline: none; border-color: #2196F3; background: #f0f7ff; }
+.matrix-header { background: #2196F3; color: white; text-align: center; }
+.range-label { font-weight: 600; color: #333; background: #f8f8f8; }
+.num-center { text-align: center; }
+.num-right { text-align: right; }
+
+/* Main modal css */
 .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 500; align-items: center; justify-content: center; }
 .modal.open { display: flex; }
 .modal-box { 
@@ -227,7 +224,7 @@ tbody tr:last-child td { border-bottom: none; }
     border-color: #0090ff; 
     background: #222;
 }
-/* BILLING & SHIPPING SECTIONS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! */
+/* Bill and ship sections!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! */
 .section-divider {
     border-top: 2px solid #444;
     margin: 24px 0 20px 0;
@@ -263,75 +260,75 @@ tbody tr:last-child td { border-bottom: none; }
     color: #d0d0d0;
     font-size: 14px;
 }
-        /* BUILDER */
-        .selected-builtins { border: 1px solid #e0e0e0; border-radius: 8px; max-height: 280px; overflow-y: auto; }
-        .selected-builtin-item { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-bottom: 1px solid #f0f0f0; }
-        .selected-builtin-item:last-child { border-bottom: none; }
-        .selected-builtin-name { flex: 1; font-size: 14px; color: white; font-weight: 500; }
-        .selected-builtin-qty { width: 60px; padding: 6px 8px; border: 1px solid #ddd; border-radius: 5px; text-align: center; font-size: 13px; }
-        .selected-builtin-price { font-size: 14px; color: #666; min-width: 80px; text-align: right; }
-        .selected-builtin-remove { background: none; border: none; color: #ccc; cursor: pointer; font-size: 18px; }
-        .selected-builtin-remove:hover { color: #e53935; }
-        .order-total-box { background: #f8f8f8; border-radius: 8px; padding: 16px; display: flex; justify-content: space-between; align-items: center; margin-top: 16px; }
-        .order-total-label { font-size: 16px; font-weight: 700; color: #333; }
-        .order-total-value { font-size: 22px; font-weight: 700; color: #2196F3; }
-        .empty-state { text-align: center; padding: 40px 20px; color: #aaa; font-size: 14px; }
+/* constructor css */
+.selected-builtins { border: 1px solid #e0e0e0; border-radius: 8px; max-height: 280px; overflow-y: auto; }
+.selected-builtin-item { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-bottom: 1px solid #f0f0f0; }
+.selected-builtin-item:last-child { border-bottom: none; }
+.selected-builtin-name { flex: 1; font-size: 14px; color: white; font-weight: 500; }
+.selected-builtin-qty { width: 60px; padding: 6px 8px; border: 1px solid #ddd; border-radius: 5px; text-align: center; font-size: 13px; }
+.selected-builtin-price { font-size: 14px; color: #666; min-width: 80px; text-align: right; }
+.selected-builtin-remove { background: none; border: none; color: #ccc; cursor: pointer; font-size: 18px; }
+.selected-builtin-remove:hover { color: #e53935; }
+.order-total-box { background: #f8f8f8; border-radius: 8px; padding: 16px; display: flex; justify-content: space-between; align-items: center; margin-top: 16px; }
+.order-total-label { font-size: 16px; font-weight: 700; color: #333; }
+.order-total-value { font-size: 22px; font-weight: 700; color: #2196F3; }
+.empty-state { text-align: center; padding: 40px 20px; color: #aaa; font-size: 14px; }
 
-        /* SELECTOR */
-        .builtin-selector-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 600; align-items: center; justify-content: center; overflow-y: auto; }
-        .builtin-selector-overlay.open { display: flex; }
-        .builtin-selector-panel { background: #fff; border-radius: 12px; width: 95%; max-width: 1200px; max-height: 90vh; display: flex; flex-direction: column; box-shadow: 0 20px 60px rgba(0,0,0,0.3); margin: 20px; }
-        .builtin-selector-header { padding: 24px 28px; border-bottom: 2px solid #f0f0f0; display: flex; justify-content: space-between; align-items: center; }
-        .builtin-selector-title { font-size: 22px; font-weight: 700; color: #1a1a2e; }
-        .builtin-selector-close { background: none; border: none; font-size: 28px; cursor: pointer; color: #aaa; padding: 0; }
-        .builtin-selector-body { padding: 28px; overflow-y: auto; flex: 1; }
-        .builtin-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; }
-        .builtin-card { background: #fafafa; border: 2px solid #e0e0e0; border-radius: 10px; padding: 18px; transition: all 0.2s; cursor: pointer; text-align: center; }
-        .builtin-card:hover { border-color: #2196F3; background: #f0f7ff; transform: translateY(-2px); }
-        .builtin-card-name { font-size: 16px; font-weight: 600; color: #1a1a2e; margin-bottom: 8px; }
-        .builtin-card-category { font-size: 12px; color: #888; text-transform: uppercase; letter-spacing: 0.5px; }
+/* selections css */
+.builtin-selector-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 600; align-items: center; justify-content: center; overflow-y: auto; }
+.builtin-selector-overlay.open { display: flex; }
+.builtin-selector-panel { background: #fff; border-radius: 12px; width: 95%; max-width: 1200px; max-height: 90vh; display: flex; flex-direction: column; box-shadow: 0 20px 60px rgba(0,0,0,0.3); margin: 20px; }
+.builtin-selector-header { padding: 24px 28px; border-bottom: 2px solid #f0f0f0; display: flex; justify-content: space-between; align-items: center; }
+.builtin-selector-title { font-size: 22px; font-weight: 700; color: #1a1a2e; }
+.builtin-selector-close { background: none; border: none; font-size: 28px; cursor: pointer; color: #aaa; padding: 0; }
+.builtin-selector-body { padding: 28px; overflow-y: auto; flex: 1; }
+.builtin-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; }
+.builtin-card { background: #fafafa; border: 2px solid #e0e0e0; border-radius: 10px; padding: 18px; transition: all 0.2s; cursor: pointer; text-align: center; }
+.builtin-card:hover { border-color: #2196F3; background: #f0f7ff; transform: translateY(-2px); }
+.builtin-card-name { font-size: 16px; font-weight: 600; color: #1a1a2e; margin-bottom: 8px; }
+.builtin-card-category { font-size: 12px; color: #888; text-transform: uppercase; letter-spacing: 0.5px; }
 
-        /* CATEGORY DIVIDERS (when choosing cabinets to add to order, this will separate categories with a bar) */
-        .category-divider { background: #f8f8f8; padding: 12px 20px; border-top: 2px solid #e0e0e0; border-bottom: 1px solid #e0e0e0; font-weight: 700; font-size: 13px; color: #555; text-transform: uppercase; letter-spacing: 0.5px; margin: 16px 0 12px 0; grid-column: 1 / -1; }
+/* Cat divider lines (when choosing cabinets to add to order, this will separate categories with a bar) */
+.category-divider { background: #f8f8f8; padding: 12px 20px; border-top: 2px solid #e0e0e0; border-bottom: 1px solid #e0e0e0; font-weight: 700; font-size: 13px; color: #555; text-transform: uppercase; letter-spacing: 0.5px; margin: 16px 0 12px 0; grid-column: 1 / -1; }
 
-        /* PDF VIEWER PAGE */
-        .pdf-section { margin-top: 20px; }
-        .pdf-upload-zone { border: 2px dashed #ccc; border-radius: 8px; padding: 10px; text-align: center; cursor: pointer; transition: all 0.2s; background: #fafafa; }
-        .pdf-upload-zone:hover { border-color: #2196F3; background: #f0f7ff; }
-        .pdf-upload-zone input { display: none; }
-        .pdf-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; margin-top: 16px; }
-        .pdf-item { background: #f8f8f8; border: 1px solid #e0e0e0; border-radius: 8px; padding: 12px; cursor: pointer; transition: all 0.2s; }
-        .pdf-item:hover { border-color: #2196F3; background: #f0f7ff; }
-        .pdf-item-icon { font-size: 32px; text-align: center; margin-bottom: 8px; }
-        .pdf-item-name { font-size: 13px; font-weight: 500; color: #333; text-align: center; word-break: break-word; }
-        .pdf-item-actions { display: flex; gap: 4px; margin-top: 8px; justify-content: center; }
+/* PDF viewing page */
+.pdf-section { margin-top: 20px; }
+.pdf-upload-zone { border: 2px dashed #ccc; border-radius: 8px; padding: 10px; text-align: center; cursor: pointer; transition: all 0.2s; background: #fafafa; }
+.pdf-upload-zone:hover { border-color: #2196F3; background: #f0f7ff; }
+.pdf-upload-zone input { display: none; }
+.pdf-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; margin-top: 16px; }
+.pdf-item { background: #f8f8f8; border: 1px solid #e0e0e0; border-radius: 8px; padding: 12px; cursor: pointer; transition: all 0.2s; }
+.pdf-item:hover { border-color: #2196F3; background: #f0f7ff; }
+.pdf-item-icon { font-size: 32px; text-align: center; margin-bottom: 8px; }
+.pdf-item-name { font-size: 13px; font-weight: 500; color: #333; text-align: center; word-break: break-word; }
+.pdf-item-actions { display: flex; gap: 4px; margin-top: 8px; justify-content: center; }
         
-        /* PDF VIEWER MODAL */
-        .pdf-viewer-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 1000; }
-        .pdf-viewer-modal.open { display: flex; flex-direction: column; }
-        .pdf-viewer-header { background: black; padding: 12px 20px; display: flex; align-items: center; gap: 12px; }
-        .pdf-viewer-title { color: #fff; font-size: 16px; font-weight: 500; flex: 1; }
-        .pdf-viewer-tools { display: flex; gap: 8px; }
-        .pdf-tool-btn { background: #333; color: #fff; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 13px; transition: background 0.2s; }
-        .pdf-tool-btn:hover { background: #555; }
-        .pdf-tool-btn.active { background: #2196F3; }
-        .pdf-viewer-close { background: #e53935; color: #fff; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 14px; }
-        .pdf-viewer-body { flex: 1; overflow: auto; display: flex; align-items: center; justify-content: center; padding: 20px; position: relative; }
-        .pdf-canvas-container { position: relative; display: inline-block; }
-        #pdf-canvas { max-width: 100%; height: auto; box-shadow: 0 4px 20px rgba(0,0,0,0.5); }
-        #pdf-annotation-canvas { position: absolute; top: 0; left: 0; cursor: crosshair; max-width: 100%; height: auto; }
-        .pdf-nav { display: flex; gap: 12px; align-items: center; }
+/* PDF modal*/
+.pdf-viewer-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 1000; }
+.pdf-viewer-modal.open { display: flex; flex-direction: column; }
+.pdf-viewer-header { background: black; padding: 12px 20px; display: flex; align-items: center; gap: 12px; }
+.pdf-viewer-title { color: #fff; font-size: 16px; font-weight: 500; flex: 1; }
+.pdf-viewer-tools { display: flex; gap: 8px; }
+.pdf-tool-btn { background: #333; color: #fff; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 13px; transition: background 0.2s; }
+.pdf-tool-btn:hover { background: #555; }
+.pdf-tool-btn.active { background: #2196F3; }
+.pdf-viewer-close { background: #e53935; color: #fff; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 14px; }
+.pdf-viewer-body { flex: 1; overflow: auto; display: flex; align-items: center; justify-content: center; padding: 20px; position: relative; }
+.pdf-canvas-container { position: relative; display: inline-block; }
+#pdf-canvas { max-width: 100%; height: auto; box-shadow: 0 4px 20px rgba(0,0,0,0.5); }
+#pdf-annotation-canvas { position: absolute; top: 0; left: 0; cursor: crosshair; max-width: 100%; height: auto; }
+.pdf-nav { display: flex; gap: 12px; align-items: center; }
 
-        /* TOAST */
-        .toast-container { position: fixed; bottom: 28px; right: 28px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; }
-        .toast { background: black; color: #fff; padding: 14px 20px; border-radius: 10px; box-shadow: 0 4px 16px rgba(0,0,0,0.25); font-size: 14px; display: flex; align-items: center; gap: 12px; min-width: 300px; animation: slideIn 0.3s ease; }
-        .toast-body { flex: 1; }
-        .toast-title { font-weight: 600; margin-bottom: 2px; }
-        .toast-msg { font-size: 12px; color: #aaa; }
-        .toast-close { background: none; border: none; color: #aaa; cursor: pointer; font-size: 18px; }
-        @keyframes slideIn { from { transform: translateX(60px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+/* Toast! (all the notifications) */
+.toast-container { position: fixed; bottom: 28px; right: 28px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; }
+.toast { background: black; color: #fff; padding: 14px 20px; border-radius: 10px; box-shadow: 0 4px 16px rgba(0,0,0,0.25); font-size: 14px; display: flex; align-items: center; gap: 12px; min-width: 300px; animation: slideIn 0.3s ease; }
+.toast-body { flex: 1; }
+.toast-title { font-weight: 600; margin-bottom: 2px; }
+.toast-msg { font-size: 12px; color: #aaa; }
+.toast-close { background: none; border: none; color: #aaa; cursor: pointer; font-size: 18px; }
+@keyframes slideIn { from { transform: translateX(60px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
         
-/* LOGIN PAGE */
+/* Login page */
 .login-container { 
     display: flex; 
     align-items: center; 
@@ -372,7 +369,7 @@ tbody tr:last-child td { border-bottom: none; }
 </head>
 <body>
 
-<!-- LOGIN PAGE -->
+<!-- Login page html -->
 <div id="login-container" class="login-container">
     <div class="login-box">
         <div class="login-logo">BR▲▼E<span> Timeline X</span></div>
@@ -390,7 +387,7 @@ tbody tr:last-child td { border-bottom: none; }
     </div>
 </div>
 
-<!-- APP CONTAINER (hidden until logged in) -->
+<!-- Application container (hidden until logged in) -->
 <div id="app-container">
 
 <nav>
@@ -457,7 +454,6 @@ tbody tr:last-child td { border-bottom: none; }
     <div class="container">
         <div class="action-bar">
             <button class="btn btn-primary" onclick="addNewCabinet()">+ Add Cabinet</button>
-            <button class="btn btn-ghost" onclick="exportMatrix()">Export to CSV</button>
         </div>
         <div class="card">
             <div class="matrix-table-wrapper">
@@ -483,7 +479,36 @@ tbody tr:last-child td { border-bottom: none; }
         </div>
     </div>
 </div>
-
+<div style="margin-top:40px;">
+    <h3 style="font-size:18px;font-weight:700;color:white;margin-bottom:16px;">Trim & Molding Pricing</h3>
+    <div class="card">
+        <div style="padding:24px;">
+            <p style="font-size:13px;color:#888;margin-bottom:20px;">Price per 8-foot stick. Orders are automatically calculated based on total linear feet.</p>
+            
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:20px;">
+                <div class="form-group">
+                    <label class="form-label">Crown Molding (per 8' stick)</label>
+                    <input type="number" class="form-input" id="trim-crown" placeholder="$0.00" step="0.01" min="0" onchange="updateTrimPrice('crown', this.value)">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Light Rail (per 8' stick)</label>
+                    <input type="number" class="form-input" id="trim-light-rail" placeholder="$0.00" step="0.01" min="0" onchange="updateTrimPrice('lightRail', this.value)">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Baseboard (per 8' stick)</label>
+                    <input type="number" class="form-input" id="trim-baseboard" placeholder="$0.00" step="0.01" min="0" onchange="updateTrimPrice('baseboard', this.value)">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Scribe (per 8' stick)</label>
+                    <input type="number" class="form-input" id="trim-scribe" placeholder="$0.00" step="0.01" min="0" onchange="updateTrimPrice('scribe', this.value)">
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 <!-- SETTINGS PAGE -->
 <div id="page-settings" class="page">
     <div class="container">
@@ -610,6 +635,15 @@ tbody tr:last-child td { border-bottom: none; }
         <div><div style="font-size:11px;color:#aaa;text-transform:uppercase;font-weight:600;letter-spacing:0.5px;margin-bottom:5px;">Installation</div><div style="font-size:15px;color:white;font-weight:500;" id="di-installation">–</div></div>
         <div><div style="font-size:11px;color:#aaa;text-transform:uppercase;font-weight:600;letter-spacing:0.5px;margin-bottom:5px;">Doors</div><div style="font-size:15px;color:white;font-weight:500;" id="di-doors">–</div></div>
         <div><div style="font-size:11px;color:#aaa;text-transform:uppercase;font-weight:600;letter-spacing:0.5px;margin-bottom:5px;">Drawer Fronts</div><div style="font-size:15px;color:white;font-weight:500;" id="di-drawer-fronts">–</div></div>
+    </div>
+</div>
+<div class="card" style="padding:24px;margin-bottom:20px;">
+    <div style="font-size:16px;font-weight:700;color:white;margin-bottom:16px;padding-bottom:10px;border-bottom:2px solid #f0f0f0;">Trim & Molding</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;">
+        <div id="trim-crown-display" style="display:none;"><div style="font-size:11px;color:#aaa;text-transform:uppercase;font-weight:600;letter-spacing:0.5px;margin-bottom:5px;">Crown Molding</div><div style="font-size:15px;color:white;font-weight:500;" id="di-crown">–</div></div>
+        <div id="trim-light-rail-display" style="display:none;"><div style="font-size:11px;color:#aaa;text-transform:uppercase;font-weight:600;letter-spacing:0.5px;margin-bottom:5px;">Light Rail</div><div style="font-size:15px;color:white;font-weight:500;" id="di-light-rail">–</div></div>
+        <div id="trim-baseboard-display" style="display:none;"><div style="font-size:11px;color:#aaa;text-transform:uppercase;font-weight:600;letter-spacing:0.5px;margin-bottom:5px;">Baseboard</div><div style="font-size:15px;color:white;font-weight:500;" id="di-baseboard">–</div></div>
+        <div id="trim-scribe-display" style="display:none;"><div style="font-size:11px;color:#aaa;text-transform:uppercase;font-weight:600;letter-spacing:0.5px;margin-bottom:5px;">Scribe</div><div style="font-size:15px;color:white;font-weight:500;" id="di-scribe">–</div></div>
     </div>
 </div>
         <div class="card" style="padding:24px;margin-bottom:20px;">
@@ -868,6 +902,31 @@ tbody tr:last-child td { border-bottom: none; }
         <option value="Saratoga 831">Saratoga 831</option>
         <option value="Victoria 833">Victoria 833</option>
     </select>
+</div>
+
+<!-- TRIM SECTION -->
+<div class="section-divider">
+    <div class="section-title">Trim & Molding</div>
+</div>
+
+<div class="form-group">
+    <label class="form-label">Crown Molding (linear feet)</label>
+    <input type="number" class="form-input" id="order-crown" placeholder="Enter total linear feet" step="0.25" min="0">
+</div>
+
+<div class="form-group">
+    <label class="form-label">Light Rail (linear feet)</label>
+    <input type="number" class="form-input" id="order-light-rail" placeholder="Enter total linear feet" step="0.25" min="0">
+</div>
+
+<div class="form-group">
+    <label class="form-label">Baseboard (linear feet)</label>
+    <input type="number" class="form-input" id="order-baseboard" placeholder="Enter total linear feet" step="0.25" min="0">
+</div>
+
+<div class="form-group">
+    <label class="form-label">Scribe (linear feet)</label>
+    <input type="number" class="form-input" id="order-scribe" placeholder="Enter total linear feet" step="0.25" min="0">
 </div>
         <!-- BILLING SECTION -->
         <div class="section-divider">
@@ -1273,7 +1332,18 @@ async function loadFromFirebaseOnStartup() {
                     </span>`
                 ).join('');
             }
-          
+
+            // Load trim pricing
+            const loadedTrimPricing = await loadFromFirebase('trimPricing');
+            if (loadedTrimPricing) {
+                trimPricing = loadedTrimPricing;
+                document.getElementById('trim-crown').value = trimPricing.crown || 0;
+                document.getElementById('trim-light-rail').value = trimPricing.lightRail || 0;
+                document.getElementById('trim-baseboard').value = trimPricing.baseboard || 0;
+                document.getElementById('trim-scribe').value = trimPricing.scribe || 0;
+                console.log('Loaded trim pricing from Firebase');
+            }
+                        
             // Load tax rate
             const loadedTaxRate = await loadFromFirebase('settings/taxRate');
             if (loadedTaxRate !== null && loadedTaxRate !== undefined) {
@@ -1349,7 +1419,14 @@ let pricingMatrix = [
     {"name":"B-2WF","category":"Base Cabinets","ranges":[{"label":"15\" to 20-7/8\"","minWidth":15,"maxWidth":20.875,"prices":{"12":738,"18":803,"24":870}},{"label":"21\" to 29-7/8\"","minWidth":21,"maxWidth":29.875,"prices":{"12":775,"18":843,"24":914}},{"label":"30\" to 36\"","minWidth":30,"maxWidth":36,"prices":{"12":814,"18":885,"24":960}}]},
     {"name":"B-3W","category":"Base Cabinets","ranges":[{"label":"15\" to 20-7/8\"","minWidth":15,"maxWidth":20.875,"prices":{"12":936,"18":1018,"24":1104}},{"label":"21\" to 29-7/8\"","minWidth":21,"maxWidth":29.875,"prices":{"12":983,"18":1069,"24":1159}},{"label":"30\" to 36\"","minWidth":30,"maxWidth":36,"prices":{"12":1032,"18":1122,"24":1217}}]},
 ];
-
+    
+let trimPricing = {
+    crown: 0,
+    lightRail: 0,
+    baseboard: 0,
+    scribe: 0
+};
+    
 let orders = [
     {id:2225,company:'Evergreene Companies',name:'EVG FLP2 0005',ship:'04/12/26',status:'bid',builtins:[{cabinetName:'B-O1A',width:15,depth:'24',price:359.1,qty:2},{cabinetName:'B-2WF',width:18,depth:'18',price:803,qty:1}],pdfs:[]},
     {id:2224,company:'Evergreene Companies',name:'EVG MAN4 0068',ship:'04/12/26',status:'bid',builtins:[{cabinetName:'B-O1A',width:25,depth:'24',price:435,qty:3}],pdfs:[]},
@@ -1379,22 +1456,20 @@ if (typeof pdfjsLib !== 'undefined') {
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 }
 
-// UTILS
+// Utilities
 function fmt(n) { return '$' + n.toFixed(2); }
 function getOrder(id) { return orders.find(o => o.id === id); }
 function getCabinet(name) { return pricingMatrix.find(c => c.name === name); }
 function parseFraction(input) {
-    if (!input) return 0;
+     if (!input) return 0;
     
-    // Convert to string and trim
     const str = input.toString().trim();
-    
-    // If it's already a valid decimal, return it
     if (!isNaN(str) && !str.includes('/')) {
+        
         return parseFloat(str);
     }
     
-    // Handle mixed fractions like "15 1/2" or "15-1/2"
+    // complex fraction solver
     const mixedMatch = str.match(/^(\d+)[\s-]+(\d+)\/(\d+)$/);
     if (mixedMatch) {
         const whole = parseFloat(mixedMatch[1]);
@@ -1403,7 +1478,7 @@ function parseFraction(input) {
         return whole + (numerator / denominator);
     }
     
-    // Handle simple fractions like "1/2" or "3/4"
+    // simple fraction solver
     const fractionMatch = str.match(/^(\d+)\/(\d+)$/);
     if (fractionMatch) {
         const numerator = parseFloat(fractionMatch[1]);
@@ -1411,7 +1486,6 @@ function parseFraction(input) {
         return numerator / denominator;
     }
     
-    // If we can't parse it, return the original as a number
     return parseFloat(str) || 0;
 }
 
@@ -1432,11 +1506,38 @@ function calculateOrderTotal(builtinsList) {
     return builtinsList.reduce((sum, item) => sum + (item.price * item.qty), 0);
 }
 
+// Calculate number of 8-foot sticks needed
+function calculateSticks(linearFeet) {
+    if (!linearFeet || linearFeet <= 0) return 0;
+    return Math.ceil(linearFeet / 8);
+}
+
+// Calculate trim price based on linear feet
+function calculateTrimPrice(linearFeet, pricePerStick) {
+    const sticks = calculateSticks(linearFeet);
+    return sticks * pricePerStick;
+}
+
+// Update trim pricing
+function updateTrimPrice(type, value) {
+    const price = parseFloat(value);
+    if (!isNaN(price) && price >= 0) {
+        trimPricing[type] = price;
+        syncTrimPricing();
+        showToast('✅ Trim Price Updated', `${type} set to ${fmt(price)} per 8' stick`);
+    }
+}
+
+// Sync trim pricing to Firebase
+function syncTrimPricing() {
+    saveToFirebase('trimPricing', trimPricing).catch(err => console.error('Error saving trim pricing:', err));
+}
+    
 // NAV
 let isAdminAuthenticated = false;
 
 function showPage(page, btn) {
-    // Check if trying to access admin-only pages
+//admin access check
     if ((page === 'settings' || page === 'matrix') && !isAdminAuthenticated) {
         openAdminAccess();
         return;
@@ -1465,7 +1566,7 @@ function checkAdminPassword() {
         isAdminAuthenticated = true;
         closeModal('modal-admin-password');
         showPage('settings', null);
-        showToast('✅ Admin Access Granted', 'You can now access settings and pricing matrix');
+        showToast('Access Granted', 'You can now access settings and pricing matrix');
     } else {
         document.getElementById('admin-password-error').style.display = 'block';
     }
@@ -1480,12 +1581,8 @@ function renderOrders() {
     const filterStatus = document.getElementById('filter-status')?.value || 'all';
     const searchTerm = document.getElementById('search-orders')?.value.toLowerCase() || '';
     
-    // Filter orders
     let filteredOrders = orders.filter(o => {
-        // Status filter
         if (filterStatus !== 'all' && o.status !== filterStatus) return false;
-        
-        // Search filter
         if (searchTerm && 
             !o.id.toString().includes(searchTerm) &&
             !o.company.toLowerCase().includes(searchTerm) &&
@@ -1536,7 +1633,7 @@ function openOrder(id) {
     const o = getOrder(id);
     if (!o) return;
     
-    // Ensure builtins exists
+    // check for built ins existence
     if (!o.builtins) o.builtins = [];
     
     document.getElementById('detail-title').textContent = `Order #${o.id} – ${o.name}`;
@@ -1593,6 +1690,43 @@ function openOrder(id) {
     } else {
         document.getElementById('di-shipping-instructions-wrapper').style.display = 'none';
     }
+
+// Display trim (only show if values exist)
+if (o.crown && o.crown > 0) {
+    document.getElementById('trim-crown-display').style.display = 'block';
+    const sticks = calculateSticks(o.crown);
+    const price = calculateTrimPrice(o.crown, trimPricing.crown);
+    document.getElementById('di-crown').textContent = `${o.crown} LF (${sticks} sticks) - ${fmt(price)}`;
+} else {
+    document.getElementById('trim-crown-display').style.display = 'none';
+}
+
+if (o.lightRail && o.lightRail > 0) {
+    document.getElementById('trim-light-rail-display').style.display = 'block';
+    const sticks = calculateSticks(o.lightRail);
+    const price = calculateTrimPrice(o.lightRail, trimPricing.lightRail);
+    document.getElementById('di-light-rail').textContent = `${o.lightRail} LF (${sticks} sticks) - ${fmt(price)}`;
+} else {
+    document.getElementById('trim-light-rail-display').style.display = 'none';
+}
+
+if (o.baseboard && o.baseboard > 0) {
+    document.getElementById('trim-baseboard-display').style.display = 'block';
+    const sticks = calculateSticks(o.baseboard);
+    const price = calculateTrimPrice(o.baseboard, trimPricing.baseboard);
+    document.getElementById('di-baseboard').textContent = `${o.baseboard} LF (${sticks} sticks) - ${fmt(price)}`;
+} else {
+    document.getElementById('trim-baseboard-display').style.display = 'none';
+}
+
+if (o.scribe && o.scribe > 0) {
+    document.getElementById('trim-scribe-display').style.display = 'block';
+    const sticks = calculateSticks(o.scribe);
+    const price = calculateTrimPrice(o.scribe, trimPricing.scribe);
+    document.getElementById('di-scribe').textContent = `${o.scribe} LF (${sticks} sticks) - ${fmt(price)}`;
+} else {
+    document.getElementById('trim-scribe-display').style.display = 'none';
+}
     
     renderDetailStatus(o);
     renderDetailBuiltins(o);
@@ -1728,8 +1862,15 @@ function renderDetailBuiltins(o) {
     }).join('');
     
     const subtotal = calculateOrderTotal(o.builtins);
-    const tax = subtotal * (taxRate / 100);
-    const total = subtotal + tax;
+    const trimTotal = 
+    calculateTrimPrice(o.crown || 0, trimPricing.crown) +
+    calculateTrimPrice(o.lightRail || 0, trimPricing.lightRail) +
+    calculateTrimPrice(o.baseboard || 0, trimPricing.baseboard) +
+    calculateTrimPrice(o.scribe || 0, trimPricing.scribe);
+
+    const finalSubtotal = subtotal + trimTotal;
+    const tax = finalSubtotal * (taxRate / 100);
+    const total = finalSubtotal + tax;
     
     document.getElementById('detail-subtotal').textContent = fmt(subtotal);
     document.getElementById('detail-tax-rate').textContent = taxRate.toFixed(2);
@@ -1747,13 +1888,10 @@ function deleteBuiltinFromOrder(orderId, builtinIndex) {
     
     o.builtins.splice(builtinIndex, 1);
     
-    // Save to Firebase
     syncOrders();
-    
-    // Re-render the table
     renderDetailBuiltins(o);
     
-    // Update the count
+    // Update count
     const count = (o.builtins || []).reduce((sum, bi) => sum + bi.qty, 0);
     document.getElementById('di-count').textContent = count + ' items';
     
@@ -1766,7 +1904,7 @@ function deleteBuiltinFromOrder(orderId, builtinIndex) {
     
     const builtin = o.builtins[builtinIndex];
     
-    // Update the field
+    // Update field
     if (field === 'width') {
         builtin.width = value;
         // Recalculate price based on new width
@@ -1778,15 +1916,9 @@ function deleteBuiltinFromOrder(orderId, builtinIndex) {
     } else if (field === 'qty') {
         builtin.qty = Math.max(1, value);
     }
-    
-    // Save to Firebase
     syncOrders();
-    
-    // Re-render the table
     renderDetailBuiltins(o);
-    
-    // Show toast notification
-    showToast('✅ Updated', `${builtin.cabinetName} ${field} changed`);
+    showToast('Updated', `${builtin.cabinetName} ${field} changed`);
 }   
 
 function backToOrders() {
@@ -1866,19 +1998,15 @@ function handleShippingSameAsBilling() {
     }
 }
 
-// ORDER MODAL
 function openOrderModal() {
     editingOrderId = null;
     orderBuiltinsList = [];
     const maxOrderId = orders.length > 0 ? Math.max(...orders.map(o => o.id)) : 2226;
     document.getElementById('order-number').value = maxOrderId + 1;
-    
     document.getElementById('order-company').value = '';
     document.getElementById('order-name').value = '';
     document.getElementById('order-status').value = 'bid';
     document.getElementById('order-ship').value = '';
-    
-    // Reset specification fields
     document.getElementById('order-construction').value = '';
     document.getElementById('order-materials').value = '';
     document.getElementById('order-stain-species').value = '';
@@ -1895,15 +2023,15 @@ function openOrderModal() {
     document.getElementById('order-installation').value = 'None';
     document.getElementById('order-doors').value = '';
     document.getElementById('order-drawer-fronts').value = '';
-    
-    // Reset billing fields
+    document.getElementById('order-crown').value = '';
+    document.getElementById('order-light-rail').value = '';
+    document.getElementById('order-baseboard').value = '';
+    document.getElementById('order-scribe').value = '';
     document.getElementById('order-bill-name').value = '';
     document.getElementById('order-bill-address').value = '';
     document.getElementById('order-bill-city').value = '';
     document.getElementById('order-bill-state').value = '';
     document.getElementById('order-bill-zip').value = '';
-    
-    // Reset shipping fields
     document.getElementById('order-ship-same').checked = false;
     document.getElementById('shipping-address-fields').style.display = 'block';
     document.getElementById('order-ship-name').value = '';
@@ -1939,6 +2067,10 @@ function editOrder(id) {
     document.getElementById('order-installation').value = o.installation || 'None';
     document.getElementById('order-doors').value = o.doors || '';
     document.getElementById('order-drawer-fronts').value = o.drawerFronts || '';
+    document.getElementById('order-crown').value = o.crown || '';
+    document.getElementById('order-light-rail').value = o.lightRail || '';
+    document.getElementById('order-baseboard').value = o.baseboard || '';
+    document.getElementById('order-scribe').value = o.scribe || '';
     document.getElementById('order-bill-name').value = o.billName || '';
     document.getElementById('order-bill-address').value = o.billAddress || '';
     document.getElementById('order-bill-city').value = o.billCity || '';
@@ -1956,7 +2088,6 @@ function editOrder(id) {
     handleMaterialsChange();
     handleDrawersChange();
     handleCountertopsChange();
-    
     renderOrderBuiltinsList();
     openModal('modal-order');
 }
@@ -2015,7 +2146,7 @@ function updateModalBuiltinDimension(builtinIndex, field, value) {
     
     const builtin = orderBuiltinsList[builtinIndex];
     
-    // Update the field
+    // Update field
     if (field === 'width') {
         builtin.width = value;
         // Recalculate price based on new width
@@ -2027,8 +2158,7 @@ function updateModalBuiltinDimension(builtinIndex, field, value) {
     } else if (field === 'qty') {
         builtin.qty = Math.max(1, value);
     }
-    
-    // Re-render the list to show updated prices
+
     renderOrderBuiltinsList();
 }  
 
@@ -2045,7 +2175,6 @@ function removeBuiltinFromOrder(idx) {
 }
 
 function saveOrder() {
-    // Ensure orderBuiltinsList is always an array
     if (!orderBuiltinsList) orderBuiltinsList = [];
     
     const orderNumber = parseInt(document.getElementById('order-number').value);
@@ -2065,6 +2194,10 @@ function saveOrder() {
     const installation = document.getElementById('order-installation').value;
     const doors = document.getElementById('order-doors').value;
     const drawerFronts = document.getElementById('order-drawer-fronts').value;
+    const crown = parseFloat(document.getElementById('order-crown').value) || 0;
+    const lightRail = parseFloat(document.getElementById('order-light-rail').value) || 0;
+    const baseboard = parseFloat(document.getElementById('order-baseboard').value) || 0;
+    const scribe = parseFloat(document.getElementById('order-scribe').value) || 0;
     const billName = document.getElementById('order-bill-name').value.trim();
     const billAddress = document.getElementById('order-bill-address').value.trim();
     const billCity = document.getElementById('order-bill-city').value.trim();
@@ -2103,6 +2236,10 @@ function saveOrder() {
             installation, 
             doors, 
             drawerFronts,
+            crown,
+            lightRail,
+            baseboard,
+            scribe,
             billName, 
             billAddress, 
             billCity, 
@@ -2137,6 +2274,10 @@ function saveOrder() {
             installation, 
             doors, 
             drawerFronts,
+            crown,
+            lightRail,
+            baseboard,
+            scribe,
             billName, 
             billAddress, 
             billCity, 
@@ -2177,7 +2318,7 @@ function saveOrder() {
     closeModal('modal-order');
 }
 
-// BUILTIN SELECTOR
+// Built-in selector
 function openBuiltinSelector() {
     renderBuiltinGrid();
     document.getElementById('builtin-selector').classList.add('open');
@@ -2218,7 +2359,7 @@ function selectCabinet(name) {
     openDimensionsModal(name);
 }
 
-// DIMENSIONS MODAL
+// Dimensions modal
 function openDimensionsModal(cabinetName) {
     document.getElementById('dim-modal-title').textContent = 'Specify Dimensions';
     document.getElementById('dim-cabinet-name').textContent = `Cabinet: ${cabinetName}`;
@@ -2257,7 +2398,7 @@ function confirmDimensions() {
     closeModal('modal-dimensions');
 }
 
-// PRICING MATRIX
+// Pricing matrix
 function renderMatrix() {
     const tbody = document.getElementById('matrix-tbody');
     tbody.innerHTML = pricingMatrix.map(cabinet => {
@@ -2408,12 +2549,12 @@ function saveCabinet() {
     }
     
     if (!name) {
-        alert('Please enter a cabinet name');
+        alert('Please enter cabinet name');
         return;
     }
     
     if (!category) {
-        alert('Please select or create a category');
+        alert('Please select or create category');
         return;
     }
     

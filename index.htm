@@ -477,33 +477,33 @@ tbody tr:last-child td { border-bottom: none; }
                 </table>
             </div>
         </div>
+        <div style="margin-top:40px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+                <h3 style="font-size:18px;font-weight:700;color:white;">Trim & Molding Pricing</h3>
+                <button class="btn btn-primary" onclick="addNewTrimItem()">+ Add Trim Item</button>
+            </div>
+        </div>
+            <div class="card">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Type</th>
+                            <th>Name</th>
+                            <th style="text-align:right;">Price per 8' Stick</th>
+                            <th style="width:120px;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="trim-items-tbody">
+                        <tr>
+                            <td colspan="4" style="text-align:center;color:#888;padding:40px;">No trim items added yet</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
 </div>
-<!--Trim pricing stuff -->
-<div style="margin-top:40px;">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-        <h3 style="font-size:18px;font-weight:700;color:white;">Trim & Molding Pricing</h3>
-        <button class="btn btn-primary" onclick="addNewTrimItem()">+ Add Trim Item</button>
-    </div>
-    
-    <div class="card">
-        <table>
-            <thead>
-                <tr>
-                    <th>Type</th>
-                    <th>Name</th>
-                    <th style="text-align:right;">Price per 8' Stick</th>
-                    <th style="width:120px;">Actions</th>
-                </tr>
-            </thead>
-            <tbody id="trim-items-tbody">
-                <tr>
-                    <td colspan="4" style="text-align:center;color:#888;padding:40px;">No trim items added yet</td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
-</div>
+
 <!-- SETTINGS PAGE -->
 <div id="page-settings" class="page">
     <div class="container">

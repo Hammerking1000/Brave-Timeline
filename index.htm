@@ -2135,7 +2135,8 @@ function renderDetailBuiltins(o) {
     // Safety check
     if (!o.builtins) o.builtins = [];
     
-    tbody.innerHTML = o.builtins.map(bi => {
+    // Render built-ins
+    const builtinsHTML = o.builtins.map(bi => {
         const total = bi.price * bi.qty;
         return `<tr>
             <td>${bi.cabinetName}</td>
@@ -2147,14 +2148,29 @@ function renderDetailBuiltins(o) {
         </tr>`;
     }).join('');
     
-    const subtotal = calculateOrderTotal(o.builtins);
-    const trimTotal = (o.trimItems || []).reduce((sum, item) => sum + item.totalPrice, 0);
-
-    const finalSubtotal = subtotal + trimTotal;
+    // Render trim items
+    const trimHTML = (o.trimItems || []).map(item => {
+        return `<tr>
+            <td>${item.type}: ${item.name}</td>
+            <td>${item.linearFeet} LF</td>
+            <td>${item.sticks} sticks</td>
+            <td class="num-right">1</td>
+            <td class="num-right">${fmt(item.pricePerStick)}/stick</td>
+            <td class="num-right">${fmt(item.totalPrice)}</td>
+        </tr>`;
+    }).join('');
+    
+    // Combine both
+    tbody.innerHTML = builtinsHTML + trimHTML;
+    
+    // Calculate totals
+    const builtinsSubtotal = calculateOrderTotal(o.builtins);
+    const trimSubtotal = (o.trimItems || []).reduce((sum, item) => sum + item.totalPrice, 0);
+    const finalSubtotal = builtinsSubtotal + trimSubtotal;
     const tax = finalSubtotal * (taxRate / 100);
     const total = finalSubtotal + tax;
     
-    document.getElementById('detail-subtotal').textContent = fmt(subtotal);
+    document.getElementById('detail-subtotal').textContent = fmt(finalSubtotal);
     document.getElementById('detail-tax-rate').textContent = taxRate.toFixed(2);
     document.getElementById('detail-tax').textContent = fmt(tax);
     document.getElementById('detail-total').textContent = fmt(total);

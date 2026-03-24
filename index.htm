@@ -479,34 +479,29 @@ tbody tr:last-child td { border-bottom: none; }
         </div>
     </div>
 </div>
+<!--Trim pricing stuff -->
 <div style="margin-top:40px;">
-    <h3 style="font-size:18px;font-weight:700;color:white;margin-bottom:16px;">Trim & Molding Pricing</h3>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+        <h3 style="font-size:18px;font-weight:700;color:white;">Trim & Molding Pricing</h3>
+        <button class="btn btn-primary" onclick="addNewTrimItem()">+ Add Trim Item</button>
+    </div>
+    
     <div class="card">
-        <div style="padding:24px;">
-            <p style="font-size:13px;color:#888;margin-bottom:20px;">Price per 8-foot stick. Orders are automatically calculated based on total linear feet.</p>
-            
-            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:20px;">
-                <div class="form-group">
-                    <label class="form-label">Crown Molding (per 8' stick)</label>
-                    <input type="number" class="form-input" id="trim-crown" placeholder="$0.00" step="0.01" min="0" onchange="updateTrimPrice('crown', this.value)">
-                </div>
-                
-                <div class="form-group">
-                    <label class="form-label">Light Rail (per 8' stick)</label>
-                    <input type="number" class="form-input" id="trim-light-rail" placeholder="$0.00" step="0.01" min="0" onchange="updateTrimPrice('lightRail', this.value)">
-                </div>
-                
-                <div class="form-group">
-                    <label class="form-label">Baseboard (per 8' stick)</label>
-                    <input type="number" class="form-input" id="trim-baseboard" placeholder="$0.00" step="0.01" min="0" onchange="updateTrimPrice('baseboard', this.value)">
-                </div>
-                
-                <div class="form-group">
-                    <label class="form-label">Scribe (per 8' stick)</label>
-                    <input type="number" class="form-input" id="trim-scribe" placeholder="$0.00" step="0.01" min="0" onchange="updateTrimPrice('scribe', this.value)">
-                </div>
-            </div>
-        </div>
+        <table>
+            <thead>
+                <tr>
+                    <th>Type</th>
+                    <th>Name</th>
+                    <th style="text-align:right;">Price per 8' Stick</th>
+                    <th style="width:120px;">Actions</th>
+                </tr>
+            </thead>
+            <tbody id="trim-items-tbody">
+                <tr>
+                    <td colspan="4" style="text-align:center;color:#888;padding:40px;">No trim items added yet</td>
+                </tr>
+            </tbody>
+        </table>
     </div>
 </div>
 <!-- SETTINGS PAGE -->
@@ -904,29 +899,18 @@ tbody tr:last-child td { border-bottom: none; }
     </select>
 </div>
 
-<!-- TRIM SECTION -->
+<!--TRIM SECTION-->
 <div class="section-divider">
     <div class="section-title">Trim & Molding</div>
 </div>
 
-<div class="form-group">
-    <label class="form-label">Crown Molding (linear feet)</label>
-    <input type="number" class="form-input" id="order-crown" placeholder="Enter total linear feet" step="0.25" min="0">
-</div>
-
-<div class="form-group">
-    <label class="form-label">Light Rail (linear feet)</label>
-    <input type="number" class="form-input" id="order-light-rail" placeholder="Enter total linear feet" step="0.25" min="0">
-</div>
-
-<div class="form-group">
-    <label class="form-label">Baseboard (linear feet)</label>
-    <input type="number" class="form-input" id="order-baseboard" placeholder="Enter total linear feet" step="0.25" min="0">
-</div>
-
-<div class="form-group">
-    <label class="form-label">Scribe (linear feet)</label>
-    <input type="number" class="form-input" id="order-scribe" placeholder="Enter total linear feet" step="0.25" min="0">
+<div style="margin-bottom:18px;">
+    <button class="btn btn-primary" style="width:100%; justify-content:center; margin-bottom:12px;" onclick="openTrimSelector()">
+        + Add Trim Items
+    </button>
+    <div class="selected-builtins" id="order-trim-list">
+        <div class="empty-state">No trim items added yet</div>
+    </div>
 </div>
         <!-- BILLING SECTION -->
         <div class="section-divider">
@@ -1107,7 +1091,78 @@ tbody tr:last-child td { border-bottom: none; }
         </div>
     </div>
 </div>
+<!-- TRIM SELECTOR MODAL -->
+<div class="builtin-selector-overlay" id="trim-selector">
+    <div class="builtin-selector-panel">
+        <div class="builtin-selector-header">
+            <h2 class="builtin-selector-title">Select Trim Item</h2>
+            <button class="builtin-selector-close" onclick="closeTrimSelector()">×</button>
+        </div>
+        <div class="builtin-selector-body">
+            <div class="builtin-grid" id="trim-grid"></div>
+        </div>
+    </div>
+</div>
 
+<!-- TRIM QUANTITY MODAL -->
+<div class="modal" id="modal-trim-quantity">
+    <div class="modal-box" style="max-width:450px;">
+        <div class="modal-header">
+            <h2 class="modal-title" id="trim-modal-title">Add Trim</h2>
+            <button class="modal-close" onclick="closeModal('modal-trim-quantity')">×</button>
+        </div>
+        <p style="font-size:14px;color:#888;margin-bottom:20px;" id="trim-item-name"></p>
+        <div class="form-group">
+            <label class="form-label">Linear Feet</label>
+            <input type="number" class="form-input" id="trim-linear-feet" placeholder="Enter total linear feet" step="0.25" min="0">
+        </div>
+        <div style="background:#1a1a1a;border-radius:8px;padding:16px;margin-bottom:20px;border:1px solid #444;" id="trim-price-display">
+            <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+                <span style="font-size:12px;color:#888;">Sticks Needed:</span>
+                <span style="font-size:14px;color:#0090ff;font-weight:600;" id="trim-sticks">0</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;">
+                <span style="font-size:12px;color:#888;">Total Price:</span>
+                <span style="font-size:18px;font-weight:700;color:#0090ff;" id="trim-total-price">$0.00</span>
+            </div>
+        </div>
+        <div class="form-actions">
+            <button class="btn btn-primary" onclick="confirmTrimQuantity()">Add to Order</button>
+            <button class="btn btn-ghost" onclick="closeModal('modal-trim-quantity')">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<!-- ADD/EDIT TRIM ITEM MODAL -->
+<div class="modal" id="modal-trim-item">
+    <div class="modal-box" style="max-width:500px;">
+        <div class="modal-header">
+            <h2 class="modal-title" id="trim-item-modal-title">Add Trim Item</h2>
+            <button class="modal-close" onclick="closeModal('modal-trim-item')">×</button>
+        </div>
+        <div class="form-group">
+            <label class="form-label">Type</label>
+            <select class="form-select" id="trim-item-type">
+                <option value="Crown Molding">Crown Molding</option>
+                <option value="Light Rail">Light Rail</option>
+                <option value="Baseboard">Baseboard</option>
+                <option value="Scribe">Scribe</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label class="form-label">Name/Description</label>
+            <input type="text" class="form-input" id="trim-item-name-input" placeholder="e.g., 3.5 inch Colonial, Simple Flat">
+        </div>
+        <div class="form-group">
+            <label class="form-label">Price per 8-foot Stick</label>
+            <input type="number" class="form-input" id="trim-item-price" placeholder="$0.00" step="0.01" min="0">
+        </div>
+        <div class="form-actions">
+            <button class="btn btn-primary" onclick="saveTrimItem()">Save Trim Item</button>
+            <button class="btn btn-ghost" onclick="closeModal('modal-trim-item')">Cancel</button>
+        </div>
+    </div>
+</div>
 <!-- ADMIN PASSWORD MODAL -->
 <div class="modal" id="modal-admin-password">
     <div class="modal-box" style="max-width:400px;">
@@ -1333,15 +1388,12 @@ async function loadFromFirebaseOnStartup() {
                 ).join('');
             }
 
-            // Load trim pricing
-            const loadedTrimPricing = await loadFromFirebase('trimPricing');
-            if (loadedTrimPricing) {
-                trimPricing = loadedTrimPricing;
-                document.getElementById('trim-crown').value = trimPricing.crown || 0;
-                document.getElementById('trim-light-rail').value = trimPricing.lightRail || 0;
-                document.getElementById('trim-baseboard').value = trimPricing.baseboard || 0;
-                document.getElementById('trim-scribe').value = trimPricing.scribe || 0;
-                console.log('Loaded trim pricing from Firebase');
+           // Load trim items
+            const loadedTrimItems = await loadFromFirebase('trimItems');
+            if (loadedTrimItems) {
+                trimItems = loadedTrimItems;
+                renderTrimItems();
+                console.log('Loaded trim items from Firebase');
             }
                         
             // Load tax rate
@@ -1420,12 +1472,7 @@ let pricingMatrix = [
     {"name":"B-3W","category":"Base Cabinets","ranges":[{"label":"15\" to 20-7/8\"","minWidth":15,"maxWidth":20.875,"prices":{"12":936,"18":1018,"24":1104}},{"label":"21\" to 29-7/8\"","minWidth":21,"maxWidth":29.875,"prices":{"12":983,"18":1069,"24":1159}},{"label":"30\" to 36\"","minWidth":30,"maxWidth":36,"prices":{"12":1032,"18":1122,"24":1217}}]},
 ];
     
-let trimPricing = {
-    crown: 0,
-    lightRail: 0,
-    baseboard: 0,
-    scribe: 0
-};
+let trimItems = [];
     
 let orders = [
     {id:2225,company:'Evergreene Companies',name:'EVG FLP2 0005',ship:'04/12/26',status:'bid',builtins:[{cabinetName:'B-O1A',width:15,depth:'24',price:359.1,qty:2},{cabinetName:'B-2WF',width:18,depth:'18',price:803,qty:1}],pdfs:[]},
@@ -1436,6 +1483,244 @@ let currentOrderId = null;
 let editingOrderId = null;
 let orderBuiltinsList = [];
 let selectedCabinetForDim = null;
+
+    // Trim item variables
+let orderTrimList = [];
+let selectedTrimForQuantity = null;
+let editingTrimItemId = null;
+
+// Render trim items table in pricing matrix
+function renderTrimItems() {
+    const tbody = document.getElementById('trim-items-tbody');
+    
+    if (trimItems.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#888;padding:40px;">No trim items added yet</td></tr>';
+        return;
+    }
+    
+    tbody.innerHTML = trimItems.map(item => `
+        <tr>
+            <td>${item.type}</td>
+            <td>${item.name}</td>
+            <td style="text-align:right;">${fmt(item.pricePerStick)}</td>
+            <td>
+                <button class="btn btn-ghost btn-sm" onclick="editTrimItem('${item.id}')">Edit</button>
+                <button class="btn btn-danger btn-sm" onclick="deleteTrimItem('${item.id}')">Delete</button>
+            </td>
+        </tr>
+    `).join('');
+}
+
+// Add new trim item
+function addNewTrimItem() {
+    editingTrimItemId = null;
+    document.getElementById('trim-item-modal-title').textContent = 'Add Trim Item';
+    document.getElementById('trim-item-type').value = 'Crown Molding';
+    document.getElementById('trim-item-name-input').value = '';
+    document.getElementById('trim-item-price').value = '';
+    openModal('modal-trim-item');
+}
+
+// Edit trim item
+function editTrimItem(id) {
+    const item = trimItems.find(t => t.id === id);
+    if (!item) return;
+    
+    editingTrimItemId = id;
+    document.getElementById('trim-item-modal-title').textContent = 'Edit Trim Item';
+    document.getElementById('trim-item-type').value = item.type;
+    document.getElementById('trim-item-name-input').value = item.name;
+    document.getElementById('trim-item-price').value = item.pricePerStick;
+    openModal('modal-trim-item');
+}
+
+// Save trim item
+function saveTrimItem() {
+    const type = document.getElementById('trim-item-type').value;
+    const name = document.getElementById('trim-item-name-input').value.trim();
+    const price = parseFloat(document.getElementById('trim-item-price').value);
+    
+    if (!name) {
+        alert('Please enter a name/description');
+        return;
+    }
+    
+    if (isNaN(price) || price < 0) {
+        alert('Please enter a valid price');
+        return;
+    }
+    
+    if (editingTrimItemId) {
+        // Update existing
+        const item = trimItems.find(t => t.id === editingTrimItemId);
+        if (item) {
+            item.type = type;
+            item.name = name;
+            item.pricePerStick = price;
+            showToast('Trim Item Updated', name);
+        }
+    } else {
+        // Add new
+        trimItems.push({
+            id: 'trim-' + Date.now(),
+            type: type,
+            name: name,
+            pricePerStick: price
+        });
+        showToast('Trim Item Added', name);
+    }
+    
+    renderTrimItems();
+    syncTrimPricing();
+    closeModal('modal-trim-item');
+}
+
+// Delete trim item
+function deleteTrimItem(id) {
+    const item = trimItems.find(t => t.id === id);
+    if (!item) return;
+    
+    if (!confirm(`Delete "${item.name}"?`)) return;
+    
+    trimItems = trimItems.filter(t => t.id !== id);
+    renderTrimItems();
+    syncTrimPricing();
+    showToast('🗑 Trim Item Deleted', item.name);
+}
+
+// Open trim selector for order
+function openTrimSelector() {
+    renderTrimGrid();
+    document.getElementById('trim-selector').classList.add('open');
+}
+
+function closeTrimSelector() {
+    document.getElementById('trim-selector').classList.remove('open');
+}
+
+// Render trim grid
+function renderTrimGrid() {
+    const grid = document.getElementById('trim-grid');
+    
+    if (trimItems.length === 0) {
+        grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:#888;padding:40px;">No trim items available. Add them in the Pricing Matrix first.</div>';
+        return;
+    }
+    
+    // Group by type
+    const grouped = {};
+    trimItems.forEach(item => {
+        if (!grouped[item.type]) grouped[item.type] = [];
+        grouped[item.type].push(item);
+    });
+    
+    grid.innerHTML = Object.keys(grouped).sort().map(type => {
+        const items = grouped[type];
+        const cards = items.map(item => `
+            <div class="builtin-card" onclick="selectTrimItem('${item.id}')">
+                <div class="builtin-card-name">${item.name}</div>
+                <div class="builtin-card-category">${fmt(item.pricePerStick)} per 8' stick</div>
+            </div>
+        `).join('');
+        
+        return `<div class="category-divider">${type}</div>${cards}`;
+    }).join('');
+}
+
+// Select trim item
+function selectTrimItem(id) {
+    const item = trimItems.find(t => t.id === id);
+    if (!item) return;
+    
+    selectedTrimForQuantity = item;
+    closeTrimSelector();
+    
+    document.getElementById('trim-modal-title').textContent = 'Add Trim';
+    document.getElementById('trim-item-name').textContent = `${item.type}: ${item.name} (${fmt(item.pricePerStick)} per 8' stick)`;
+    document.getElementById('trim-linear-feet').value = '';
+    document.getElementById('trim-sticks').textContent = '0';
+    document.getElementById('trim-total-price').textContent = '$0.00';
+    
+    openModal('modal-trim-quantity');
+}
+
+// Live price calculation for trim
+document.addEventListener('DOMContentLoaded', () => {
+    const trimLinearFeetInput = document.getElementById('trim-linear-feet');
+    
+    function updateTrimLivePrice() {
+        if (!selectedTrimForQuantity) return;
+        
+        const linearFeet = parseFloat(trimLinearFeetInput.value) || 0;
+        const sticks = calculateSticks(linearFeet);
+        const price = calculateTrimPrice(linearFeet, selectedTrimForQuantity.pricePerStick);
+        
+        document.getElementById('trim-sticks').textContent = sticks;
+        document.getElementById('trim-total-price').textContent = fmt(price);
+    }
+    
+    trimLinearFeetInput?.addEventListener('input', updateTrimLivePrice);
+});
+
+// Confirm trim quantity
+function confirmTrimQuantity() {
+    const linearFeet = parseFloat(document.getElementById('trim-linear-feet').value);
+    
+    if (!linearFeet || linearFeet <= 0) {
+        alert('Please enter a valid linear footage');
+        return;
+    }
+    
+    const sticks = calculateSticks(linearFeet);
+    const price = calculateTrimPrice(linearFeet, selectedTrimForQuantity.pricePerStick);
+    
+    orderTrimList.push({
+        trimItemId: selectedTrimForQuantity.id,
+        type: selectedTrimForQuantity.type,
+        name: selectedTrimForQuantity.name,
+        pricePerStick: selectedTrimForQuantity.pricePerStick,
+        linearFeet: linearFeet,
+        sticks: sticks,
+        totalPrice: price
+    });
+    
+    renderOrderTrimList();
+    closeModal('modal-trim-quantity');
+}
+
+// Render trim list in order modal
+function renderOrderTrimList() {
+    const container = document.getElementById('order-trim-list');
+    
+    if (orderTrimList.length === 0) {
+        container.innerHTML = '<div class="empty-state">No trim items added yet</div>';
+        return;
+    }
+    
+    container.innerHTML = orderTrimList.map((item, idx) => `
+        <div class="selected-builtin-item">
+            <div style="flex:1;">
+                <div style="font-weight:600;color:#0090ff;margin-bottom:4px;">${item.type}: ${item.name}</div>
+                <div style="font-size:12px;color:#888;">
+                    ${item.linearFeet} LF · ${item.sticks} sticks @ ${fmt(item.pricePerStick)}/stick
+                </div>
+            </div>
+            <span class="selected-builtin-price">${fmt(item.totalPrice)}</span>
+            <button class="selected-builtin-remove" onclick="removeTrimFromOrder(${idx})">×</button>
+        </div>
+    `).join('');
+}
+
+// Remove trim from order
+function removeTrimFromOrder(idx) {
+    orderTrimList.splice(idx, 1);
+    renderOrderTrimList();
+}
+
+// Sync trim pricing to Firebase
+function syncTrimPricing() {
+    saveToFirebase('trimItems', trimItems).catch(err => console.error('Error saving trim items:', err));
+}
 
 // PDF VIEWER VARIABLES
 let currentPDF = null;
@@ -1691,41 +1976,11 @@ function openOrder(id) {
         document.getElementById('di-shipping-instructions-wrapper').style.display = 'none';
     }
 
-// Display trim (only show if values exist)
-if (o.crown && o.crown > 0) {
-    document.getElementById('trim-crown-display').style.display = 'block';
-    const sticks = calculateSticks(o.crown);
-    const price = calculateTrimPrice(o.crown, trimPricing.crown);
-    document.getElementById('di-crown').textContent = `${o.crown} LF (${sticks} sticks) - ${fmt(price)}`;
-} else {
-    document.getElementById('trim-crown-display').style.display = 'none';
-}
-
-if (o.lightRail && o.lightRail > 0) {
-    document.getElementById('trim-light-rail-display').style.display = 'block';
-    const sticks = calculateSticks(o.lightRail);
-    const price = calculateTrimPrice(o.lightRail, trimPricing.lightRail);
-    document.getElementById('di-light-rail').textContent = `${o.lightRail} LF (${sticks} sticks) - ${fmt(price)}`;
-} else {
-    document.getElementById('trim-light-rail-display').style.display = 'none';
-}
-
-if (o.baseboard && o.baseboard > 0) {
-    document.getElementById('trim-baseboard-display').style.display = 'block';
-    const sticks = calculateSticks(o.baseboard);
-    const price = calculateTrimPrice(o.baseboard, trimPricing.baseboard);
-    document.getElementById('di-baseboard').textContent = `${o.baseboard} LF (${sticks} sticks) - ${fmt(price)}`;
-} else {
-    document.getElementById('trim-baseboard-display').style.display = 'none';
-}
-
-if (o.scribe && o.scribe > 0) {
-    document.getElementById('trim-scribe-display').style.display = 'block';
-    const sticks = calculateSticks(o.scribe);
-    const price = calculateTrimPrice(o.scribe, trimPricing.scribe);
-    document.getElementById('di-scribe').textContent = `${o.scribe} LF (${sticks} sticks) - ${fmt(price)}`;
-} else {
-    document.getElementById('trim-scribe-display').style.display = 'none';
+// Display trim items
+if (o.trimItems && o.trimItems.length > 0) {
+    const trimDisplay = o.trimItems.map(item => 
+        `<div><div style="font-size:11px;color:#aaa;text-transform:uppercase;font-weight:600;letter-spacing:0.5px;margin-bottom:5px;">${item.type}</div><div style="font-size:15px;color:white;font-weight:500;">${item.name}: ${item.linearFeet} LF (${item.sticks} sticks) - ${fmt(item.totalPrice)}</div></div>`
+    ).join('');
 }
     
     renderDetailStatus(o);
@@ -1862,11 +2117,7 @@ function renderDetailBuiltins(o) {
     }).join('');
     
     const subtotal = calculateOrderTotal(o.builtins);
-    const trimTotal = 
-    calculateTrimPrice(o.crown || 0, trimPricing.crown) +
-    calculateTrimPrice(o.lightRail || 0, trimPricing.lightRail) +
-    calculateTrimPrice(o.baseboard || 0, trimPricing.baseboard) +
-    calculateTrimPrice(o.scribe || 0, trimPricing.scribe);
+    const trimTotal = (o.trimItems || []).reduce((sum, item) => sum + item.totalPrice, 0);
 
     const finalSubtotal = subtotal + trimTotal;
     const tax = finalSubtotal * (taxRate / 100);
@@ -2001,6 +2252,7 @@ function handleShippingSameAsBilling() {
 function openOrderModal() {
     editingOrderId = null;
     orderBuiltinsList = [];
+    orderTrimList = [];
     const maxOrderId = orders.length > 0 ? Math.max(...orders.map(o => o.id)) : 2226;
     document.getElementById('order-number').value = maxOrderId + 1;
     document.getElementById('order-company').value = '';
@@ -2042,6 +2294,7 @@ function openOrderModal() {
     document.getElementById('order-ship-instructions').value = '';
     
     renderOrderBuiltinsList();
+    renderOrderTrimList();
     openModal('modal-order');
 }
 
@@ -2050,6 +2303,7 @@ function editOrder(id) {
     if (!o) return;
     editingOrderId = id;
     orderBuiltinsList = JSON.parse(JSON.stringify(o.builtins || []));
+    orderTrimList = JSON.parse(JSON.stringify(o.trimItems || []));
     document.getElementById('order-number').value = o.id;
     document.getElementById('order-company').value = o.company;
     document.getElementById('order-name').value = o.name;
@@ -2089,6 +2343,7 @@ function editOrder(id) {
     handleDrawersChange();
     handleCountertopsChange();
     renderOrderBuiltinsList();
+    renderOrderTrimList();
     openModal('modal-order');
 }
 
@@ -2252,7 +2507,8 @@ function saveOrder() {
             shipState, 
             shipZip, 
             shipInstructions,
-            builtins: orderBuiltinsList
+            builtins: orderBuiltinsList,
+            trimItems: orderTrimList
         });
         showToast('Order Updated', `Order #${orderNumber} saved`);
     } else {
@@ -2290,7 +2546,8 @@ function saveOrder() {
             shipState, 
             shipZip, 
             shipInstructions,
-            builtins: orderBuiltinsList, 
+            builtins: orderBuiltinsList,
+            trimItems: orderTrimList,
             pdfs: []
         });
         showToast('Order Created', `Order #${orderNumber} created`);

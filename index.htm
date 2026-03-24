@@ -1531,7 +1531,6 @@ function editTrimItem(id) {
     openModal('modal-trim-item');
 }
 
-// Save trim item
 function saveTrimItem() {
     const type = document.getElementById('trim-item-type').value;
     const name = document.getElementById('trim-item-name-input').value.trim();
@@ -1716,7 +1715,14 @@ function removeTrimFromOrder(idx) {
 
 // Sync trim pricing to Firebase
 function syncTrimPricing() {
-    saveToFirebase('trimItems', trimItems).catch(err => console.error('Error saving trim items:', err));
+    console.log('Saving trim items to Firebase:', trimItems);
+    saveToFirebase('trimItems', trimItems)
+        .then(() => {
+            console.log('✅ Trim items saved successfully');
+        })
+        .catch(err => {
+            console.error('❌ Error saving trim items:', err);
+        });
 }
 
 // PDF VIEWER VARIABLES

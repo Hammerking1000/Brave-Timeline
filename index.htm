@@ -1281,6 +1281,9 @@ function handleLogout() {
         });
     }
 }
+// ═══════════════════════════════════════════════════════════════
+// FIREBASE OPERATIONS
+// ═══════════════════════════════════════════════════════════════
 
 // FIREBASE SYNC FUNCTIONS
 function saveToFirebase(path, data) {
@@ -1312,16 +1315,9 @@ function syncPricingMatrix() {
 
 // Saves trim items to Firebase
 function syncTrimPricing() {
-    console.log('Saving trim items to Firebase:', trimItems);
-    saveToFirebase('trimItems', trimItems)
-        .then(() => {
-            console.log('✅ Trim items saved successfully');
-        })
-        .catch(err => {
-            console.error('❌ Error saving trim items:', err);
-        });
+    saveToFirebase('trimItems', trimItems).catch(err => console.error('Error saving trim items:', err));
 }
-    
+
 // Saves notifications and tax rates
 function syncNotificationSettings() {
     const settings = {
@@ -1365,6 +1361,7 @@ function saveTaxRate() {
         });
 }
 
+// Load all data from Firebase when opening up
 async function loadFromFirebaseOnStartup() {
     if (!firebaseInitialized) {
         console.log('Firebase not initialized, using local data');
@@ -1386,11 +1383,11 @@ async function loadFromFirebaseOnStartup() {
             console.log('✅ Loaded pricing matrix from Firebase');
         }
         
-        // Load trim items - ADD THIS SECTION
+        // Load trim items
         const loadedTrimItems = await loadFromFirebase('trimItems');
         if (loadedTrimItems) {
             trimItems = loadedTrimItems;
-            renderTrimItems(); // ← THIS LINE WAS MISSING!
+            renderTrimItems();
             console.log('✅ Loaded trim items from Firebase');
         }
         
@@ -1408,9 +1405,11 @@ async function loadFromFirebaseOnStartup() {
             }
             
             // Load tax rate
-            if (loadedSettings.taxRate !== undefined) {
-                taxRate = loadedSettings.taxRate;
+            const loadedTaxRate = await loadFromFirebase('settings/taxRate');
+            if (loadedTaxRate !== null && loadedTaxRate !== undefined) {
+                taxRate = loadedTaxRate;
                 document.getElementById('tax-rate-input').value = taxRate;
+                console.log('✅ Loaded tax rate:', taxRate);
             }
             
             // Restore toggle states
@@ -1457,7 +1456,7 @@ function setupRealtimeListeners() {
         }
     });
 }
-
+    
 // DATA
 const STATUSES = [
     { key:'bid',label:'BID',cls:'status-bid',dot:'#e65100' },

@@ -1965,16 +1965,45 @@ function openOrder(id) {
 
 // Display trim items
 if (o.trimItems && o.trimItems.length > 0) {
-    const trimDisplay = o.trimItems.map(item => 
-        `<div><div style="font-size:11px;color:#aaa;text-transform:uppercase;font-weight:600;letter-spacing:0.5px;margin-bottom:5px;">${item.type}</div><div style="font-size:15px;color:white;font-weight:500;">${item.name}: ${item.linearFeet} LF (${item.sticks} sticks) - ${fmt(item.totalPrice)}</div></div>`
-    ).join('');
-}
+    // Group trim items by type
+    const trimByType = {
+        'Crown Molding': [],
+        'Light Rail': [],
+        'Baseboard': [],
+        'Scribe': []
+    };
     
-    renderDetailStatus(o);
-    renderDetailBuiltins(o);
-    renderPDFList(o);
+    o.trimItems.forEach(item => {
+        if (trimByType[item.type]) {
+            trimByType[item.type].push(item);
+        }
+    });
     
-    showPage('order-detail', null);
+    // Display each type if it has items
+    Object.keys(trimByType).forEach(type => {
+        const items = trimByType[type];
+        if (items.length > 0) {
+            const displayId = type.toLowerCase().replace(' ', '-');
+            const displayDiv = document.getElementById(`trim-${displayId}-display`);
+            const contentDiv = document.getElementById(`di-${displayId}`);
+            
+            if (displayDiv && contentDiv) {
+                displayDiv.style.display = 'block';
+                
+                const trimText = items.map(item => 
+                    `${item.name}: ${item.linearFeet} LF (${item.sticks} sticks) - ${fmt(item.totalPrice)}`
+                ).join('<br>');
+                
+                contentDiv.innerHTML = trimText;
+            }
+        }
+    });
+} else {
+    // Hide all trim displays if no trim items
+    ['crown', 'light-rail', 'baseboard', 'scribe'].forEach(type => {
+        const displayDiv = document.getElementById(`trim-${type}-display`);
+        if (displayDiv) displayDiv.style.display = 'none';
+    });
 }
 
 function renderDetailStatus(o) {

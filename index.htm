@@ -1979,13 +1979,21 @@ if (o.trimItems && o.trimItems.length > 0) {
         }
     });
     
-    // Display each type if it has items
-    Object.keys(trimByType).forEach(type => {
-        const items = trimByType[type];
-        if (items.length > 0) {
-            const displayId = type.toLowerCase().replace(' ', '-');
-            const displayDiv = document.getElementById(`trim-${displayId}-display`);
-            const contentDiv = document.getElementById(`di-${displayId}`);
+   // Map display names to HTML IDs
+const typeIdMap = {
+    'Crown Molding': 'crown',
+    'Light Rail': 'light-rail',
+    'Baseboard': 'baseboard',
+    'Scribe': 'scribe'
+};
+
+// Display each type if it has items
+Object.keys(trimByType).forEach(type => {
+    const items = trimByType[type];
+    if (items.length > 0) {
+        const displayId = typeIdMap[type];
+        const displayDiv = document.getElementById(`trim-${displayId}-display`);
+        const contentDiv = document.getElementById(`di-${displayId}`);
             
             if (displayDiv && contentDiv) {
                 displayDiv.style.display = 'block';

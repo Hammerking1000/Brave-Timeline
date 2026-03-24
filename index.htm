@@ -1907,8 +1907,8 @@ function renderOrders() {
                 </div>
             </td>
             <td onclick="event.stopPropagation()">
-                <button class="btn btn-ghost btn-icon" onclick="editOrder(${o.id})">Edit</button>
-            </td>
+    <button class="btn btn-ghost btn-icon" onclick="editOrder(${o.id})">Edit</button>
+        </td>
         </tr>`;
     }).join('');
 }
@@ -2301,9 +2301,16 @@ function openOrderModal() {
 function editOrder(id) {
     const o = getOrder(id);
     if (!o) return;
+    
+    // Set editing mode and prepare lists
     editingOrderId = id;
     orderBuiltinsList = JSON.parse(JSON.stringify(o.builtins || []));
     orderTrimList = JSON.parse(JSON.stringify(o.trimItems || []));
+    
+    // OPEN THE MODAL FIRST
+    openModal('modal-order');
+    
+    // NOW populate the fields (they exist now)
     document.getElementById('order-number').value = o.id;
     document.getElementById('order-company').value = o.company;
     document.getElementById('order-name').value = o.name;
@@ -2321,15 +2328,15 @@ function editOrder(id) {
     document.getElementById('order-installation').value = o.installation || 'None';
     document.getElementById('order-doors').value = o.doors || '';
     document.getElementById('order-drawer-fronts').value = o.drawerFronts || '';
-    document.getElementById('order-crown').value = o.crown || '';
-    document.getElementById('order-light-rail').value = o.lightRail || '';
-    document.getElementById('order-baseboard').value = o.baseboard || '';
-    document.getElementById('order-scribe').value = o.scribe || '';
+    
+    // Billing info
     document.getElementById('order-bill-name').value = o.billName || '';
     document.getElementById('order-bill-address').value = o.billAddress || '';
     document.getElementById('order-bill-city').value = o.billCity || '';
     document.getElementById('order-bill-state').value = o.billState || '';
     document.getElementById('order-bill-zip').value = o.billZip || '';
+    
+    // Shipping info
     document.getElementById('order-ship-same').checked = o.shipSameAsBilling || false;
     document.getElementById('shipping-address-fields').style.display = o.shipSameAsBilling ? 'none' : 'block';
     document.getElementById('order-ship-name').value = o.shipName || '';
@@ -2339,12 +2346,14 @@ function editOrder(id) {
     document.getElementById('order-ship-zip').value = o.shipZip || '';
     document.getElementById('order-ship-instructions').value = o.shipInstructions || '';
     
+    // Update conditional field visibility
     handleMaterialsChange();
     handleDrawersChange();
     handleCountertopsChange();
+    
+    // Render built-ins and trim lists
     renderOrderBuiltinsList();
     renderOrderTrimList();
-    openModal('modal-order');
 }
 
 function renderOrderBuiltinsList() {

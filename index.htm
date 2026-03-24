@@ -2489,10 +2489,6 @@ function saveOrder() {
     const installation = document.getElementById('order-installation').value;
     const doors = document.getElementById('order-doors').value;
     const drawerFronts = document.getElementById('order-drawer-fronts').value;
-    const crown = parseFloat(document.getElementById('order-crown').value) || 0;
-    const lightRail = parseFloat(document.getElementById('order-light-rail').value) || 0;
-    const baseboard = parseFloat(document.getElementById('order-baseboard').value) || 0;
-    const scribe = parseFloat(document.getElementById('order-scribe').value) || 0;
     const billName = document.getElementById('order-bill-name').value.trim();
     const billAddress = document.getElementById('order-bill-address').value.trim();
     const billCity = document.getElementById('order-bill-city').value.trim();
@@ -2531,10 +2527,6 @@ function saveOrder() {
             installation, 
             doors, 
             drawerFronts,
-            crown,
-            lightRail,
-            baseboard,
-            scribe,
             billName, 
             billAddress, 
             billCity, 
@@ -2570,10 +2562,6 @@ function saveOrder() {
             installation, 
             doors, 
             drawerFronts,
-            crown,
-            lightRail,
-            baseboard,
-            scribe,
             billName, 
             billAddress, 
             billCity, 

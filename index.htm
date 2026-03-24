@@ -1353,7 +1353,6 @@ function saveTaxRate() {
         });
 }
 
-// Load all data from Firebase when opening up
 async function loadFromFirebaseOnStartup() {
     if (!firebaseInitialized) {
         console.log('Firebase not initialized, using local data');
@@ -1361,18 +1360,26 @@ async function loadFromFirebaseOnStartup() {
     }
     
     try {
-        // Loads orders
+        // Load orders
         const loadedOrders = await loadFromFirebase('orders');
         if (loadedOrders) {
             orders = loadedOrders;
-            console.log('Loaded orders from Firebase');
+            console.log('✅ Loaded orders from Firebase');
         }
         
         // Load pricing matrix
         const loadedMatrix = await loadFromFirebase('pricingMatrix');
         if (loadedMatrix) {
             pricingMatrix = loadedMatrix;
-            console.log('Loaded pricing matrix from Firebase');
+            console.log('✅ Loaded pricing matrix from Firebase');
+        }
+        
+        // Load trim items - ADD THIS SECTION
+        const loadedTrimItems = await loadFromFirebase('trimItems');
+        if (loadedTrimItems) {
+            trimItems = loadedTrimItems;
+            renderTrimItems(); // ← THIS LINE WAS MISSING!
+            console.log('✅ Loaded trim items from Firebase');
         }
         
         // Load settings
@@ -1387,21 +1394,11 @@ async function loadFromFirebaseOnStartup() {
                     </span>`
                 ).join('');
             }
-
-           // Load trim items
-            const loadedTrimItems = await loadFromFirebase('trimItems');
-            if (loadedTrimItems) {
-                trimItems = loadedTrimItems;
-                renderTrimItems();
-                console.log('Loaded trim items from Firebase');
-            }
-                        
+            
             // Load tax rate
-            const loadedTaxRate = await loadFromFirebase('settings/taxRate');
-            if (loadedTaxRate !== null && loadedTaxRate !== undefined) {
-                taxRate = loadedTaxRate;
+            if (loadedSettings.taxRate !== undefined) {
+                taxRate = loadedSettings.taxRate;
                 document.getElementById('tax-rate-input').value = taxRate;
-                console.log('Loaded tax rate:', taxRate);
             }
             
             // Restore toggle states
@@ -1415,7 +1412,7 @@ async function loadFromFirebaseOnStartup() {
                 });
             }
             
-            console.log('Loaded settings from Firebase');
+            console.log('✅ Loaded settings from Firebase');
         }
         
         // Render UI with loaded data

@@ -1310,6 +1310,18 @@ function syncPricingMatrix() {
     saveToFirebase('pricingMatrix', pricingMatrix).catch(err => console.error('Error saving pricing matrix:', err));
 }
 
+// Saves trim items to Firebase
+function syncTrimPricing() {
+    console.log('Saving trim items to Firebase:', trimItems);
+    saveToFirebase('trimItems', trimItems)
+        .then(() => {
+            console.log('✅ Trim items saved successfully');
+        })
+        .catch(err => {
+            console.error('❌ Error saving trim items:', err);
+        });
+}
+    
 // Saves notifications and tax rates
 function syncNotificationSettings() {
     const settings = {
@@ -1711,18 +1723,6 @@ function renderOrderTrimList() {
 function removeTrimFromOrder(idx) {
     orderTrimList.splice(idx, 1);
     renderOrderTrimList();
-}
-
-// Sync trim pricing to Firebase
-function syncTrimPricing() {
-    console.log('Saving trim items to Firebase:', trimItems);
-    saveToFirebase('trimItems', trimItems)
-        .then(() => {
-            console.log('✅ Trim items saved successfully');
-        })
-        .catch(err => {
-            console.error('❌ Error saving trim items:', err);
-        });
 }
 
 // PDF VIEWER VARIABLES

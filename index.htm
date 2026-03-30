@@ -597,7 +597,7 @@ tbody tr:last-child td { border-bottom: none; }
         <div class="action-bar">
             <button class="btn btn-ghost btn-sm" onclick="backToOrders()">← Back to Orders</button>
             <div style="margin-left:auto;display:flex;gap:10px;">
-                <button class="btn btn-ghost btn-sm" onclick="editCurrentOrder()">Edit Order</button>
+                <button class="btn btn-ghost btn-sm" onclick="editCurrentOrder()">🖉</button>
                 <button class="btn btn-danger btn-sm" onclick="deleteCurrentOrder()">Delete</button>
             </div>
         </div>
@@ -1212,11 +1212,11 @@ try {
     console.log('Firebase connected successfully');
 } catch (error) {
     console.error('Firebase initialization error:', error);
-    alert('Please update Firebase configuration in the code. See instructions at the top of the script section.');
+    alert('Please update Firebase config. See my instructions at the top of the script section on the github page or in the code.');
 }
 
 // ═══════════════════════════════════════════════════════════════
-// AUTHENTICATION
+// AUTH
 // ═══════════════════════════════════════════════════════════════
 
 // Monitor auth state
@@ -1510,7 +1510,7 @@ function renderTrimItems() {
             <td>${item.name}</td>
             <td style="text-align:right;">${fmt(item.pricePerStick)}</td>
             <td>
-                <button class="btn btn-ghost btn-sm" onclick="editTrimItem('${item.id}')">Edit</button>
+                <button class="btn btn-ghost btn-sm" onclick="editTrimItem('${item.id}')">🖉</button>
                 <button class="btn btn-danger btn-sm" onclick="deleteTrimItem('${item.id}')">Delete</button>
             </td>
         </tr>
@@ -1590,7 +1590,7 @@ function deleteTrimItem(id) {
     trimItems = trimItems.filter(t => t.id !== id);
     renderTrimItems();
     syncTrimPricing();
-    showToast('🗑 Trim Item Deleted', item.name);
+    showToast('Trim Item Deleted', item.name);
 }
 
 // Open trim selector for order
@@ -1892,7 +1892,7 @@ function renderOrders() {
                 </div>
             </td>
             <td onclick="event.stopPropagation()">
-    <button class="btn btn-ghost btn-icon" onclick="editOrder(${o.id})">Edit</button>
+    <button class="btn btn-ghost btn-icon" onclick="editOrder(${o.id})">🖉</button>
         </td>
         </tr>`;
     }).join('');

@@ -1544,6 +1544,18 @@ async function loadFromFirebaseOnStartup() {
             console.log('✅ Loaded settings from Firebase');
         }
         
+        if (currentUser) {
+            const today = getTodayDate();
+            const entriesPath = `timeEntries/${currentUser.uid}/${today}`;
+            const loadedEntries = await loadFromFirebase(entriesPath);
+            if (loadedEntries) {
+                todayEntries = Object.values(loadedEntries);
+                console.log('✅ Loaded time entries from Firebase');
+            } else {
+                todayEntries = [];
+                console.log('✅ No time entries for today');
+            }
+        }
         // Render UI with loaded data
         renderOrders();
         
@@ -1578,15 +1590,13 @@ function setupRealtimeListeners() {
 // ═══════════════════════════════════════════════════════════════
 // TIME CARD SYSTEM
 // ═══════════════════════════════════════════════════════════════
-
-let currentClockInTime = null;
-let todayEntries = [];
-
 // Get today's date in YYYY-MM-DD format
 function getTodayDate() {
     const today = new Date();
     return today.toISOString().split('T')[0];
 }
+let currentClockInTime = null;
+let todayEntries = [];    
 
 // Format date for display
 function formatDisplayDate(dateStr) {

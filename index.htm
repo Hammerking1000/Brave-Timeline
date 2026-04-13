@@ -1843,9 +1843,18 @@ function renderAdminTimeCards(userSummaries) {
 
 // Initialize time card page
 function initializeTimeCard() {
+    if (!currentUser) {
+        console.log('⚠️ Cannot initialize time card - no user logged in');
+        return;
+    }
+    
+    console.log('✅ Initializing time card for:', currentUser.email);
+    
     updateCurrentTime();
     setInterval(updateCurrentTime, 1000);
-    loadTodayTimeCard();
+    
+    // Render the time card with already-loaded data
+    renderTodayTimeCard();
     
     // Set admin date picker to today
     const datePicker = document.getElementById('admin-date-picker');

@@ -1614,21 +1614,29 @@ function updateCurrentTime() {
 }
 
 // Clock In
-function clockIn() {
+async function clockIn() {
     if (!currentUser) return;
     
     currentClockInTime = new Date().toISOString();
+    
+    // Save active clock-in to Firebase
+    const activePath = `activeClockIns/${currentUser.uid}`;
+    await saveToFirebase(activePath, {
+        clockInTime: currentClockInTime,
+        userId: currentUser.uid,
+        userEmail: currentUser.email
+    });
     
     document.getElementById('clock-status').textContent = 'Clocked In';
     document.getElementById('clock-status').style.color = '#4caf50';
     document.getElementById('clock-in-btn').style.display = 'none';
     document.getElementById('clock-out-btn').style.display = 'flex';
     
-    showToast('✅ Clocked In', 'Have a great shift!');
+    showToast('✅ Clocked In', 'Clocked in');
 }
 
 // Clock Out
-function clockOut() {
+async function clockOut() {
     if (!currentUser || !currentClockInTime) return;
     
     const clockOutTime = new Date().toISOString();
@@ -1643,19 +1651,49 @@ function clockOut() {
     
     // Save to Firebase
     const entryPath = `timeEntries/${currentUser.uid}/${entry.date}/${entry.id}`;
-    saveToFirebase(entryPath, entry).then(() => {
-        showToast('✅ Clocked Out', 'Entry saved successfully');
-        currentClockInTime = null;
+    await saveToFirebase(entryPath, entry);
+    
+    // Remove active clock-in
+    const activePath = `activeClockIns/${currentUser.uid}`;
+    await saveToFirebase(activePath, null); // Set to null to delete
+    
+    showToast('✅ Clocked Out', 'Bye');
+    currentClockInTime = null;
+    
+    document.getElementById('clock-status').textContent = 'Clocked Out';
+    document.getElementById('clock-status').style.color = '#0090ff';
+    document.getElementById('clock-in-btn').style.display = 'flex';
+    document.getElementById('clock-out-btn').style.display = 'none';
+    
+    loadTodayTimeCard();
+}
+
+// Check if user has an active clock-in
+async function checkActiveClockIn() {
+    if (!currentUser) return;
+    
+    const activePath = `activeClockIns/${currentUser.uid}`;
+    const activeClockIn = await loadFromFirebase(activePath);
+    
+    if (activeClockIn && activeClockIn.clockInTime) {
+        // User has an active clock-in
+        currentClockInTime = activeClockIn.clockInTime;
         
+        document.getElementById('clock-status').textContent = 'Clocked In';
+        document.getElementById('clock-status').style.color = '#4caf50';
+        document.getElementById('clock-in-btn').style.display = 'none';
+        document.getElementById('clock-out-btn').style.display = 'flex';
+        
+        console.log('✅ Restored active clock-in from:', new Date(currentClockInTime).toLocaleTimeString());
+    } else {
+        // No active clock-in
         document.getElementById('clock-status').textContent = 'Clocked Out';
         document.getElementById('clock-status').style.color = '#0090ff';
         document.getElementById('clock-in-btn').style.display = 'flex';
         document.getElementById('clock-out-btn').style.display = 'none';
-        
-        loadTodayTimeCard();
-    });
+    }
 }
-
+    
 // Load today's time card
 async function loadTodayTimeCard() {
     if (!currentUser) return;
@@ -1842,7 +1880,7 @@ function renderAdminTimeCards(userSummaries) {
 }
 
 // Initialize time card page
-function initializeTimeCard() {
+async function initializeTimeCard() {
     if (!currentUser) {
         console.log('⚠️ Cannot initialize time card - no user logged in');
         return;
@@ -1852,6 +1890,9 @@ function initializeTimeCard() {
     
     updateCurrentTime();
     setInterval(updateCurrentTime, 1000);
+    
+    // Check if user has an active clock-in
+    await checkActiveClockIn();
     
     // Render the time card with already-loaded data
     renderTodayTimeCard();

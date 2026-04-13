@@ -1349,6 +1349,7 @@ if (auth) {
             // Load data from Firebase
             loadFromFirebaseOnStartup().then(() => {
                 setupRealtimeListeners();
+                initializeTimeCard();
             });
         } else {
             // User is signed out
@@ -3652,8 +3653,7 @@ depthSelect?.addEventListener('change', updateLivePrice);
             setTimeout(syncNotificationSettings, 100);
         });
     });
-    initializeTimeCard();
-    
+   
     renderOrders();
 });
 </script>

@@ -3614,6 +3614,24 @@ function confirmDimensions() {
 
 // Pricing matrix
 function renderMatrix() {
+    console.log('🔍 renderMatrix called');
+    console.log('📊 pricingMatrix:', pricingMatrix);
+    
+    const container = document.getElementById('matrix-container');
+    console.log('📦 container found:', !!container);
+    
+    if (!container) {
+        console.error('❌ Matrix container not found!');
+        return;
+    }
+    
+    if (!pricingMatrix || pricingMatrix.length === 0) {
+        console.log('⚠️ pricingMatrix is empty');
+        container.innerHTML = '<div style="text-align:center;padding:40px;color:#888;">No cabinets in pricing matrix. Click "Add Cabinet" to get started.</div>';
+        return;
+    }
+    
+    console.log('✅ Rendering', pricingMatrix.length, 'cabinets');
     const tbody = document.getElementById('matrix-tbody');
     tbody.innerHTML = pricingMatrix.map(cabinet => {
         return cabinet.ranges.map((range, rangeIdx) => {

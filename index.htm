@@ -2007,25 +2007,30 @@ async function loadWeeklySummary() {
     let week2Hours = 0;
     const dailyHours = {};
     
-    allEntries.forEach(entry => {
-        const entryDate = new Date(entry.clockIn);
-        const dateKey = formatDateKey(entryDate);
-        
-        const start = new Date(entry.clockIn);
-        const end = new Date(entry.clockOut);
-        const hours = (end - start) / 1000 / 60 / 60;
-        
-        // Track daily
-        if (!dailyHours[dateKey]) dailyHours[dateKey] = 0;
-        dailyHours[dateKey] += hours;
-        
-        // Determine which week
-        if (entryDate >= week1Start && entryDate <= week1End) {
-            week1Hours += hours;
-        } else if (entryDate >= week2Start && entryDate <= week2End) {
-            week2Hours += hours;
-        }
-    });
+   allEntries.forEach(entry => {
+    const entryDate = new Date(entry.clockIn);
+    const dateKey = formatDateKey(entryDate);
+    
+    const start = new Date(entry.clockIn);
+    const end = new Date(entry.clockOut);
+    const hours = (end - start) / 1000 / 60 / 60;
+    
+    // Track daily
+    if (!dailyHours[dateKey]) dailyHours[dateKey] = 0;
+    dailyHours[dateKey] += hours;
+    
+    // Determine which week using date string comparison (avoids timezone issues)
+    const week1StartKey = formatDateKey(week1Start);
+    const week1EndKey = formatDateKey(week1End);
+    const week2StartKey = formatDateKey(week2Start);
+    const week2EndKey = formatDateKey(week2End);
+    
+    if (dateKey >= week1StartKey && dateKey <= week1EndKey) {
+        week1Hours += hours;
+    } else if (dateKey >= week2StartKey && dateKey <= week2EndKey) {
+        week2Hours += hours;
+    }
+});
     
     const twoWeekTotal = week1Hours + week2Hours;
     

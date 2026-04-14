@@ -3616,7 +3616,7 @@ function renderMatrix() {
     console.log('🔍 renderMatrix called');
     console.log('📊 pricingMatrix:', pricingMatrix);
     
-    const tbody = document.getElementById('matrix-tbody');  // ← Changed from 'matrix-container'
+    const tbody = document.getElementById('matrix-tbody');
     console.log('📦 tbody found:', !!tbody);
     
     if (!tbody) {
@@ -3633,12 +3633,17 @@ function renderMatrix() {
     console.log('✅ Rendering', pricingMatrix.length, 'cabinets');
     
     tbody.innerHTML = pricingMatrix.map(cabinet => {
+        // Handle undefined prices safely
+        const price12 = cabinet.price12 !== undefined ? fmt(cabinet.price12) : '—';
+        const price18 = cabinet.price18 !== undefined ? fmt(cabinet.price18) : '—';
+        const price24 = cabinet.price24 !== undefined ? fmt(cabinet.price24) : '—';
+        
         return `<tr>
             <td style="font-weight:600;">${cabinet.name}</td>
-            <td>${cabinet.ranges.map(r => r.label).join(', ')}</td>
-            <td class="num-right">${fmt(cabinet.price12)}</td>
-            <td class="num-right">${fmt(cabinet.price18)}</td>
-            <td class="num-right">${fmt(cabinet.price24)}</td>
+            <td>${cabinet.ranges && cabinet.ranges.length > 0 ? cabinet.ranges.map(r => r.label).join(', ') : '—'}</td>
+            <td class="num-right">${price12}</td>
+            <td class="num-right">${price18}</td>
+            <td class="num-right">${price24}</td>
             <td>
                 <button class="btn btn-sm" onclick="editCabinet('${cabinet.id}')">Edit</button>
                 <button class="btn btn-danger btn-sm" onclick="deleteCabinet('${cabinet.id}')">Delete</button>

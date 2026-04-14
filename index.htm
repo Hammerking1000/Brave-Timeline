@@ -540,8 +540,73 @@ tbody tr:last-child td { border-bottom: none; }
                 </div>
             </div>
             
-            <!-- Entry List -->
-            <div id="today-entries-list"></div>
+     <!-- Weekly Summary -->
+        <div class="card" style="padding:24px;margin-top:20px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+                <h3 style="font-size:16px;font-weight:700;color:white;margin:0;">Weekly Summary</h3>
+                <div style="display:flex;gap:8px;">
+                    <button class="btn btn-sm" onclick="changeWeek(-1)" style="padding:4px 12px;">← Prev</button>
+                    <button class="btn btn-sm" onclick="changeWeek(1)" style="padding:4px 12px;">Next →</button>
+                </div>
+            </div>
+            
+            <div style="font-size:12px;color:#888;margin-bottom:16px;" id="week-range-display">Loading...</div>
+            
+            <!-- Two Week Cycle Display -->
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;">
+                <!-- Week 1 -->
+                <div style="padding:16px;background:#1a1a1a;border-radius:8px;border:2px solid #444;" id="week-1-card">
+                    <div style="font-size:12px;color:#888;margin-bottom:8px;">Week 1</div>
+                    <div style="font-size:28px;font-weight:700;color:#0090ff;margin-bottom:4px;" id="week-1-hours">0.0</div>
+                    <div style="font-size:11px;color:#888;">of 42.5 hrs required</div>
+                    
+                    <!-- Progress bar -->
+                    <div style="height:6px;background:#252525;border-radius:3px;margin-top:12px;overflow:hidden;">
+                        <div id="week-1-progress" style="height:100%;background:linear-gradient(90deg, #0090ff, #00c8ff);width:0%;transition:width 0.3s;"></div>
+                    </div>
+                    
+                    <div style="font-size:11px;margin-top:8px;" id="week-1-status">--</div>
+                </div>
+                
+                <!-- Week 2 -->
+                <div style="padding:16px;background:#1a1a1a;border-radius:8px;border:2px solid #444;" id="week-2-card">
+                    <div style="font-size:12px;color:#888;margin-bottom:8px;">Week 2</div>
+                    <div style="font-size:28px;font-weight:700;color:#0090ff;margin-bottom:4px;" id="week-2-hours">0.0</div>
+                    <div style="font-size:11px;color:#888;">of 42.5 hrs required</div>
+                    
+                    <!-- Progress bar -->
+                    <div style="height:6px;background:#252525;border-radius:3px;margin-top:12px;overflow:hidden;">
+                        <div id="week-2-progress" style="height:100%;background:linear-gradient(90deg, #0090ff, #00c8ff);width:0%;transition:width 0.3s;"></div>
+                    </div>
+                    
+                    <div style="font-size:11px;margin-top:8px;" id="week-2-status">--</div>
+                </div>
+            </div>
+            
+            <!-- Two Week Total -->
+            <div style="padding:20px;background:#1a1a1a;border-radius:8px;border:2px solid #0090ff;">
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                    <div>
+                        <div style="font-size:12px;color:#888;margin-bottom:4px;">Two Week Total</div>
+                        <div style="font-size:32px;font-weight:700;color:#0090ff;" id="two-week-total">0.0 hrs</div>
+                    </div>
+                    <div style="text-align:right;">
+                        <div style="font-size:12px;color:#888;margin-bottom:4px;">Target: 85 hrs</div>
+                        <div style="font-size:18px;font-weight:600;" id="two-week-status">--</div>
+                    </div>
+                </div>
+                
+                <!-- Two week progress bar -->
+                <div style="height:8px;background:#252525;border-radius:4px;margin-top:16px;overflow:hidden;">
+                    <div id="two-week-progress" style="height:100%;background:linear-gradient(90deg, #0090ff, #00c8ff);width:0%;transition:width 0.3s;"></div>
+                </div>
+            </div>
+            
+            <!-- Day by day breakdown -->
+            <div style="margin-top:20px;">
+                <h4 style="font-size:14px;font-weight:600;color:white;margin-bottom:12px;">Daily Breakdown</h4>
+                <div id="weekly-breakdown"></div>
+            </div>
         </div>
     </div>
 </div>
@@ -1708,6 +1773,7 @@ async function clockOut() {
     document.getElementById('clock-out-btn').style.display = 'none';
     
     loadTodayTimeCard();
+    loadWeeklySummary();
 }
 
 // Check if user has an active clock-in
@@ -1835,6 +1901,216 @@ function renderEntryList() {
     }).join('');
 }
 
+// Weekly tracking
+let currentWeekOffset = 0; // 0 = current week, -1 = last week, etc.
+
+// Get Monday of the week for a given date
+function getMonday(date) {
+    const d = new Date(date);
+    const day = d.getDay();
+    const diff = d.getDate() - day + (day === 0 ? -6 : 1); // Adjust when day is Sunday
+    return new Date(d.setDate(diff));
+}
+
+// Get date range for two-week cycle
+function getTwoWeekRange(offsetWeeks = 0) {
+    const today = new Date();
+    today.setDate(today.getDate() + (offsetWeeks * 7));
+    
+    const monday = getMonday(today);
+    
+    // Determine which two-week cycle we're in
+    // Calculate weeks since epoch
+    const epoch = new Date('2026-01-05'); // Start reference (a Monday)
+    const weeksSinceEpoch = Math.floor((monday - epoch) / (7 * 24 * 60 * 60 * 1000));
+    const cycleWeek = weeksSinceEpoch % 2; // 0 or 1
+    
+    let week1Start, week2Start;
+    
+    if (cycleWeek === 0) {
+        // Current week is first week of cycle
+        week1Start = new Date(monday);
+        week2Start = new Date(monday);
+        week2Start.setDate(week2Start.getDate() + 7);
+    } else {
+        // Current week is second week of cycle
+        week1Start = new Date(monday);
+        week1Start.setDate(week1Start.getDate() - 7);
+        week2Start = new Date(monday);
+    }
+    
+    const week1End = new Date(week1Start);
+    week1End.setDate(week1End.getDate() + 6);
+    
+    const week2End = new Date(week2Start);
+    week2End.setDate(week2End.getDate() + 6);
+    
+    return {
+        week1Start,
+        week1End,
+        week2Start,
+        week2End,
+        cycleWeek
+    };
+}
+
+// Format date for Firebase query (YYYY-MM-DD)
+function formatDateKey(date) {
+    return date.toISOString().split('T')[0];
+}
+
+// Change week offset
+function changeWeek(direction) {
+    currentWeekOffset += direction;
+    loadWeeklySummary();
+}
+
+// Load weekly summary
+async function loadWeeklySummary() {
+    if (!currentUser) return;
+    
+    const { week1Start, week1End, week2Start, week2End, cycleWeek } = getTwoWeekRange(currentWeekOffset);
+    
+    // Update display
+    const options = { month: 'short', day: 'numeric' };
+    const week1Str = `${week1Start.toLocaleDateString('en-US', options)} - ${week1End.toLocaleDateString('en-US', options)}`;
+    const week2Str = `${week2Start.toLocaleDateString('en-US', options)} - ${week2End.toLocaleDateString('en-US', options)}`;
+    
+    document.getElementById('week-range-display').textContent = 
+        `Two-Week Cycle: ${week1Start.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} - ${week2End.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
+    
+    // Load entries for the entire two-week period
+    const allEntries = [];
+    const currentDate = new Date(week1Start);
+    const endDate = new Date(week2End);
+    
+    while (currentDate <= endDate) {
+        const dateKey = formatDateKey(currentDate);
+        const entriesPath = `timeEntries/${currentUser.uid}/${dateKey}`;
+        const dayEntries = await loadFromFirebase(entriesPath);
+        
+        if (dayEntries) {
+            Object.values(dayEntries).forEach(entry => {
+                allEntries.push(entry);
+            });
+        }
+        
+        currentDate.setDate(currentDate.getDate() + 1);
+    }
+    
+    // Calculate hours for each week
+    let week1Hours = 0;
+    let week2Hours = 0;
+    const dailyHours = {};
+    
+    allEntries.forEach(entry => {
+        const entryDate = new Date(entry.clockIn);
+        const dateKey = formatDateKey(entryDate);
+        
+        const start = new Date(entry.clockIn);
+        const end = new Date(entry.clockOut);
+        const hours = (end - start) / 1000 / 60 / 60;
+        
+        // Track daily
+        if (!dailyHours[dateKey]) dailyHours[dateKey] = 0;
+        dailyHours[dateKey] += hours;
+        
+        // Determine which week
+        if (entryDate >= week1Start && entryDate <= week1End) {
+            week1Hours += hours;
+        } else if (entryDate >= week2Start && entryDate <= week2End) {
+            week2Hours += hours;
+        }
+    });
+    
+    const twoWeekTotal = week1Hours + week2Hours;
+    
+    // Update Week 1 display
+    document.getElementById('week-1-hours').textContent = week1Hours.toFixed(1);
+    const week1Percent = (week1Hours / 42.5) * 100;
+    document.getElementById('week-1-progress').style.width = Math.min(week1Percent, 100) + '%';
+    
+    if (week1Hours >= 42.5) {
+        const over = week1Hours - 42.5;
+        document.getElementById('week-1-status').innerHTML = `<span style="color:#4caf50;">✓ Complete (+${over.toFixed(1)} hrs)</span>`;
+        document.getElementById('week-1-card').style.borderColor = '#4caf50';
+    } else {
+        const remaining = 42.5 - week1Hours;
+        document.getElementById('week-1-status').innerHTML = `<span style="color:#ff9800;">${remaining.toFixed(1)} hrs remaining</span>`;
+        document.getElementById('week-1-card').style.borderColor = '#444';
+    }
+    
+    // Update Week 2 display
+    document.getElementById('week-2-hours').textContent = week2Hours.toFixed(1);
+    const week2Percent = (week2Hours / 42.5) * 100;
+    document.getElementById('week-2-progress').style.width = Math.min(week2Percent, 100) + '%';
+    
+    if (week2Hours >= 42.5) {
+        const over = week2Hours - 42.5;
+        document.getElementById('week-2-status').innerHTML = `<span style="color:#4caf50;">✓ Complete (+${over.toFixed(1)} hrs)</span>`;
+        document.getElementById('week-2-card').style.borderColor = '#4caf50';
+    } else {
+        const remaining = 42.5 - week2Hours;
+        document.getElementById('week-2-status').innerHTML = `<span style="color:#ff9800;">${remaining.toFixed(1)} hrs remaining</span>`;
+        document.getElementById('week-2-card').style.borderColor = '#444';
+    }
+    
+    // Update two-week total
+    document.getElementById('two-week-total').textContent = twoWeekTotal.toFixed(1) + ' hrs';
+    const twoWeekPercent = (twoWeekTotal / 85) * 100;
+    document.getElementById('two-week-progress').style.width = Math.min(twoWeekPercent, 100) + '%';
+    
+    if (twoWeekTotal >= 85) {
+        const over = twoWeekTotal - 85;
+        document.getElementById('two-week-status').innerHTML = `<span style="color:#4caf50;">✓ Goal Met (+${over.toFixed(1)} hrs)</span>`;
+    } else {
+        const remaining = 85 - twoWeekTotal;
+        document.getElementById('two-week-status').innerHTML = `<span style="color:#ff9800;">${remaining.toFixed(1)} hrs needed</span>`;
+    }
+    
+    // Render daily breakdown
+    renderWeeklyBreakdown(week1Start, week2End, dailyHours);
+}
+
+// Render daily breakdown
+function renderWeeklyBreakdown(startDate, endDate, dailyHours) {
+    const container = document.getElementById('weekly-breakdown');
+    if (!container) return;
+    
+    const days = [];
+    const currentDate = new Date(startDate);
+    
+    while (currentDate <= endDate) {
+        const dateKey = formatDateKey(currentDate);
+        const hours = dailyHours[dateKey] || 0;
+        const dayName = currentDate.toLocaleDateString('en-US', { weekday: 'short' });
+        const dateStr = currentDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        
+        days.push({
+            dateKey,
+            dayName,
+            dateStr,
+            hours,
+            isToday: dateKey === getTodayDate()
+        });
+        
+        currentDate.setDate(currentDate.getDate() + 1);
+    }
+    
+    container.innerHTML = days.map(day => `
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:${day.isToday ? '#1a3a4a' : '#1a1a1a'};border-radius:6px;margin-bottom:6px;border-left:3px solid ${day.hours > 0 ? '#0090ff' : '#333'};">
+            <div style="display:flex;gap:12px;align-items:center;">
+                <div style="font-size:12px;color:#888;min-width:35px;">${day.dayName}</div>
+                <div style="font-size:13px;color:white;">${day.dateStr}</div>
+                ${day.isToday ? '<span style="font-size:10px;color:#0090ff;font-weight:600;">TODAY</span>' : ''}
+            </div>
+            <div style="font-size:14px;color:${day.hours > 0 ? '#0090ff' : '#666'};font-weight:600;">
+                ${day.hours > 0 ? day.hours.toFixed(1) + ' hrs' : '—'}
+            </div>
+        </div>
+    `).join('');
+}
+    
 // Load admin time cards
 async function loadAdminTimeCards() {
     const datePicker = document.getElementById('admin-date-picker');
@@ -2087,6 +2363,9 @@ async function initializeTimeCard() {
     
     // Render the time card with already-loaded data
     renderTodayTimeCard();
+    
+    // Load weekly summary
+    await loadWeeklySummary();
     
     // Set admin date picker to today
     const datePicker = document.getElementById('admin-date-picker');

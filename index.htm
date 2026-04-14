@@ -3612,44 +3612,38 @@ function confirmDimensions() {
     closeModal('modal-dimensions');
 }
 
-// Pricing matrix
 function renderMatrix() {
     console.log('🔍 renderMatrix called');
     console.log('📊 pricingMatrix:', pricingMatrix);
     
-    const container = document.getElementById('matrix-container');
-    console.log('📦 container found:', !!container);
+    const tbody = document.getElementById('matrix-tbody');  // ← Changed from 'matrix-container'
+    console.log('📦 tbody found:', !!tbody);
     
-    if (!container) {
-        console.error('❌ Matrix container not found!');
+    if (!tbody) {
+        console.error('❌ Matrix tbody not found!');
         return;
     }
     
     if (!pricingMatrix || pricingMatrix.length === 0) {
         console.log('⚠️ pricingMatrix is empty');
-        container.innerHTML = '<div style="text-align:center;padding:40px;color:#888;">No cabinets in pricing matrix. Click "Add Cabinet" to get started.</div>';
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:40px;color:#888;">No cabinets in pricing matrix. Click "Add Cabinet" to get started.</td></tr>';
         return;
     }
     
     console.log('✅ Rendering', pricingMatrix.length, 'cabinets');
-    const tbody = document.getElementById('matrix-tbody');
+    
     tbody.innerHTML = pricingMatrix.map(cabinet => {
-        return cabinet.ranges.map((range, rangeIdx) => {
-            const isFirstRange = rangeIdx === 0;
-            const rowspan = cabinet.ranges.length;
-            
-            return `<tr>
-                ${isFirstRange ? `<td rowspan="${rowspan}" class="range-label">${cabinet.name}</td>` : ''}
-                <td class="range-label">${range.label}</td>
-                <td><input type="number" value="${range.prices['12'] || ''}" onchange="updatePrice('${cabinet.name}',${rangeIdx},'12',this.value)" step="0.01"></td>
-                <td><input type="number" value="${range.prices['18'] || ''}" onchange="updatePrice('${cabinet.name}',${rangeIdx},'18',this.value)" step="0.01"></td>
-                <td><input type="number" value="${range.prices['24'] || ''}" onchange="updatePrice('${cabinet.name}',${rangeIdx},'24',this.value)" step="0.01"></td>
-                ${isFirstRange ? `<td rowspan="${rowspan}">
-                    <button class="btn btn-ghost btn-sm" onclick="editCabinet('${cabinet.name}')">Edit</button>
-                    <button class="btn btn-danger btn-sm" onclick="deleteCabinet('${cabinet.name}')">Delete</button>
-                </td>` : ''}
-            </tr>`;
-        }).join('');
+        return `<tr>
+            <td style="font-weight:600;">${cabinet.name}</td>
+            <td>${cabinet.ranges.map(r => r.label).join(', ')}</td>
+            <td class="num-right">${fmt(cabinet.price12)}</td>
+            <td class="num-right">${fmt(cabinet.price18)}</td>
+            <td class="num-right">${fmt(cabinet.price24)}</td>
+            <td>
+                <button class="btn btn-sm" onclick="editCabinet('${cabinet.id}')">Edit</button>
+                <button class="btn btn-danger btn-sm" onclick="deleteCabinet('${cabinet.id}')">Delete</button>
+            </td>
+        </tr>`;
     }).join('');
 }
 

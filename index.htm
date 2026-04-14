@@ -1301,7 +1301,47 @@ tbody tr:last-child td { border-bottom: none; }
         </div>
     </div>
 </div>
-
+<!-- EDIT TIME ENTRY MODAL -->
+<div class="modal" id="modal-edit-time">
+    <div class="modal-content" style="max-width:500px;">
+        <div class="modal-header">
+            <h3>Edit Time Entry</h3>
+            <button class="modal-close" onclick="closeModal('modal-edit-time')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div style="margin-bottom:16px;">
+                <label class="form-label">Employee</label>
+                <div id="edit-time-employee" style="color:#888;font-size:14px;"></div>
+            </div>
+            
+            <div style="margin-bottom:16px;">
+                <label class="form-label">Date</label>
+                <input type="date" class="form-input" id="edit-time-date">
+            </div>
+            
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
+                <div>
+                    <label class="form-label">Clock In Time</label>
+                    <input type="time" class="form-input" id="edit-time-clockin">
+                </div>
+                <div>
+                    <label class="form-label">Clock Out Time</label>
+                    <input type="time" class="form-input" id="edit-time-clockout">
+                </div>
+            </div>
+            
+            <div style="padding:12px;background:#1a1a1a;border-radius:6px;margin-bottom:16px;">
+                <div style="font-size:12px;color:#888;margin-bottom:4px;">Calculated Duration</div>
+                <div style="font-size:18px;color:#0090ff;font-weight:600;" id="edit-time-duration">0.00 hrs</div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeModal('modal-edit-time')">Cancel</button>
+            <button class="btn btn-primary" onclick="saveTimeEntry()">Save Changes</button>
+        </div>
+    </div>
+</div>
+    
 <script>
 // ═══════════════════════════════════════════════════════════════
 // FIREBASE CONFIGURATION
@@ -1848,7 +1888,9 @@ function renderAdminTimeCards(userSummaries) {
         return;
     }
     
-    container.innerHTML = Object.values(userSummaries).map(summary => `
+    container.innerHTML = Object.keys(userSummaries).map(userId => {
+        const summary = userSummaries[userId];
+        return `
         <div class="card" style="padding:24px;margin-bottom:20px;">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
                 <div>
@@ -1871,16 +1913,163 @@ function renderAdminTimeCards(userSummaries) {
                 const endTime = end.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
                 
                 return `
-                    <div style="display:flex;justify-content:space-between;padding:12px;background:#1a1a1a;border-radius:6px;margin-bottom:8px;">
-                        <div style="font-size:14px;color:white;">${startTime} - ${endTime}</div>
-                        <div style="font-size:14px;color:#0090ff;font-weight:600;">${hours} hrs</div>
+                    <div style="display:flex;justify-content:space-between;align-items:center;padding:12px;background:#1a1a1a;border-radius:6px;margin-bottom:8px;">
+                        <div style="flex:1;">
+                            <div style="font-size:14px;color:white;">${startTime} - ${endTime}</div>
+                        </div>
+                        <div style="font-size:14px;color:#0090ff;font-weight:600;margin-right:12px;">${hours} hrs</div>
+                        <div style="display:flex;gap:8px;">
+                            <button class="btn btn-sm" onclick='editTimeEntry("${userId}", "${entry.date}", "${entry.id}")' style="padding:4px 8px;font-size:12px;">
+                                Edit
+                            </button>
+                            <button class="btn btn-danger btn-sm" onclick='deleteTimeEntry("${userId}", "${entry.date}", "${entry.id}")' style="padding:4px 8px;font-size:12px;">
+                                Delete
+                            </button>
+                        </div>
                     </div>
                 `;
             }).join('')}
         </div>
-    `).join('');
+        `;
+    }).join('');
 }
 
+// Edit time entry
+let editingTimeEntry = null;
+
+async function editTimeEntry(userId, date, entryId) {
+    const entryPath = `timeEntries/${userId}/${date}/${entryId}`;
+    const entry = await loadFromFirebase(entryPath);
+    
+    if (!entry) {
+        showToast('❌ Error', 'Could not load time entry');
+        return;
+    }
+    
+    editingTimeEntry = { userId, date, entryId, entry };
+    
+    // Populate modal
+    document.getElementById('edit-time-employee').textContent = entry.userEmail;
+    document.getElementById('edit-time-date').value = date;
+    
+    // Convert ISO timestamps to time inputs
+    const clockInDate = new Date(entry.clockIn);
+    const clockOutDate = new Date(entry.clockOut);
+    
+    document.getElementById('edit-time-clockin').value = 
+        clockInDate.toTimeString().slice(0, 5); // HH:MM format
+    document.getElementById('edit-time-clockout').value = 
+        clockOutDate.toTimeString().slice(0, 5);
+    
+    // Calculate and display duration
+    updateEditDuration();
+    
+    // Add listeners for live duration calculation
+    document.getElementById('edit-time-clockin').addEventListener('input', updateEditDuration);
+    document.getElementById('edit-time-clockout').addEventListener('input', updateEditDuration);
+    document.getElementById('edit-time-date').addEventListener('input', updateEditDuration);
+    
+    openModal('modal-edit-time');
+}
+
+// Update duration in edit modal
+function updateEditDuration() {
+    const date = document.getElementById('edit-time-date').value;
+    const clockInTime = document.getElementById('edit-time-clockin').value;
+    const clockOutTime = document.getElementById('edit-time-clockout').value;
+    
+    if (!date || !clockInTime || !clockOutTime) {
+        document.getElementById('edit-time-duration').textContent = '0.00 hrs';
+        return;
+    }
+    
+    const clockInDate = new Date(`${date}T${clockInTime}:00`);
+    const clockOutDate = new Date(`${date}T${clockOutTime}:00`);
+    
+    const minutes = (clockOutDate - clockInDate) / 1000 / 60;
+    const hours = (minutes / 60).toFixed(2);
+    
+    if (minutes < 0) {
+        document.getElementById('edit-time-duration').textContent = 'Invalid time range';
+        document.getElementById('edit-time-duration').style.color = '#ff4444';
+    } else {
+        document.getElementById('edit-time-duration').textContent = hours + ' hrs';
+        document.getElementById('edit-time-duration').style.color = '#0090ff';
+    }
+}
+
+// Save edited time entry
+async function saveTimeEntry() {
+    if (!editingTimeEntry) return;
+    
+    const date = document.getElementById('edit-time-date').value;
+    const clockInTime = document.getElementById('edit-time-clockin').value;
+    const clockOutTime = document.getElementById('edit-time-clockout').value;
+    
+    if (!date || !clockInTime || !clockOutTime) {
+        showToast('❌ Error', 'Please fill in all fields');
+        return;
+    }
+    
+    const clockInDate = new Date(`${date}T${clockInTime}:00`);
+    const clockOutDate = new Date(`${date}T${clockOutTime}:00`);
+    
+    if (clockOutDate <= clockInDate) {
+        showToast('❌ Error', 'Clock out must be after clock in');
+        return;
+    }
+    
+    const { userId, entryId } = editingTimeEntry;
+    
+    // Check if date changed - need to move entry to new date path
+    const oldDate = editingTimeEntry.date;
+    const newDate = date;
+    
+    const updatedEntry = {
+        id: entryId,
+        clockIn: clockInDate.toISOString(),
+        clockOut: clockOutDate.toISOString(),
+        date: newDate,
+        userId: userId,
+        userEmail: editingTimeEntry.entry.userEmail
+    };
+    
+    if (oldDate !== newDate) {
+        // Delete from old date
+        const oldPath = `timeEntries/${userId}/${oldDate}/${entryId}`;
+        await saveToFirebase(oldPath, null);
+        
+        // Save to new date
+        const newPath = `timeEntries/${userId}/${newDate}/${entryId}`;
+        await saveToFirebase(newPath, updatedEntry);
+    } else {
+        // Same date, just update
+        const entryPath = `timeEntries/${userId}/${newDate}/${entryId}`;
+        await saveToFirebase(entryPath, updatedEntry);
+    }
+    
+    showToast('✅ Updated', 'Time entry saved successfully');
+    closeModal('modal-edit-time');
+    editingTimeEntry = null;
+    
+    // Reload admin view
+    loadAdminTimeCards();
+}
+
+// Delete time entry
+async function deleteTimeEntry(userId, date, entryId) {
+    const confirmed = confirm('Are you sure you want to delete this time entry? This cannot be undone.');
+    if (!confirmed) return;
+    
+    const entryPath = `timeEntries/${userId}/${date}/${entryId}`;
+    await saveToFirebase(entryPath, null); // Set to null to delete
+    
+    showToast('✅ Deleted', 'Time entry removed');
+    
+    // Reload admin view
+    loadAdminTimeCards();
+}
+    
 // Initialize time card page
 async function initializeTimeCard() {
     if (!currentUser) {

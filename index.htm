@@ -2730,46 +2730,38 @@ function calculateTrimPrice(linearFeet, pricePerStick) {
 }
     
 // NAV
-let isAdminAuthenticated = false;
 
-function showPage(page, btn) {
-    // Admin access check - now includes 'admin' page
-    if ((page === 'settings' || page === 'matrix' || page === 'admin') && !isAdminAuthenticated) {
-        pendingAdminPage = page;
-        openAdminAccess();
-        return;
-    }
-    
-    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-    document.getElementById(`page-${page}`).classList.add('active');
-    document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
-    if (btn && btn.classList.contains('nav-tab')) {
-        btn.classList.add('active');
-    }
-    if (page === 'matrix') renderMatrix();
-    if (page === 'admin') loadAdminTimeCards();
-}
-    
-function openAdminAccess() {
-    document.getElementById('admin-password-input').value = '';
-    document.getElementById('admin-password-error').style.display = 'none';
-    openModal('modal-admin-password');
+const ADMIN_PASSWORD_HASH = '03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4';
+
+async function hashPassword(password) {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(password);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    const hashArray = Array.from(new UInt8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
-function checkAdminPassword() {
+async function checkAdminPassword() {
     const password = document.getElementById('admin-password-input').value;
-    const ADMIN_PASSWORD = '1234';
+    const hash = await hashPassword(password);
     
-    if (password === ADMIN_PASSWORD) {
+    if (hash === ADMIN_PASSWORD_HASH) {
         isAdminAuthenticated = true;
         closeModal('modal-admin-password');
-        showPage('settings', null);
-        showToast('Access Granted', 'You can now access settings and pricing matrix');
+        
+        if (pendingAdminPage) {
+            showPage(pendingAdminPage, null);
+            pendingAdminPage = null;
+        } else {
+            showPage('settings', null);
+        }
+        
+        showToast('Access Granted', 'You can now access admin pages');
     } else {
         document.getElementById('admin-password-error').style.display = 'block';
     }
 }
-
+    
 // ORDERS
 function renderOrders() {
     const tbody = document.getElementById('orders-tbody');

@@ -4125,9 +4125,9 @@ function openModal(id) { document.getElementById(id).classList.add('open'); }
 function closeModal(id) { document.getElementById(id).classList.remove('open'); }
 
 document.querySelectorAll('.modal').forEach(m => {
-    m.addEventListener('click', e => { if (e.target === m) closeModal(m.id); });
+    m.addEventListener('click', e => { });
 });
-
+    
 // GLOBAL CLICK CLOSE MENUS
 document.addEventListener('click', () => {
     document.querySelectorAll('.status-menu.open').forEach(m => m.classList.remove('open'));

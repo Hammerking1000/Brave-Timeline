@@ -3240,7 +3240,9 @@ function openOrderModal() {
     document.getElementById('order-company').value = '';
     document.getElementById('order-name').value = '';
     document.getElementById('order-status').value = 'bid';
-    document.getElementById('order-ship').value = '';
+    const defaultShip = new Date();
+    defaultShip.setDate(defaultShip.getDate() + 30);
+    document.getElementById('order-ship').value = defaultShip.toISOString().split('T')[0];
     document.getElementById('order-construction').value = '';
     document.getElementById('order-materials').value = '';
     document.getElementById('order-stain-species').value = '';

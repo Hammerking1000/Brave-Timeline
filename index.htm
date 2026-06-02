@@ -2787,8 +2787,6 @@ async function checkAdminPassword() {
 // ORDERS
 function renderOrders() {
     const tbody = document.getElementById('orders-tbody');
-    
-    // Get filter values
     const sortBy = document.getElementById('sort-orders')?.value || 'id-desc';
     const filterStatus = document.getElementById('filter-status')?.value || 'all';
     const searchTerm = document.getElementById('search-orders')?.value.toLowerCase() || '';
@@ -2905,7 +2903,6 @@ function openOrder(id) {
 
 // Display trim items
 if (o.trimItems && o.trimItems.length > 0) {
-    // Group trim items by type
     const trimByType = {
         'Crown Molding': [],
         'Light Rail': [],
@@ -2919,7 +2916,6 @@ if (o.trimItems && o.trimItems.length > 0) {
         }
     });
     
-   // Map display names to HTML IDs
 const typeIdMap = {
     'Crown Molding': 'crown',
     'Light Rail': 'light-rail',
@@ -2947,7 +2943,6 @@ Object.keys(trimByType).forEach(type => {
         }
     });
 } else {
-    // Hide all trim displays if no trim items
     ['crown', 'light-rail', 'baseboard', 'scribe'].forEach(type => {
         const displayDiv = document.getElementById(`trim-${type}-display`);
         if (displayDiv) displayDiv.style.display = 'none';
@@ -4169,7 +4164,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     return;
                 }
             }
-            document.getElementById('dim-range-hint').textContent = '⚠️ Width outside available ranges';
+            document.getElementById('dim-range-hint').textContent = 'Width outside available ranges';
         }
     } else {
         document.getElementById('dim-price').textContent = '$0.00';
@@ -4210,7 +4205,6 @@ depthSelect?.addEventListener('change', updateLivePrice);
     renderOrders();
 });
 </script>
-</div><!-- /app-container -->
-
+</div>
 </body>
 </html>

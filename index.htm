@@ -1838,10 +1838,7 @@ function renderTodayTimeCard() {
     document.getElementById('total-hours-today').textContent = totalHours;
     document.getElementById('total-entries-today').textContent = todayEntries.length;
     
-    // Render timeline blocks
     renderTimeline();
-    
-    // Render entry list
     renderEntryList();
 }
 
@@ -1853,8 +1850,6 @@ function renderTimeline() {
     container.innerHTML = todayEntries.map(entry => {
         const start = new Date(entry.clockIn);
         const end = new Date(entry.clockOut);
-        
-        // Calculate position and width as percentage of 24 hours
         const startPercent = (start.getHours() + start.getMinutes() / 60) / 24 * 100;
         const endPercent = (end.getHours() + end.getMinutes() / 60) / 24 * 100;
         const width = endPercent - startPercent;
@@ -1923,9 +1918,8 @@ function getTwoWeekRange(offsetWeeks = 0) {
     
     const monday = getMonday(today);
     
-    // Determine which two-week cycle we're in
-    // Calculate weeks since epoch
-    const epoch = new Date('2026-01-05'); // Start reference (a Monday)
+    // Determine which two-week cycle we're in, then alculate weeks since epoch
+    const epoch = new Date('2026-01-05');
     const weeksSinceEpoch = Math.floor((monday - epoch) / (7 * 24 * 60 * 60 * 1000));
     const cycleWeek = weeksSinceEpoch % 2; // 0 or 1
     

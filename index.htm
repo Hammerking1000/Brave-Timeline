@@ -2401,16 +2401,12 @@ let pricingMatrix = [
 ];
     
 let trimItems = [];
-    
 let orders = [];
-
 let taxRate = 6.0;
 let currentOrderId = null;
 let editingOrderId = null;
 let orderBuiltinsList = [];
 let selectedCabinetForDim = null;
-
-    // Trim item variables
 let orderTrimList = [];
 let selectedTrimForQuantity = null;
 let editingTrimItemId = null;
@@ -3302,7 +3298,7 @@ function editOrder(id) {
     document.getElementById('order-installation').value = o.installation || 'None';
     document.getElementById('order-doors').value = o.doors || '';
     document.getElementById('order-drawer-fronts').value = o.drawerFronts || '';
-    
+  
     // Billing info
     document.getElementById('order-bill-name').value = o.billName || '';
     document.getElementById('order-bill-address').value = o.billAddress || '';
@@ -3666,13 +3662,11 @@ function addNewCabinet() {
     rangeRowCount = 0;
     document.getElementById('cabinet-modal-title').textContent = 'Add Cabinet';
     document.getElementById('cabinet-name').value = '';
-    
     populateCategoryDropdown();
     document.getElementById('cabinet-category-select').value = '';
     document.getElementById('cabinet-category-input').style.display = 'none';
     document.getElementById('cabinet-category-input').value = '';
-    document.getElementById('new-cat-btn').textContent = '+ New';
-    
+    document.getElementById('new-cat-btn').textContent = '+ New'; 
     document.getElementById('range-inputs').innerHTML = '';
     addRangeRow();
     openModal('modal-cabinet');
@@ -3686,14 +3680,12 @@ function editCabinet(name) {
     rangeRowCount = 0;
     document.getElementById('cabinet-modal-title').textContent = 'Edit Cabinet';
     document.getElementById('cabinet-name').value = cabinet.name;
-    document.getElementById('cabinet-name').disabled = true;
-    
+    document.getElementById('cabinet-name').disabled = true; 
     populateCategoryDropdown();
     document.getElementById('cabinet-category-select').value = cabinet.category || '';
     document.getElementById('cabinet-category-input').style.display = 'none';
     document.getElementById('cabinet-category-input').value = '';
-    document.getElementById('new-cat-btn').textContent = '+ New';
-    
+    document.getElementById('new-cat-btn').textContent = '+ New';  
     document.getElementById('range-inputs').innerHTML = '';
     
     cabinet.ranges.forEach(range => {
@@ -3803,8 +3795,7 @@ function saveCabinet() {
             
             if (p12El.value) prices['12'] = parseFloat(p12El.value);
             if (p18El.value) prices['18'] = parseFloat(p18El.value);
-            if (p24El.value) prices['24'] = parseFloat(p24El.value);
-            
+            if (p24El.value) prices['24'] = parseFloat(p24El.value); 
             if (label && !isNaN(minWidth) && !isNaN(maxWidth)) {
                 ranges.push({ label, minWidth, maxWidth, prices });
             }
@@ -3938,8 +3929,7 @@ async function renderPDFPage(pageNum) {
     if (!currentPDFDoc) return;
     
     const page = await currentPDFDoc.getPage(pageNum);
-    const viewport = page.getViewport({ scale: pdfScale });
-    
+    const viewport = page.getViewport({ scale: pdfScale });    
     const canvas = document.getElementById('pdf-canvas');
     const context = canvas.getContext('2d');
     canvas.width = viewport.width;

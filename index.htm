@@ -1743,7 +1743,7 @@ async function clockIn() {
     document.getElementById('clock-in-btn').style.display = 'none';
     document.getElementById('clock-out-btn').style.display = 'flex';
     
-    showToast('✅ Clocked In', 'Clocked in');
+    showToast('Clocked In', 'Clocked in');
 }
 
 // Clock Out
@@ -1768,7 +1768,7 @@ async function clockOut() {
     const activePath = `activeClockIns/${currentUser.uid}`;
     await saveToFirebase(activePath, null); // Set to null to delete
     
-    showToast('✅ Clocked Out', 'Bye');
+    showToast('Clocked Out', 'Bye');
     currentClockInTime = null;
     
     document.getElementById('clock-status').textContent = 'Clocked Out';
@@ -1796,7 +1796,7 @@ async function checkActiveClockIn() {
         document.getElementById('clock-in-btn').style.display = 'none';
         document.getElementById('clock-out-btn').style.display = 'flex';
         
-        console.log('✅ Restored active clock-in from:', new Date(currentClockInTime).toLocaleTimeString());
+        console.log('Restored active clock-in from:', new Date(currentClockInTime).toLocaleTimeString());
     } else {
         // No active clock-in
         document.getElementById('clock-status').textContent = 'Clocked Out';
@@ -1811,8 +1811,7 @@ async function loadTodayTimeCard() {
     if (!currentUser) return;
     
     const today = getTodayDate();
-    const entriesPath = `timeEntries/${currentUser.uid}/${today}`;
-    
+    const entriesPath = `timeEntries/${currentUser.uid}/${today}`;   
     const entries = await loadFromFirebase(entriesPath);
     todayEntries = entries ? Object.values(entries) : [];
     
@@ -2003,8 +2002,7 @@ async function loadWeeklySummary() {
     
    allEntries.forEach(entry => {
     const entryDate = new Date(entry.clockIn);
-    const dateKey = formatDateKey(entryDate);
-    
+    const dateKey = formatDateKey(entryDate); 
     const start = new Date(entry.clockIn);
     const end = new Date(entry.clockOut);
     const hours = (end - start) / 1000 / 60 / 60;
@@ -2221,7 +2219,7 @@ async function editTimeEntry(userId, date, entryId) {
     const entry = await loadFromFirebase(entryPath);
     
     if (!entry) {
-        showToast('❌ Error', 'Could not load time entry');
+        showToast('ERROR', 'Could not load time entry');
         return;
     }
     
@@ -2286,7 +2284,7 @@ async function saveTimeEntry() {
     const clockOutTime = document.getElementById('edit-time-clockout').value;
     
     if (!date || !clockInTime || !clockOutTime) {
-        showToast('❌ Error', 'Please fill in all fields');
+        showToast('ERROR', 'Fill in all fields');
         return;
     }
     
@@ -2294,7 +2292,7 @@ async function saveTimeEntry() {
     const clockOutDate = new Date(`${date}T${clockOutTime}:00`);
     
     if (clockOutDate <= clockInDate) {
-        showToast('❌ Error', 'Clock out must be after clock in');
+        showToast('ERROR', 'Clock out must be after clock in');
         return;
     }
     
@@ -2327,7 +2325,7 @@ async function saveTimeEntry() {
         await saveToFirebase(entryPath, updatedEntry);
     }
     
-    showToast('✅ Updated', 'Time entry saved successfully');
+    showToast('Updated', 'Time entry saved successfully');
     closeModal('modal-edit-time');
     editingTimeEntry = null;
     
@@ -2343,7 +2341,7 @@ async function deleteTimeEntry(userId, date, entryId) {
     const entryPath = `timeEntries/${userId}/${date}/${entryId}`;
     await saveToFirebase(entryPath, null); // Set to null to delete
     
-    showToast('✅ Deleted', 'Time entry removed');
+    showToast('Deleted', 'Time entry removed');
     
     // Reload admin view
     loadAdminTimeCards();
@@ -2352,11 +2350,11 @@ async function deleteTimeEntry(userId, date, entryId) {
 // Initialize time card page
 async function initializeTimeCard() {
     if (!currentUser) {
-        console.log('⚠️ Cannot initialize time card - no user logged in');
+        console.log('Cannot initialize time card - no user logged in');
         return;
     }
     
-    console.log('✅ Initializing time card for:', currentUser.email);
+    console.log('Initializing time card for:', currentUser.email);
     
     updateCurrentTime();
     setInterval(updateCurrentTime, 1000);

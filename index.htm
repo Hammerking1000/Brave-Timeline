@@ -1510,9 +1510,8 @@ function handleLogout() {
         });
     }
 }
-// ═══════════════════════════════════════════════════════════════
+
 // FIREBASE OPERATIONS
-// ═══════════════════════════════════════════════════════════════
 
 // FIREBASE SYNC FUNCTIONS
 function saveToFirebase(path, data) {
@@ -1602,14 +1601,14 @@ async function loadFromFirebaseOnStartup() {
         const loadedOrders = await loadFromFirebase('orders');
         if (loadedOrders) {
             orders = loadedOrders;
-            console.log('✅ Loaded orders from Firebase');
+            console.log('Loaded orders from Firebase');
         }
         
         // Load pricing matrix
         const loadedMatrix = await loadFromFirebase('pricingMatrix');
         if (loadedMatrix) {
             pricingMatrix = loadedMatrix;
-            console.log('✅ Loaded pricing matrix from Firebase');
+            console.log('Loaded pricing matrix from Firebase');
         }
         
         // Load trim items
@@ -1617,7 +1616,7 @@ async function loadFromFirebaseOnStartup() {
         if (loadedTrimItems) {
             trimItems = loadedTrimItems;
             renderTrimItems();
-            console.log('✅ Loaded trim items from Firebase');
+            console.log('Loaded trim items from Firebase');
         }
         
         // Load settings
@@ -1638,7 +1637,7 @@ async function loadFromFirebaseOnStartup() {
             if (loadedTaxRate !== null && loadedTaxRate !== undefined) {
                 taxRate = loadedTaxRate;
                 document.getElementById('tax-rate-input').value = taxRate;
-                console.log('✅ Loaded tax rate:', taxRate);
+                console.log('Loaded tax rate:', taxRate);
             }
             
             // Restore toggle states
@@ -1652,7 +1651,7 @@ async function loadFromFirebaseOnStartup() {
                 });
             }
             
-            console.log('✅ Loaded settings from Firebase');
+            console.log('Loaded settings from Firebase');
         }
         
         if (currentUser) {
@@ -1661,10 +1660,10 @@ async function loadFromFirebaseOnStartup() {
             const loadedEntries = await loadFromFirebase(entriesPath);
             if (loadedEntries) {
                 todayEntries = Object.values(loadedEntries);
-                console.log('✅ Loaded time entries from Firebase');
+                console.log('Loaded time entries from Firebase');
             } else {
                 todayEntries = [];
-                console.log('✅ No time entries for today');
+                console.log('No time entries for today');
             }
         }
         // Render UI with loaded data

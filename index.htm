@@ -1510,9 +1510,9 @@ function handleLogout() {
         });
     }
 }
-
+// ==============================================================
 // FIREBASE OPERATIONS
-
+// ==============================================================
 // FIREBASE SYNC FUNCTIONS
 function saveToFirebase(path, data) {
     if (!firebaseInitialized) return Promise.resolve();
@@ -1697,9 +1697,9 @@ function setupRealtimeListeners() {
     });
 }
 
-// ═══════════════════════════════════════════════════════════════
+// ===============================================================
 // TIME CARD SYSTEM
-// ═══════════════════════════════════════════════════════════════
+// ===============================================================
 // Get today's date in YYYY-MM-DD format
 function getTodayDate() {
     const today = new Date();
@@ -1765,7 +1765,7 @@ async function clockOut() {
     
     // Remove active clock-in
     const activePath = `activeClockIns/${currentUser.uid}`;
-    await saveToFirebase(activePath, null); // Set to null to delete
+    await saveToFirebase(activePath, null);
     
     showToast('Clocked Out', 'Bye');
     currentClockInTime = null;

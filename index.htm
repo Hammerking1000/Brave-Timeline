@@ -464,156 +464,108 @@ tbody tr:last-child td { border-bottom: none; }
 <!-- TIME CARD PAGE -->
 <div id="page-timecard" class="page">
     <div class="container">
-        <div style="margin-bottom:24px;">
-            <h2 style="font-size:22px;font-weight:700;color:white;margin-bottom:8px;">Time Card</h2>
-            <p style="color:#888;font-size:14px;" id="timecard-date">Monday, March 25, 2026</p>
-        </div>
-        
-        <!-- Clock In/Out Controls -->
-        <div class="card" style="padding:24px;margin-bottom:20px;">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
-                <div>
-                    <div style="font-size:14px;color:#888;margin-bottom:4px;">Status</div>
-                    <div style="font-size:20px;font-weight:700;color:#0090ff;" id="clock-status">Clocked Out</div>
-                </div>
-                <div style="text-align:right;">
-                    <div style="font-size:14px;color:#888;margin-bottom:4px;">Current Time</div>
-                    <div style="font-size:20px;font-weight:700;color:white;" id="current-time">--:--</div>
-                </div>
+ 
+        <!-- Header row -->
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:12px;">
+            <div>
+                <h2 style="font-size:22px;font-weight:700;color:white;margin-bottom:4px;">Time Card</h2>
+                <div style="color:#888;font-size:13px;" id="tc-pay-period-label">Loading pay period…</div>
             </div>
-            
-            <div style="display:flex;gap:12px;">
-                <button class="btn btn-primary" id="clock-in-btn" onclick="clockIn()" style="flex:1;justify-content:center;">
+            <div style="display:flex;gap:10px;align-items:center;">
+                <button class="btn btn-ghost btn-sm" onclick="tcChangePayPeriod(-1)">← Prev</button>
+                <button class="btn btn-ghost btn-sm" onclick="tcChangePayPeriod(1)">Next →</button>
+                <button class="btn btn-primary" id="tc-main-btn" onclick="tcToggleClock()" style="min-width:120px;justify-content:center;">
                     Clock In
                 </button>
-                <button class="btn btn-danger" id="clock-out-btn" onclick="clockOut()" style="flex:1;justify-content:center;display:none;">
-                    Clock Out
+            </div>
+        </div>
+ 
+        <!-- Pay period day-column grid -->
+        <div class="card" style="margin-bottom:20px;overflow:hidden;">
+            <!-- Week labels -->
+            <div style="display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid #333;">
+                <div style="padding:10px 16px;font-size:12px;font-weight:700;color:#0090ff;text-transform:uppercase;letter-spacing:0.5px;border-right:1px solid #333;">
+                    Week 1
+                </div>
+                <div style="padding:10px 16px;font-size:12px;font-weight:700;color:#0090ff;text-transform:uppercase;letter-spacing:0.5px;">
+                    Week 2
+                </div>
+            </div>
+            <!-- Day columns -->
+            <div id="tc-day-grid" style="display:grid;grid-template-columns:repeat(14,1fr);border-bottom:1px solid #333;overflow-x:auto;">
+                <!-- filled by JS -->
+            </div>
+            <!-- Total row -->
+            <div style="display:flex;justify-content:flex-end;align-items:center;padding:10px 20px;gap:24px;">
+                <div style="font-size:13px;color:#888;">Pay Period Total</div>
+                <div style="font-size:20px;font-weight:700;color:#0090ff;" id="tc-period-total">0.00 hrs</div>
+            </div>
+        </div>
+ 
+        <!-- Entry log for selected/today day -->
+        <div class="card" style="padding:24px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px;">
+                <div>
+                    <div style="font-size:16px;font-weight:700;color:white;" id="tc-selected-label">Today's Entries</div>
+                    <div style="font-size:12px;color:#888;margin-top:2px;" id="tc-selected-date-sub"></div>
+                </div>
+                <button class="btn btn-ghost btn-sm" onclick="openTCExportModal()" style="display:flex;align-items:center;gap:6px;">
+                    ⬇ Export PDF
                 </button>
             </div>
-        </div>
-        
-        <!-- Timeline Visualization -->
-        <div class="card" style="padding:24px;margin-bottom:20px;">
-            <h3 style="font-size:16px;font-weight:700;color:white;margin-bottom:16px;">Today's Timeline</h3>
-            
-            <!-- 24-hour timeline -->
-            <div style="position:relative;height:60px;background:#1a1a1a;border-radius:8px;border:1px solid #444;overflow:hidden;">
-                <!-- Hour markers -->
-                <div style="position:absolute;inset:0;display:flex;">
-                    <div style="flex:1;border-right:1px solid #333;"></div>
-                    <div style="flex:1;border-right:1px solid #333;"></div>
-                    <div style="flex:1;border-right:1px solid #333;"></div>
-                    <div style="flex:1;border-right:1px solid #333;"></div>
-                    <div style="flex:1;border-right:1px solid #333;"></div>
-                    <div style="flex:1;border-right:1px solid #333;"></div>
-                    <div style="flex:1;"></div>
-                </div>
-                
-                <!-- Time blocks will be rendered here -->
-                <div id="timeline-blocks" style="position:absolute;inset:0;"></div>
+ 
+            <!-- Entry table header -->
+            <div style="display:grid;grid-template-columns:1fr 1fr 120px;gap:0;border-bottom:2px solid #0090ff;padding-bottom:8px;margin-bottom:4px;">
+                <div style="font-size:11px;font-weight:700;color:#0090ff;text-transform:uppercase;letter-spacing:0.5px;">In Time</div>
+                <div style="font-size:11px;font-weight:700;color:#ff4444;text-transform:uppercase;letter-spacing:0.5px;">Out Time</div>
+                <div style="font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:0.5px;text-align:right;">Hours</div>
             </div>
-            
-            <!-- Hour labels -->
-            <div style="display:flex;margin-top:8px;">
-                <div style="flex:1;text-align:center;font-size:11px;color:#888;">12a</div>
-                <div style="flex:1;text-align:center;font-size:11px;color:#888;">4a</div>
-                <div style="flex:1;text-align:center;font-size:11px;color:#888;">8a</div>
-                <div style="flex:1;text-align:center;font-size:11px;color:#888;">12p</div>
-                <div style="flex:1;text-align:center;font-size:11px;color:#888;">4p</div>
-                <div style="flex:1;text-align:center;font-size:11px;color:#888;">8p</div>
-                <div style="flex:1;text-align:center;font-size:11px;color:#888;">12a</div>
+ 
+            <div id="tc-entry-list" style="min-height:60px;">
+                <div style="text-align:center;color:#888;padding:30px;font-size:13px;">No entries for this day.</div>
+            </div>
+ 
+            <!-- Day total -->
+            <div style="display:flex;justify-content:flex-end;align-items:center;gap:16px;border-top:1px solid #333;margin-top:12px;padding-top:12px;">
+                <div style="font-size:13px;color:#888;">Day Total</div>
+                <div style="font-size:18px;font-weight:700;color:#0090ff;" id="tc-day-total">0.00 hrs</div>
             </div>
         </div>
-        
-       <!-- Today's Summary -->
-        <div class="card" style="padding:24px;margin-bottom:20px;">
-            <h3 style="font-size:16px;font-weight:700;color:white;margin-bottom:16px;">Today's Summary</h3>
-            
-            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:16px;margin-bottom:20px;">
-                <div>
-                    <div style="font-size:12px;color:#888;margin-bottom:4px;">Total Hours</div>
-                    <div style="font-size:24px;font-weight:700;color:#0090ff;" id="total-hours-today">0.0</div>
-                </div>
-                <div>
-                    <div style="font-size:12px;color:#888;margin-bottom:4px;">Clock Ins</div>
-                    <div style="font-size:24px;font-weight:700;color:white;" id="total-entries-today">0</div>
-                </div>
+ 
+    </div>
+</div>
+ 
+<!-- EXPORT PDF MODAL -->
+<div class="modal" id="modal-tc-export">
+    <div class="modal-box" style="max-width:460px;">
+        <div class="modal-header">
+            <h2 class="modal-title">Export Timecard PDF</h2>
+            <button class="modal-close" onclick="closeModal('modal-tc-export')">×</button>
+        </div>
+        <p style="font-size:13px;color:#888;margin-bottom:20px;">Select the date range to include in the report. The PDF will show each day's entries, hours, and a grand total.</p>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;">
+            <div class="form-group" style="margin:0;">
+                <label class="form-label">From</label>
+                <input type="date" class="form-input" id="export-from">
             </div>
-            
-            <!-- Entry List -->
-            <div id="today-entries-list"></div>
-        </div>  <!-- ← CLOSE TODAY'S SUMMARY CARD HERE -->
-     
-        <!-- Weekly Summary -->
-        <div class="card" style="padding:24px;">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-                <h3 style="font-size:16px;font-weight:700;color:white;margin:0;">Weekly Summary</h3>
-                <div style="display:flex;gap:8px;">
-                    <button class="btn btn-sm" onclick="changeWeek(-1)" style="padding:4px 12px;">← Prev</button>
-                    <button class="btn btn-sm" onclick="changeWeek(1)" style="padding:4px 12px;">Next →</button>
-                </div>
+            <div class="form-group" style="margin:0;">
+                <label class="form-label">To</label>
+                <input type="date" class="form-input" id="export-to">
             </div>
-            
-            <div style="font-size:12px;color:#888;margin-bottom:16px;" id="week-range-display">Loading...</div>
-            
-            <!-- Two Week Cycle Display -->
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;">
-                <!-- Week 1 -->
-                <div style="padding:16px;background:#1a1a1a;border-radius:8px;border:2px solid #444;" id="week-1-card">
-                    <div style="font-size:12px;color:#888;margin-bottom:8px;">Week 1</div>
-                    <div style="font-size:28px;font-weight:700;color:#0090ff;margin-bottom:4px;" id="week-1-hours">0.0</div>
-                    <div style="font-size:11px;color:#888;">of 42.5 hrs required</div>
-                    
-                    <!-- Progress bar -->
-                    <div style="height:6px;background:#252525;border-radius:3px;margin-top:12px;overflow:hidden;">
-                        <div id="week-1-progress" style="height:100%;background:linear-gradient(90deg, #0090ff, #00c8ff);width:0%;transition:width 0.3s;"></div>
-                    </div>
-                    
-                    <div style="font-size:11px;margin-top:8px;" id="week-1-status">--</div>
-                </div>
-                
-                <!-- Week 2 -->
-                <div style="padding:16px;background:#1a1a1a;border-radius:8px;border:2px solid #444;" id="week-2-card">
-                    <div style="font-size:12px;color:#888;margin-bottom:8px;">Week 2</div>
-                    <div style="font-size:28px;font-weight:700;color:#0090ff;margin-bottom:4px;" id="week-2-hours">0.0</div>
-                    <div style="font-size:11px;color:#888;">of 42.5 hrs required</div>
-                    
-                    <!-- Progress bar -->
-                    <div style="height:6px;background:#252525;border-radius:3px;margin-top:12px;overflow:hidden;">
-                        <div id="week-2-progress" style="height:100%;background:linear-gradient(90deg, #0090ff, #00c8ff);width:0%;transition:width 0.3s;"></div>
-                    </div>
-                    
-                    <div style="font-size:11px;margin-top:8px;" id="week-2-status">--</div>
-                </div>
-            </div>
-            
-            <!-- Two Week Total -->
-            <div style="padding:20px;background:#1a1a1a;border-radius:8px;border:2px solid #0090ff;">
-                <div style="display:flex;justify-content:space-between;align-items:center;">
-                    <div>
-                        <div style="font-size:12px;color:#888;margin-bottom:4px;">Two Week Total</div>
-                        <div style="font-size:32px;font-weight:700;color:#0090ff;" id="two-week-total">0.0 hrs</div>
-                    </div>
-                    <div style="text-align:right;">
-                        <div style="font-size:12px;color:#888;margin-bottom:4px;">Target: 85 hrs</div>
-                        <div style="font-size:18px;font-weight:600;" id="two-week-status">--</div>
-                    </div>
-                </div>
-                
-                <!-- Two week progress bar -->
-                <div style="height:8px;background:#252525;border-radius:4px;margin-top:16px;overflow:hidden;">
-                    <div id="two-week-progress" style="height:100%;background:linear-gradient(90deg, #0090ff, #00c8ff);width:0%;transition:width 0.3s;"></div>
-                </div>
-            </div>
-            
-            <!-- Day by day breakdown -->
-            <div style="margin-top:20px;">
-                <h4 style="font-size:14px;font-weight:600;color:white;margin-bottom:12px;">Daily Breakdown</h4>
-                <div id="weekly-breakdown"></div>
-            </div>
+        </div>
+        <div class="form-group">
+            <label class="form-label">Employee</label>
+            <div style="font-size:14px;color:#d0d0d0;padding:10px 12px;background:#1a1a1a;border:1px solid #444;border-radius:4px;" id="export-employee-label">–</div>
+        </div>
+        <div class="form-actions" style="display:flex;gap:10px;margin-top:8px;">
+            <button class="btn btn-primary" onclick="generateTimecardPDF()">Generate PDF</button>
+            <button class="btn btn-ghost" onclick="closeModal('modal-tc-export')">Cancel</button>
         </div>
     </div>
 </div>
+ 
+<!-- PRINT FRAME (hidden, used for PDF generation) -->
+<div id="tc-print-frame" style="display:none;"></div>
     
 <!-- PRICING MATRIX PAGE -->
 <div id="page-matrix" class="page">
@@ -1697,681 +1649,411 @@ function setupRealtimeListeners() {
     });
 }
 
-// ===============================================================
-// TIME CARD SYSTEM
-// ===============================================================
-// Get today's date in YYYY-MM-DD format
+// ═══════════════════════════════════════════════════════════════
+// TIME CARD SYSTEM v2
+// ═══════════════════════════════════════════════════════════════
+ 
+// ── State ──────────────────────────────────────────────────────
+let tcPayPeriodOffset = 0;   // 0 = current period, -1 = previous, etc.
+let tcSelectedDate   = getTodayDate();
+let tcCurrentClockIn = null; // ISO string of active clock-in, or null
+let tcDayCache       = {};   // dateKey -> [entries]  (loaded on demand)
+ 
+// ── Helpers ────────────────────────────────────────────────────
 function getTodayDate() {
-    const today = new Date();
-    return today.toISOString().split('T')[0];
+    return new Date().toISOString().split('T')[0];
 }
-let currentClockInTime = null;
-let todayEntries = [];    
-
-// Format date for display
+ 
+function fmtTime(isoStr) {
+    if (!isoStr) return '—';
+    return new Date(isoStr).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+}
+ 
+function fmtHours(ms) {
+    if (!ms || ms < 0) return '0.00';
+    return (ms / 3600000).toFixed(2);
+}
+ 
+function entryHours(entry) {
+    if (!entry.clockOut) return 0;
+    return new Date(entry.clockOut) - new Date(entry.clockIn);
+}
+ 
 function formatDisplayDate(dateStr) {
-    const date = new Date(dateStr + 'T00:00:00');
-    const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-    return date.toLocaleDateString('en-US', options);
+    const d = new Date(dateStr + 'T00:00:00');
+    return d.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 }
-
-// Update current time display
-function updateCurrentTime() {
-    const now = new Date();
-    const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-    const timeEl = document.getElementById('current-time');
-    if (timeEl) timeEl.textContent = timeStr;
-}
-
-// Clock In
-async function clockIn() {
-    if (!currentUser) return;
-    
-    currentClockInTime = new Date().toISOString();
-    
-    // Save active clock-in to Firebase
-    const activePath = `activeClockIns/${currentUser.uid}`;
-    await saveToFirebase(activePath, {
-        clockInTime: currentClockInTime,
-        userId: currentUser.uid,
-        userEmail: currentUser.email
-    });
-    
-    document.getElementById('clock-status').textContent = 'Clocked In';
-    document.getElementById('clock-status').style.color = '#4caf50';
-    document.getElementById('clock-in-btn').style.display = 'none';
-    document.getElementById('clock-out-btn').style.display = 'flex';
-    
-    showToast('Clocked In', 'Clocked in');
-}
-
-// Clock Out
-async function clockOut() {
-    if (!currentUser || !currentClockInTime) return;
-    
-    const clockOutTime = new Date().toISOString();
-    const entry = {
-        id: 'entry-' + Date.now(),
-        clockIn: currentClockInTime,
-        clockOut: clockOutTime,
-        date: getTodayDate(),
-        userId: currentUser.uid,
-        userEmail: currentUser.email
-    };
-    
-    // Save to Firebase
-    const entryPath = `timeEntries/${currentUser.uid}/${entry.date}/${entry.id}`;
-    await saveToFirebase(entryPath, entry);
-    
-    // Remove active clock-in
-    const activePath = `activeClockIns/${currentUser.uid}`;
-    await saveToFirebase(activePath, null);
-    
-    showToast('Clocked Out', 'Bye');
-    currentClockInTime = null;
-    
-    document.getElementById('clock-status').textContent = 'Clocked Out';
-    document.getElementById('clock-status').style.color = '#0090ff';
-    document.getElementById('clock-in-btn').style.display = 'flex';
-    document.getElementById('clock-out-btn').style.display = 'none';
-    
-    loadTodayTimeCard();
-    loadWeeklySummary();
-}
-
-// Check if user has an active clock-in
-async function checkActiveClockIn() {
-    if (!currentUser) return;
-    
-    const activePath = `activeClockIns/${currentUser.uid}`;
-    const activeClockIn = await loadFromFirebase(activePath);
-    
-    if (activeClockIn && activeClockIn.clockInTime) {
-        // User has an active clock-in
-        currentClockInTime = activeClockIn.clockInTime;
-        
-        document.getElementById('clock-status').textContent = 'Clocked In';
-        document.getElementById('clock-status').style.color = '#4caf50';
-        document.getElementById('clock-in-btn').style.display = 'none';
-        document.getElementById('clock-out-btn').style.display = 'flex';
-        
-        console.log('Restored active clock-in from:', new Date(currentClockInTime).toLocaleTimeString());
-    } else {
-        // No active clock-in
-        document.getElementById('clock-status').textContent = 'Clocked Out';
-        document.getElementById('clock-status').style.color = '#0090ff';
-        document.getElementById('clock-in-btn').style.display = 'flex';
-        document.getElementById('clock-out-btn').style.display = 'none';
-    }
-}
-    
-// Load today's time card
-async function loadTodayTimeCard() {
-    if (!currentUser) return;
-    
-    const today = getTodayDate();
-    const entriesPath = `timeEntries/${currentUser.uid}/${today}`;   
-    const entries = await loadFromFirebase(entriesPath);
-    todayEntries = entries ? Object.values(entries) : [];
-    
-    renderTodayTimeCard();
-}
-
-// Render today's time card
-function renderTodayTimeCard() {
-    // Update date display
-    const today = getTodayDate();
-    document.getElementById('timecard-date').textContent = formatDisplayDate(today);
-    
-    // Calculate total hours
-    let totalMinutes = 0;
-    todayEntries.forEach(entry => {
-        const start = new Date(entry.clockIn);
-        const end = new Date(entry.clockOut);
-        const minutes = (end - start) / 1000 / 60;
-        totalMinutes += minutes;
-    });
-    
-    const totalHours = (totalMinutes / 60).toFixed(1);
-    document.getElementById('total-hours-today').textContent = totalHours;
-    document.getElementById('total-entries-today').textContent = todayEntries.length;
-    
-    renderTimeline();
-    renderEntryList();
-}
-
-// Render timeline visualization
-function renderTimeline() {
-    const container = document.getElementById('timeline-blocks');
-    if (!container) return;
-    
-    container.innerHTML = todayEntries.map(entry => {
-        const start = new Date(entry.clockIn);
-        const end = new Date(entry.clockOut);
-        const startPercent = (start.getHours() + start.getMinutes() / 60) / 24 * 100;
-        const endPercent = (end.getHours() + end.getMinutes() / 60) / 24 * 100;
-        const width = endPercent - startPercent;
-        
-        return `
-            <div style="
-                position:absolute;
-                left:${startPercent}%;
-                width:${width}%;
-                height:100%;
-                background:linear-gradient(90deg, #0090ff, #00c8ff);
-                border-radius:4px;
-                border:1px solid #0090ff;
-            "></div>
-        `;
-    }).join('');
-}
-
-// Render entry list
-function renderEntryList() {
-    const container = document.getElementById('today-entries-list');
-    if (!container) return;
-    
-    if (todayEntries.length === 0) {
-        container.innerHTML = '<div style="text-align:center;color:#888;padding:20px;">No entries for today</div>';
-        return;
-    }
-    
-    container.innerHTML = todayEntries.map(entry => {
-        const start = new Date(entry.clockIn);
-        const end = new Date(entry.clockOut);
-        const minutes = (end - start) / 1000 / 60;
-        const hours = (minutes / 60).toFixed(2);
-        
-        const startTime = start.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-        const endTime = end.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-        
-        return `
-            <div style="display:flex;justify-content:space-between;padding:12px;background:#1a1a1a;border-radius:6px;margin-bottom:8px;">
-                <div>
-                    <div style="font-size:14px;color:white;font-weight:500;">${startTime} - ${endTime}</div>
-                </div>
-                <div style="text-align:right;">
-                    <div style="font-size:14px;color:#0090ff;font-weight:600;">${hours} hrs</div>
-                </div>
-            </div>
-        `;
-    }).join('');
-}
-
-// Weekly tracking
-let currentWeekOffset = 0; // 0 = current week, -1 = last week, etc.
-
-// Get Monday of the week for a given date
-function getMonday(date) {
-    const d = new Date(date);
-    const day = d.getDay();
-    const diff = d.getDate() - day + (day === 0 ? -6 : 1); // Adjust when day is Sunday
-    return new Date(d.setDate(diff));
-}
-
-// Get date range for two-week cycle
-function getTwoWeekRange(offsetWeeks = 0) {
+ 
+// ── Pay-period math ────────────────────────────────────────────
+// Anchor: Mon 2026-01-05 = start of a known pay period
+const TC_EPOCH = new Date('2026-01-05T00:00:00');
+ 
+function getPayPeriod(offsetPeriods) {
+    // Each period = 14 days
+    const msPerPeriod = 14 * 86400000;
     const today = new Date();
-    today.setDate(today.getDate() + (offsetWeeks * 7));
-    
-    const monday = getMonday(today);
-    
-    // Determine which two-week cycle we're in, then alculate weeks since epoch
-    const epoch = new Date('2026-01-05');
-    const weeksSinceEpoch = Math.floor((monday - epoch) / (7 * 24 * 60 * 60 * 1000));
-    const cycleWeek = weeksSinceEpoch % 2; // 0 or 1
-    
-    let week1Start, week2Start;
-    
-    if (cycleWeek === 0) {
-        // Current week is first week of cycle
-        week1Start = new Date(monday);
-        week2Start = new Date(monday);
-        week2Start.setDate(week2Start.getDate() + 7);
-    } else {
-        // Current week is second week of cycle
-        week1Start = new Date(monday);
-        week1Start.setDate(week1Start.getDate() - 7);
-        week2Start = new Date(monday);
-    }
-    
-    const week1End = new Date(week1Start);
-    week1End.setDate(week1End.getDate() + 6);
-    
-    const week2End = new Date(week2Start);
-    week2End.setDate(week2End.getDate() + 6);
-    
-    return {
-        week1Start,
-        week1End,
-        week2Start,
-        week2End,
-        cycleWeek
-    };
-}
-
-// Format date for Firebase query (YYYY-MM-DD)
-function formatDateKey(date) {
-    return date.toISOString().split('T')[0];
-}
-
-// Change week offset
-function changeWeek(direction) {
-    currentWeekOffset += direction;
-    loadWeeklySummary();
-}
-
-// Load weekly summary
-async function loadWeeklySummary() {
-    if (!currentUser) return;
-    
-    const { week1Start, week1End, week2Start, week2End, cycleWeek } = getTwoWeekRange(currentWeekOffset);
-    
-    // Update display
-    const options = { month: 'short', day: 'numeric' };
-    const week1Str = `${week1Start.toLocaleDateString('en-US', options)} - ${week1End.toLocaleDateString('en-US', options)}`;
-    const week2Str = `${week2Start.toLocaleDateString('en-US', options)} - ${week2End.toLocaleDateString('en-US', options)}`;
-    
-    document.getElementById('week-range-display').textContent = 
-        `Two-Week Cycle: ${week1Start.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} - ${week2End.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
-    
-    // Load entries for the entire two-week period
-    const allEntries = [];
-    const currentDate = new Date(week1Start);
-    const endDate = new Date(week2End);
-    
-    while (currentDate <= endDate) {
-        const dateKey = formatDateKey(currentDate);
-        const entriesPath = `timeEntries/${currentUser.uid}/${dateKey}`;
-        const dayEntries = await loadFromFirebase(entriesPath);
-        
-        if (dayEntries) {
-            Object.values(dayEntries).forEach(entry => {
-                allEntries.push(entry);
-            });
-        }
-        
-        currentDate.setDate(currentDate.getDate() + 1);
-    }
-    
-    // Calculate hours for each week
-    let week1Hours = 0;
-    let week2Hours = 0;
-    const dailyHours = {};
-    
-   allEntries.forEach(entry => {
-    const entryDate = new Date(entry.clockIn);
-    const dateKey = formatDateKey(entryDate); 
-    const start = new Date(entry.clockIn);
-    const end = new Date(entry.clockOut);
-    const hours = (end - start) / 1000 / 60 / 60;
-    
-    // Track daily
-    if (!dailyHours[dateKey]) dailyHours[dateKey] = 0;
-    dailyHours[dateKey] += hours;
-    
-    // Determine which week using date string comparison (avoids timezone issues)
-    const week1StartKey = formatDateKey(week1Start);
-    const week1EndKey = formatDateKey(week1End);
-    const week2StartKey = formatDateKey(week2Start);
-    const week2EndKey = formatDateKey(week2End);
-    
-    if (dateKey >= week1StartKey && dateKey <= week1EndKey) {
-        week1Hours += hours;
-    } else if (dateKey >= week2StartKey && dateKey <= week2EndKey) {
-        week2Hours += hours;
-    }
-});
-    
-    const twoWeekTotal = week1Hours + week2Hours;
-    
-    // Update Week 1 display
-    document.getElementById('week-1-hours').textContent = week1Hours.toFixed(1);
-    const week1Percent = (week1Hours / 42.5) * 100;
-    document.getElementById('week-1-progress').style.width = Math.min(week1Percent, 100) + '%';
-    
-    if (week1Hours >= 42.5) {
-        const over = week1Hours - 42.5;
-        document.getElementById('week-1-status').innerHTML = `<span style="color:#4caf50;">✓ Complete (+${over.toFixed(1)} hrs)</span>`;
-        document.getElementById('week-1-card').style.borderColor = '#4caf50';
-    } else {
-        const remaining = 42.5 - week1Hours;
-        document.getElementById('week-1-status').innerHTML = `<span style="color:#ff9800;">${remaining.toFixed(1)} hrs remaining</span>`;
-        document.getElementById('week-1-card').style.borderColor = '#444';
-    }
-    
-    // Update Week 2 display
-    document.getElementById('week-2-hours').textContent = week2Hours.toFixed(1);
-    const week2Percent = (week2Hours / 42.5) * 100;
-    document.getElementById('week-2-progress').style.width = Math.min(week2Percent, 100) + '%';
-    
-    if (week2Hours >= 42.5) {
-        const over = week2Hours - 42.5;
-        document.getElementById('week-2-status').innerHTML = `<span style="color:#4caf50;">✓ Complete (+${over.toFixed(1)} hrs)</span>`;
-        document.getElementById('week-2-card').style.borderColor = '#4caf50';
-    } else {
-        const remaining = 42.5 - week2Hours;
-        document.getElementById('week-2-status').innerHTML = `<span style="color:#ff9800;">${remaining.toFixed(1)} hrs remaining</span>`;
-        document.getElementById('week-2-card').style.borderColor = '#444';
-    }
-    
-    // Update two-week total
-    document.getElementById('two-week-total').textContent = twoWeekTotal.toFixed(1) + ' hrs';
-    const twoWeekPercent = (twoWeekTotal / 85) * 100;
-    document.getElementById('two-week-progress').style.width = Math.min(twoWeekPercent, 100) + '%';
-    
-    if (twoWeekTotal >= 85) {
-        const over = twoWeekTotal - 85;
-        document.getElementById('two-week-status').innerHTML = `<span style="color:#4caf50;">✓ Goal Met (+${over.toFixed(1)} hrs)</span>`;
-    } else {
-        const remaining = 85 - twoWeekTotal;
-        document.getElementById('two-week-status').innerHTML = `<span style="color:#ff9800;">${remaining.toFixed(1)} hrs needed</span>`;
-    }
-    
-    // Render daily breakdown
-    renderWeeklyBreakdown(week1Start, week2End, dailyHours);
-}
-
-// Render daily breakdown
-function renderWeeklyBreakdown(startDate, endDate, dailyHours) {
-    const container = document.getElementById('weekly-breakdown');
-    if (!container) return;
-    
+    today.setHours(0, 0, 0, 0);
+ 
+    // How many full periods since epoch to find current period start
+    const msSinceEpoch = today - TC_EPOCH;
+    const currentPeriodIndex = Math.floor(msSinceEpoch / msPerPeriod);
+    const targetIndex = currentPeriodIndex + offsetPeriods;
+ 
+    const start = new Date(TC_EPOCH.getTime() + targetIndex * msPerPeriod);
+    const end   = new Date(start.getTime() + 13 * 86400000);
+ 
+    // Build array of 14 date keys
     const days = [];
-    const currentDate = new Date(startDate);
-    
-    while (currentDate <= endDate) {
-        const dateKey = formatDateKey(currentDate);
-        const hours = dailyHours[dateKey] || 0;
-        const dayName = currentDate.toLocaleDateString('en-US', { weekday: 'short' });
-        const dateStr = currentDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-        
-        days.push({
-            dateKey,
-            dayName,
-            dateStr,
-            hours,
-            isToday: dateKey === getTodayDate()
+    for (let i = 0; i < 14; i++) {
+        const d = new Date(start.getTime() + i * 86400000);
+        days.push(d.toISOString().split('T')[0]);
+    }
+ 
+    return { start, end, days };
+}
+ 
+// ── Firebase wrappers (re-use app's existing helpers) ──────────
+async function tcLoadDay(dateKey) {
+    if (tcDayCache[dateKey] !== undefined) return tcDayCache[dateKey];
+    if (!currentUser) return [];
+    const data = await loadFromFirebase(`timeEntries/${currentUser.uid}/${dateKey}`);
+    tcDayCache[dateKey] = data ? Object.values(data) : [];
+    return tcDayCache[dateKey];
+}
+ 
+function tcInvalidateDay(dateKey) {
+    delete tcDayCache[dateKey];
+}
+ 
+// ── Clock in / out ─────────────────────────────────────────────
+async function tcToggleClock() {
+    if (!currentUser) return;
+ 
+    if (tcCurrentClockIn) {
+        // Clock OUT
+        const clockOutTime = new Date().toISOString();
+        const today = getTodayDate();
+        const entry = {
+            id: 'entry-' + Date.now(),
+            clockIn:    tcCurrentClockIn,
+            clockOut:   clockOutTime,
+            date:       today,
+            userId:     currentUser.uid,
+            userEmail:  currentUser.email
+        };
+ 
+        await saveToFirebase(`timeEntries/${currentUser.uid}/${today}/${entry.id}`, entry);
+        await saveToFirebase(`activeClockIns/${currentUser.uid}`, null);
+ 
+        tcCurrentClockIn = null;
+        tcInvalidateDay(today);
+        showToast('Clocked Out', fmtTime(clockOutTime));
+    } else {
+        // Clock IN
+        tcCurrentClockIn = new Date().toISOString();
+        await saveToFirebase(`activeClockIns/${currentUser.uid}`, {
+            clockInTime: tcCurrentClockIn,
+            userId:      currentUser.uid,
+            userEmail:   currentUser.email
         });
-        
-        currentDate.setDate(currentDate.getDate() + 1);
+        showToast('Clocked In', fmtTime(tcCurrentClockIn));
     }
-    
-    container.innerHTML = days.map(day => `
-        <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:${day.isToday ? '#1a3a4a' : '#1a1a1a'};border-radius:6px;margin-bottom:6px;border-left:3px solid ${day.hours > 0 ? '#0090ff' : '#333'};">
-            <div style="display:flex;gap:12px;align-items:center;">
-                <div style="font-size:12px;color:#888;min-width:35px;">${day.dayName}</div>
-                <div style="font-size:13px;color:white;">${day.dateStr}</div>
-                ${day.isToday ? '<span style="font-size:10px;color:#0090ff;font-weight:600;">TODAY</span>' : ''}
-            </div>
-            <div style="font-size:14px;color:${day.hours > 0 ? '#0090ff' : '#666'};font-weight:600;">
-                ${day.hours > 0 ? day.hours.toFixed(1) + ' hrs' : '—'}
-            </div>
-        </div>
-    `).join('');
+ 
+    tcUpdateClockBtn();
+    await tcRenderAll();
 }
-    
-// Load admin time cards
-async function loadAdminTimeCards() {
-    const datePicker = document.getElementById('admin-date-picker');
-    const selectedDate = datePicker.value || getTodayDate();
-    
-    document.getElementById('admin-date').textContent = formatDisplayDate(selectedDate);
-    
-    // Load all users' time entries for this date
-    const allEntriesPath = `timeEntries`;
-    const allData = await loadFromFirebase(allEntriesPath);
-    
-    if (!allData) {
-        document.getElementById('admin-timecards-container').innerHTML = 
-            '<div class="card" style="padding:40px;text-align:center;color:#888;">No time entries found</div>';
-        return;
+ 
+function tcUpdateClockBtn() {
+    const btn = document.getElementById('tc-main-btn');
+    if (!btn) return;
+    if (tcCurrentClockIn) {
+        btn.textContent = 'Clock Out';
+        btn.className = 'btn btn-danger';
+        btn.style.minWidth = '120px';
+        btn.style.justifyContent = 'center';
+    } else {
+        btn.textContent = 'Clock In';
+        btn.className = 'btn btn-primary';
+        btn.style.minWidth = '120px';
+        btn.style.justifyContent = 'center';
     }
-    
-    // Process data by user
-    const userSummaries = {};
-    
-    Object.keys(allData).forEach(userId => {
-        const userData = allData[userId];
-        if (userData[selectedDate]) {
-            const entries = Object.values(userData[selectedDate]);
-            let totalMinutes = 0;
-            
-            entries.forEach(entry => {
-                const start = new Date(entry.clockIn);
-                const end = new Date(entry.clockOut);
-                const minutes = (end - start) / 1000 / 60;
-                totalMinutes += minutes;
-            });
-            
-            userSummaries[userId] = {
-                email: entries[0].userEmail,
-                entries: entries,
-                totalHours: (totalMinutes / 60).toFixed(2)
-            };
-        }
-    });
-    
-    renderAdminTimeCards(userSummaries);
 }
-
-// Render admin time cards
-function renderAdminTimeCards(userSummaries) {
-    const container = document.getElementById('admin-timecards-container');
-    
-    if (Object.keys(userSummaries).length === 0) {
-        container.innerHTML = '<div class="card" style="padding:40px;text-align:center;color:#888;">No time entries for this date</div>';
-        return;
+ 
+// ── Restore active clock-in on load ───────────────────────────
+async function tcCheckActive() {
+    if (!currentUser) return;
+    const active = await loadFromFirebase(`activeClockIns/${currentUser.uid}`);
+    if (active && active.clockInTime) {
+        tcCurrentClockIn = active.clockInTime;
     }
-    
-    container.innerHTML = Object.keys(userSummaries).map(userId => {
-        const summary = userSummaries[userId];
-        return `
-        <div class="card" style="padding:24px;margin-bottom:20px;">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-                <div>
-                    <div style="font-size:16px;font-weight:700;color:white;">${summary.email}</div>
-                    <div style="font-size:12px;color:#888;">${summary.entries.length} entries</div>
-                </div>
-                <div style="text-align:right;">
-                    <div style="font-size:12px;color:#888;">Total Hours</div>
-                    <div style="font-size:24px;font-weight:700;color:#0090ff;">${summary.totalHours}</div>
-                </div>
+    tcUpdateClockBtn();
+}
+ 
+// ── Rendering ──────────────────────────────────────────────────
+function tcChangePayPeriod(dir) {
+    tcPayPeriodOffset += dir;
+    tcRenderAll();
+}
+ 
+async function tcRenderAll() {
+    if (!document.getElementById('page-timecard').classList.contains('active')) return;
+ 
+    const { start, end, days } = getPayPeriod(tcPayPeriodOffset);
+    const today = getTodayDate();
+ 
+    // Pay period label
+    const fmt = d => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    document.getElementById('tc-pay-period-label').textContent =
+        `Pay Period: ${fmt(start)} – ${fmt(end)}`;
+ 
+    // Load all 14 days in parallel
+    const allEntries = await Promise.all(days.map(d => tcLoadDay(d)));
+ 
+    // Day grid
+    const grid = document.getElementById('tc-day-grid');
+    let periodTotalMs = 0;
+ 
+    grid.innerHTML = days.map((dateKey, i) => {
+        const entries = allEntries[i];
+        const dayMs = entries.reduce((s, e) => s + entryHours(e), 0);
+        periodTotalMs += dayMs;
+ 
+        const d = new Date(dateKey + 'T00:00:00');
+        const dayName  = d.toLocaleDateString('en-US', { weekday: 'short' });
+        const dayNum   = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        const isToday  = dateKey === today;
+        const isSel    = dateKey === tcSelectedDate;
+        const hasHours = dayMs > 0;
+ 
+        const borderRight = (i === 6) ? 'border-right:2px solid #0090ff;' : 'border-right:1px solid #333;';
+ 
+        return `<div onclick="tcSelectDay('${dateKey}')" style="
+            cursor:pointer;
+            padding:10px 6px;
+            text-align:center;
+            background:${isSel ? '#1a3a4a' : isToday ? '#1a2a3a' : '#252525'};
+            border-bottom:${isSel ? '3px solid #0090ff' : '3px solid transparent'};
+            ${borderRight}
+            transition:background 0.15s;
+        ">
+            <div style="font-size:11px;color:${isToday ? '#0090ff' : '#888'};font-weight:${isToday ? '700' : '400'};">${dayName}</div>
+            <div style="font-size:12px;color:${isToday ? '#fff' : '#aaa'};margin:2px 0;">${dayNum}</div>
+            <div style="font-size:14px;font-weight:700;color:${hasHours ? '#0090ff' : '#444'};">
+                ${hasHours ? fmtHours(dayMs) : '—'}
             </div>
-            
-            ${summary.entries.map(entry => {
-                const start = new Date(entry.clockIn);
-                const end = new Date(entry.clockOut);
-                const minutes = (end - start) / 1000 / 60;
-                const hours = (minutes / 60).toFixed(2);
-                
-                const startTime = start.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-                const endTime = end.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-                
-                return `
-                    <div style="display:flex;justify-content:space-between;align-items:center;padding:12px;background:#1a1a1a;border-radius:6px;margin-bottom:8px;">
-                        <div style="flex:1;">
-                            <div style="font-size:14px;color:white;">${startTime} - ${endTime}</div>
-                        </div>
-                        <div style="font-size:14px;color:#0090ff;font-weight:600;margin-right:12px;">${hours} hrs</div>
-                        <div style="display:flex;gap:8px;">
-                            <button class="btn btn-sm" onclick='editTimeEntry("${userId}", "${entry.date}", "${entry.id}")' style="padding:4px 8px;font-size:12px;">
-                                Edit
-                            </button>
-                            <button class="btn btn-danger btn-sm" onclick='deleteTimeEntry("${userId}", "${entry.date}", "${entry.id}")' style="padding:4px 8px;font-size:12px;">
-                                Delete
-                            </button>
-                        </div>
-                    </div>
-                `;
-            }).join('')}
-        </div>
-        `;
+        </div>`;
     }).join('');
+ 
+    // Period total
+    document.getElementById('tc-period-total').textContent = fmtHours(periodTotalMs) + ' hrs';
+ 
+    // Entry log for selected day
+    await tcRenderDayEntries(tcSelectedDate);
 }
-
-// Edit time entry
-let editingTimeEntry = null;
-
-async function editTimeEntry(userId, date, entryId) {
-    const entryPath = `timeEntries/${userId}/${date}/${entryId}`;
-    const entry = await loadFromFirebase(entryPath);
-    
-    if (!entry) {
-        showToast('ERROR', 'Could not load time entry');
+ 
+async function tcSelectDay(dateKey) {
+    tcSelectedDate = dateKey;
+    await tcRenderAll();
+}
+ 
+async function tcRenderDayEntries(dateKey) {
+    const entries = await tcLoadDay(dateKey);
+    const d = new Date(dateKey + 'T00:00:00');
+ 
+    document.getElementById('tc-selected-label').textContent =
+        dateKey === getTodayDate() ? "Today's Entries" :
+        d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+ 
+    document.getElementById('tc-selected-date-sub').textContent =
+        dateKey === getTodayDate() && tcCurrentClockIn
+            ? `Currently clocked in since ${fmtTime(tcCurrentClockIn)}`
+            : '';
+ 
+    const container = document.getElementById('tc-entry-list');
+ 
+    if (entries.length === 0 && !(dateKey === getTodayDate() && tcCurrentClockIn)) {
+        container.innerHTML = '<div style="text-align:center;color:#888;padding:30px;font-size:13px;">No entries for this day.</div>';
+        document.getElementById('tc-day-total').textContent = '0.00 hrs';
         return;
     }
-    
-    editingTimeEntry = { userId, date, entryId, entry };
-    
-    // Populate modal
-    document.getElementById('edit-time-employee').textContent = entry.userEmail;
-    document.getElementById('edit-time-date').value = date;
-    
-    // Convert ISO timestamps to time inputs
-    const clockInDate = new Date(entry.clockIn);
-    const clockOutDate = new Date(entry.clockOut);
-    
-    document.getElementById('edit-time-clockin').value = 
-        clockInDate.toTimeString().slice(0, 5); // HH:MM format
-    document.getElementById('edit-time-clockout').value = 
-        clockOutDate.toTimeString().slice(0, 5);
-    
-    // Calculate and display duration
-    updateEditDuration();
-    
-    // Add listeners for live duration calculation
-    document.getElementById('edit-time-clockin').addEventListener('input', updateEditDuration);
-    document.getElementById('edit-time-clockout').addEventListener('input', updateEditDuration);
-    document.getElementById('edit-time-date').addEventListener('input', updateEditDuration);
-    
-    openModal('modal-edit-time');
+ 
+    let totalMs = 0;
+    let html = entries.map(entry => {
+        const ms = entryHours(entry);
+        totalMs += ms;
+        return `<div style="display:grid;grid-template-columns:1fr 1fr 120px;gap:0;padding:12px 0;border-bottom:1px solid #333;align-items:center;">
+            <div style="font-size:14px;color:white;">${fmtTime(entry.clockIn)}</div>
+            <div style="font-size:14px;color:#ff6666;">${fmtTime(entry.clockOut)}</div>
+            <div style="font-size:14px;color:#0090ff;font-weight:600;text-align:right;">${fmtHours(ms)} hrs</div>
+        </div>`;
+    }).join('');
+ 
+    // Show active in-progress row if today and clocked in
+    if (dateKey === getTodayDate() && tcCurrentClockIn) {
+        const liveMs = new Date() - new Date(tcCurrentClockIn);
+        html += `<div style="display:grid;grid-template-columns:1fr 1fr 120px;gap:0;padding:12px 0;border-bottom:1px solid #333;align-items:center;background:#1a2a1a;border-radius:4px;">
+            <div style="font-size:14px;color:#4caf50;">${fmtTime(tcCurrentClockIn)}</div>
+            <div style="font-size:14px;color:#888;font-style:italic;">In progress…</div>
+            <div style="font-size:14px;color:#4caf50;font-weight:600;text-align:right;">${fmtHours(liveMs)} hrs</div>
+        </div>`;
+        totalMs += liveMs;
+    }
+ 
+    container.innerHTML = html;
+    document.getElementById('tc-day-total').textContent = fmtHours(totalMs) + ' hrs';
 }
-
-// Update duration in edit modal
-function updateEditDuration() {
-    const date = document.getElementById('edit-time-date').value;
-    const clockInTime = document.getElementById('edit-time-clockin').value;
-    const clockOutTime = document.getElementById('edit-time-clockout').value;
-    
-    if (!date || !clockInTime || !clockOutTime) {
-        document.getElementById('edit-time-duration').textContent = '0.00 hrs';
+ 
+// ── Export PDF ─────────────────────────────────────────────────
+function openTCExportModal() {
+    const { start, end } = getPayPeriod(tcPayPeriodOffset);
+    document.getElementById('export-from').value = start.toISOString().split('T')[0];
+    document.getElementById('export-to').value   = end.toISOString().split('T')[0];
+    document.getElementById('export-employee-label').textContent =
+        currentUser ? currentUser.email : '—';
+    openModal('modal-tc-export');
+}
+ 
+async function generateTimecardPDF() {
+    const fromVal = document.getElementById('export-from').value;
+    const toVal   = document.getElementById('export-to').value;
+ 
+    if (!fromVal || !toVal || fromVal > toVal) {
+        alert('Please select a valid date range.');
         return;
     }
-    
-    const clockInDate = new Date(`${date}T${clockInTime}:00`);
-    const clockOutDate = new Date(`${date}T${clockOutTime}:00`);
-    
-    const minutes = (clockOutDate - clockInDate) / 1000 / 60;
-    const hours = (minutes / 60).toFixed(2);
-    
-    if (minutes < 0) {
-        document.getElementById('edit-time-duration').textContent = 'Invalid time range';
-        document.getElementById('edit-time-duration').style.color = '#ff4444';
-    } else {
-        document.getElementById('edit-time-duration').textContent = hours + ' hrs';
-        document.getElementById('edit-time-duration').style.color = '#0090ff';
+ 
+    // Build list of dates in range
+    const dates = [];
+    const cur = new Date(fromVal + 'T00:00:00');
+    const fin = new Date(toVal   + 'T00:00:00');
+    while (cur <= fin) {
+        dates.push(cur.toISOString().split('T')[0]);
+        cur.setDate(cur.getDate() + 1);
     }
+ 
+    // Load all entries
+    const allEntries = await Promise.all(dates.map(d => tcLoadDay(d)));
+ 
+    let grandTotalMs = 0;
+ 
+    const rows = dates.map((dateKey, i) => {
+        const entries = allEntries[i];
+        const dayMs = entries.reduce((s, e) => s + entryHours(e), 0);
+        grandTotalMs += dayMs;
+ 
+        const d = new Date(dateKey + 'T00:00:00');
+        const dateLabel = d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+ 
+        if (entries.length === 0) {
+            return `<tr class="day-row">
+                <td class="date-cell">${dateLabel}</td>
+                <td colspan="2" style="color:#aaa;font-style:italic;">No entries</td>
+                <td class="hours-cell">—</td>
+            </tr>`;
+        }
+ 
+        return entries.map((entry, ei) => {
+            const ms = entryHours(entry);
+            const isFirst = ei === 0;
+            return `<tr class="entry-row">
+                ${isFirst ? `<td class="date-cell" rowspan="${entries.length}">${dateLabel}</td>` : ''}
+                <td class="time-cell">${fmtTime(entry.clockIn)}</td>
+                <td class="time-cell out">${fmtTime(entry.clockOut)}</td>
+                ${isFirst ? `<td class="hours-cell" rowspan="${entries.length}">${fmtHours(dayMs)} hrs</td>` : ''}
+            </tr>`;
+        }).join('');
+    }).join('');
+ 
+    const employeeName = currentUser ? currentUser.email : 'Unknown';
+    const fromLabel = new Date(fromVal + 'T00:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+    const toLabel   = new Date(toVal   + 'T00:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+ 
+    const printHTML = `<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Timecard – ${employeeName}</title>
+<style>
+  body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; color: #111; margin: 0; padding: 32px; }
+  .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 28px; border-bottom: 3px solid #0090ff; padding-bottom: 16px; }
+  .company { font-size: 22px; font-weight: 700; color: #0090ff; letter-spacing: -0.5px; }
+  .report-title { font-size: 15px; color: #555; margin-top: 4px; }
+  .meta { text-align: right; font-size: 13px; color: #555; line-height: 1.7; }
+  .meta strong { color: #111; }
+  table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+  th { background: #0090ff; color: white; padding: 10px 14px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; text-align: left; }
+  td { padding: 10px 14px; border-bottom: 1px solid #e0e0e0; font-size: 13px; vertical-align: top; }
+  .date-cell { font-weight: 600; color: #333; white-space: nowrap; background: #f8f8f8; }
+  .time-cell { color: #333; }
+  .time-cell.out { color: #c62828; }
+  .hours-cell { font-weight: 700; color: #0d47a1; text-align: right; white-space: nowrap; background: #f0f7ff; }
+  .day-row td { background: #fafafa; }
+  .total-row td { background: #0090ff; color: white; font-weight: 700; font-size: 15px; border: none; }
+  .total-row .hours-cell { background: #0077dd; color: white; }
+  .footer { margin-top: 32px; font-size: 11px; color: #aaa; text-align: center; border-top: 1px solid #ddd; padding-top: 12px; }
+</style>
+</head>
+<body>
+  <div class="header">
+    <div>
+      <div class="company">BR▲▼E CWS</div>
+      <div class="report-title">Employee Timecard Report</div>
+    </div>
+    <div class="meta">
+      <div><strong>Employee:</strong> ${employeeName}</div>
+      <div><strong>Period:</strong> ${fromLabel} – ${toLabel}</div>
+      <div><strong>Generated:</strong> ${new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</div>
+    </div>
+  </div>
+ 
+  <table>
+    <thead>
+      <tr>
+        <th style="width:180px;">Date</th>
+        <th>In Time</th>
+        <th>Out Time</th>
+        <th style="text-align:right;width:100px;">Hours</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${rows}
+      <tr class="total-row">
+        <td colspan="3">TOTAL HOURS</td>
+        <td class="hours-cell" style="text-align:right;">${fmtHours(grandTotalMs)} hrs</td>
+      </tr>
+    </tbody>
+  </table>
+ 
+  <div class="footer">Brave Custom Woodworking Solutions · Generated by BR▲▼E X</div>
+</body>
+</html>`;
+ 
+    const win = window.open('', '_blank', 'width=900,height=700');
+    win.document.write(printHTML);
+    win.document.close();
+    win.focus();
+    setTimeout(() => win.print(), 500);
+ 
+    closeModal('modal-tc-export');
 }
-
-// Save edited time entry
-async function saveTimeEntry() {
-    if (!editingTimeEntry) return;
-    
-    const date = document.getElementById('edit-time-date').value;
-    const clockInTime = document.getElementById('edit-time-clockin').value;
-    const clockOutTime = document.getElementById('edit-time-clockout').value;
-    
-    if (!date || !clockInTime || !clockOutTime) {
-        showToast('ERROR', 'Fill in all fields');
-        return;
-    }
-    
-    const clockInDate = new Date(`${date}T${clockInTime}:00`);
-    const clockOutDate = new Date(`${date}T${clockOutTime}:00`);
-    
-    if (clockOutDate <= clockInDate) {
-        showToast('ERROR', 'Clock out must be after clock in');
-        return;
-    }
-    
-    const { userId, entryId } = editingTimeEntry;
-    
-    // Check if date changed - need to move entry to new date path
-    const oldDate = editingTimeEntry.date;
-    const newDate = date;
-    
-    const updatedEntry = {
-        id: entryId,
-        clockIn: clockInDate.toISOString(),
-        clockOut: clockOutDate.toISOString(),
-        date: newDate,
-        userId: userId,
-        userEmail: editingTimeEntry.entry.userEmail
-    };
-    
-    if (oldDate !== newDate) {
-        // Delete from old date
-        const oldPath = `timeEntries/${userId}/${oldDate}/${entryId}`;
-        await saveToFirebase(oldPath, null);
-        
-        // Save to new date
-        const newPath = `timeEntries/${userId}/${newDate}/${entryId}`;
-        await saveToFirebase(newPath, updatedEntry);
-    } else {
-        // Same date, just update
-        const entryPath = `timeEntries/${userId}/${newDate}/${entryId}`;
-        await saveToFirebase(entryPath, updatedEntry);
-    }
-    
-    showToast('Updated', 'Time entry saved successfully');
-    closeModal('modal-edit-time');
-    editingTimeEntry = null;
-    
-    // Reload admin view
-    loadAdminTimeCards();
-}
-
-// Delete time entry
-async function deleteTimeEntry(userId, date, entryId) {
-    const confirmed = confirm('Are you sure you want to delete this time entry? This cannot be undone.');
-    if (!confirmed) return;
-    
-    const entryPath = `timeEntries/${userId}/${date}/${entryId}`;
-    await saveToFirebase(entryPath, null); // Set to null to delete
-    
-    showToast('Deleted', 'Time entry removed');
-    
-    // Reload admin view
-    loadAdminTimeCards();
-}
-    
-// Initialize time card page
+ 
+// ── Initialize ─────────────────────────────────────────────────
 async function initializeTimeCard() {
-    if (!currentUser) {
-        console.log('Cannot initialize time card - no user logged in');
-        return;
-    }
-    
-    console.log('Initializing time card for:', currentUser.email);
-    
-    updateCurrentTime();
-    setInterval(updateCurrentTime, 1000);
-    
-    // Check if user has an active clock-in
-    await checkActiveClockIn();
-    
-    // Render the time card with already-loaded data
-    renderTodayTimeCard();
-    
-    // Load weekly summary
-    await loadWeeklySummary();
-    
+    if (!currentUser) return;
+ 
+    // Update clock every minute (for live "in progress" display)
+    setInterval(() => {
+        if (document.getElementById('page-timecard').classList.contains('active')) {
+            tcRenderDayEntries(tcSelectedDate);
+        }
+    }, 60000);
+ 
+    await tcCheckActive();
+    await tcRenderAll();
+ 
     // Set admin date picker to today
-    const datePicker = document.getElementById('admin-date-picker');
-    if (datePicker) {
-        datePicker.value = getTodayDate();
-    }
+    const picker = document.getElementById('admin-date-picker');
+    if (picker) picker.value = getTodayDate();
 }
     
 // DATA
@@ -2741,6 +2423,7 @@ function showPage(page, btn) {
         btn.classList.add('active');
     }
     if (page === 'matrix') renderMatrix();
+    if (page === 'timecard') tcRenderAll();
     if (page === 'admin') loadAdminTimeCards();
 }
     

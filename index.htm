@@ -563,9 +563,6 @@ tbody tr:last-child td { border-bottom: none; }
         </div>
     </div>
 </div>
- 
-<!-- PRINT FRAME (hidden, used for PDF generation) -->
-<div id="tc-print-frame" style="display:none;"></div>
     
 <!-- PRICING MATRIX PAGE -->
 <div id="page-matrix" class="page">
@@ -712,24 +709,54 @@ tbody tr:last-child td { border-bottom: none; }
 <!-- ADMIN TIME CARD PAGE -->
 <div id="page-admin" class="page">
     <div class="container">
-        <div style="margin-bottom:24px;">
-            <h2 style="font-size:22px;font-weight:700;color:white;margin-bottom:8px;">Employee Time Cards</h2>
-            <p style="color:#888;font-size:14px;" id="admin-date">Monday, March 25, 2026</p>
-        </div>
-        
-        <!-- Date Selector -->
-        <div class="card" style="padding:16px;margin-bottom:20px;">
-            <div style="display:flex;gap:12px;align-items:center;">
-                <label class="form-label" style="margin:0;">View Date:</label>
-                <input type="date" class="form-input" id="admin-date-picker" style="width:200px;">
-                <button class="btn btn-primary btn-sm" onclick="loadAdminTimeCards()">Load</button>
+ 
+        <!-- Header -->
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:12px;">
+            <div>
+                <h2 style="font-size:22px;font-weight:700;color:white;margin-bottom:4px;">Employee Time Cards</h2>
+                <div style="color:#888;font-size:13px;" id="admin-pay-period-label">Loading…</div>
+            </div>
+            <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+                <button class="btn btn-ghost btn-sm" onclick="adminChangePayPeriod(-1)">← Prev</button>
+                <button class="btn btn-ghost btn-sm" onclick="adminChangePayPeriod(1)">Next →</button>
             </div>
         </div>
-        
-        <!-- Employee Time Cards -->
-        <div id="admin-timecards-container"></div>
+ 
+        <!-- Pay period day-range selector -->
+        <div class="card" style="padding:16px;margin-bottom:20px;">
+            <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
+                <div style="font-size:13px;color:#888;">Or jump to date:</div>
+                <input type="date" class="form-input" id="admin-date-picker" style="width:180px;">
+                <button class="btn btn-primary btn-sm" onclick="adminJumpToDate()">Go</button>
+            </div>
+        </div>
+ 
+        <!-- Day selector strip -->
+        <div class="card" style="margin-bottom:20px;overflow:hidden;">
+            <div style="display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid #333;">
+                <div style="padding:10px 16px;font-size:12px;font-weight:700;color:#0090ff;text-transform:uppercase;letter-spacing:0.5px;border-right:1px solid #333;">Week 1</div>
+                <div style="padding:10px 16px;font-size:12px;font-weight:700;color:#0090ff;text-transform:uppercase;letter-spacing:0.5px;">Week 2</div>
+            </div>
+            <div id="admin-day-grid" style="display:grid;grid-template-columns:repeat(14,1fr);overflow-x:auto;">
+                <!-- filled by JS -->
+            </div>
+        </div>
+ 
+        <!-- All-employees grid for selected day -->
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+            <div style="font-size:16px;font-weight:700;color:white;" id="admin-selected-label">Select a day above</div>
+        </div>
+ 
+        <!-- Employee cards container -->
+        <div id="admin-employee-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px;">
+            <div class="card" style="padding:40px;text-align:center;color:#888;grid-column:1/-1;">
+                Select a day above to view employee time cards.
+            </div>
+        </div>
+ 
     </div>
 </div>
+
     
 <!-- ORDER DETAIL PAGE 000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000-->
 <div id="page-order-detail" class="page">
@@ -1322,43 +1349,72 @@ tbody tr:last-child td { border-bottom: none; }
         </div>
     </div>
 </div>
+
 <!-- EDIT TIME ENTRY MODAL -->
 <div class="modal" id="modal-edit-time">
-    <div class="modal-content" style="max-width:500px;">
+    <div class="modal-box" style="max-width:500px;">
         <div class="modal-header">
-            <h3>Edit Time Entry</h3>
-            <button class="modal-close" onclick="closeModal('modal-edit-time')">&times;</button>
+            <h2 class="modal-title">Edit Time Entry</h2>
+            <button class="modal-close" onclick="closeModal('modal-edit-time')">×</button>
         </div>
-        <div class="modal-body">
-            <div style="margin-bottom:16px;">
-                <label class="form-label">Employee</label>
-                <div id="edit-time-employee" style="color:#888;font-size:14px;"></div>
+        <div style="margin-bottom:16px;">
+            <label class="form-label">Employee</label>
+            <div id="edit-time-employee" style="color:#888;font-size:14px;padding:8px 0;"></div>
+        </div>
+        <div style="margin-bottom:16px;">
+            <label class="form-label">Date</label>
+            <input type="date" class="form-input" id="edit-time-date">
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
+            <div>
+                <label class="form-label">Clock In Time</label>
+                <input type="time" class="form-input" id="edit-time-clockin">
             </div>
-            
-            <div style="margin-bottom:16px;">
-                <label class="form-label">Date</label>
-                <input type="date" class="form-input" id="edit-time-date">
-            </div>
-            
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
-                <div>
-                    <label class="form-label">Clock In Time</label>
-                    <input type="time" class="form-input" id="edit-time-clockin">
-                </div>
-                <div>
-                    <label class="form-label">Clock Out Time</label>
-                    <input type="time" class="form-input" id="edit-time-clockout">
-                </div>
-            </div>
-            
-            <div style="padding:12px;background:#1a1a1a;border-radius:6px;margin-bottom:16px;">
-                <div style="font-size:12px;color:#888;margin-bottom:4px;">Calculated Duration</div>
-                <div style="font-size:18px;color:#0090ff;font-weight:600;" id="edit-time-duration">0.00 hrs</div>
+            <div>
+                <label class="form-label">Clock Out Time</label>
+                <input type="time" class="form-input" id="edit-time-clockout">
             </div>
         </div>
-        <div class="modal-footer">
-            <button class="btn btn-secondary" onclick="closeModal('modal-edit-time')">Cancel</button>
+        <div style="padding:12px;background:#1a1a1a;border-radius:6px;margin-bottom:20px;border:1px solid #444;">
+            <div style="font-size:12px;color:#888;margin-bottom:4px;">Calculated Duration</div>
+            <div style="font-size:18px;color:#0090ff;font-weight:600;" id="edit-time-duration">0.00 hrs</div>
+        </div>
+        <div style="display:flex;gap:10px;">
             <button class="btn btn-primary" onclick="saveTimeEntry()">Save Changes</button>
+            <button class="btn btn-ghost" onclick="closeModal('modal-edit-time')">Cancel</button>
+        </div>
+    </div>
+</div>
+ 
+<!-- ADMIN EXPORT MODAL -->
+<div class="modal" id="modal-admin-export">
+    <div class="modal-box" style="max-width:480px;">
+        <div class="modal-header">
+            <h2 class="modal-title">Export Timecards PDF</h2>
+            <button class="modal-close" onclick="closeModal('modal-admin-export')">×</button>
+        </div>
+        <p style="font-size:13px;color:#888;margin-bottom:20px;">
+            Each employee gets their own page. Selecting a full two-week pay period is recommended.
+        </p>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;">
+            <div class="form-group" style="margin:0;">
+                <label class="form-label">From</label>
+                <input type="date" class="form-input" id="admin-export-from">
+            </div>
+            <div class="form-group" style="margin:0;">
+                <label class="form-label">To</label>
+                <input type="date" class="form-input" id="admin-export-to">
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="form-label">Include Employees</label>
+            <div id="admin-export-employee-list" style="max-height:180px;overflow-y:auto;border:1px solid #444;border-radius:4px;background:#1a1a1a;padding:8px;">
+                <div style="color:#888;font-size:13px;">Loading employees…</div>
+            </div>
+        </div>
+        <div style="display:flex;gap:10px;margin-top:20px;">
+            <button class="btn btn-primary" onclick="generateAdminPDF()">Generate PDF</button>
+            <button class="btn btn-ghost" onclick="closeModal('modal-admin-export')">Cancel</button>
         </div>
     </div>
 </div>
@@ -1903,140 +1959,6 @@ async function tcRenderDayEntries(dateKey) {
     document.getElementById('tc-day-total').textContent = fmtHours(totalMs) + ' hrs';
 }
  
-// ── Export PDF ─────────────────────────────────────────────────
-function openTCExportModal() {
-    const { start, end } = getPayPeriod(tcPayPeriodOffset);
-    document.getElementById('export-from').value = start.toISOString().split('T')[0];
-    document.getElementById('export-to').value   = end.toISOString().split('T')[0];
-    document.getElementById('export-employee-label').textContent =
-        currentUser ? currentUser.email : '—';
-    openModal('modal-tc-export');
-}
- 
-async function generateTimecardPDF() {
-    const fromVal = document.getElementById('export-from').value;
-    const toVal   = document.getElementById('export-to').value;
- 
-    if (!fromVal || !toVal || fromVal > toVal) {
-        alert('Please select a valid date range.');
-        return;
-    }
- 
-    // Build list of dates in range
-    const dates = [];
-    const cur = new Date(fromVal + 'T00:00:00');
-    const fin = new Date(toVal   + 'T00:00:00');
-    while (cur <= fin) {
-        dates.push(cur.toISOString().split('T')[0]);
-        cur.setDate(cur.getDate() + 1);
-    }
- 
-    // Load all entries
-    const allEntries = await Promise.all(dates.map(d => tcLoadDay(d)));
- 
-    let grandTotalMs = 0;
- 
-    const rows = dates.map((dateKey, i) => {
-        const entries = allEntries[i];
-        const dayMs = entries.reduce((s, e) => s + entryHours(e), 0);
-        grandTotalMs += dayMs;
- 
-        const d = new Date(dateKey + 'T00:00:00');
-        const dateLabel = d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
- 
-        if (entries.length === 0) {
-            return `<tr class="day-row">
-                <td class="date-cell">${dateLabel}</td>
-                <td colspan="2" style="color:#aaa;font-style:italic;">No entries</td>
-                <td class="hours-cell">—</td>
-            </tr>`;
-        }
- 
-        return entries.map((entry, ei) => {
-            const ms = entryHours(entry);
-            const isFirst = ei === 0;
-            return `<tr class="entry-row">
-                ${isFirst ? `<td class="date-cell" rowspan="${entries.length}">${dateLabel}</td>` : ''}
-                <td class="time-cell">${fmtTime(entry.clockIn)}</td>
-                <td class="time-cell out">${fmtTime(entry.clockOut)}</td>
-                ${isFirst ? `<td class="hours-cell" rowspan="${entries.length}">${fmtHours(dayMs)} hrs</td>` : ''}
-            </tr>`;
-        }).join('');
-    }).join('');
- 
-    const employeeName = currentUser ? currentUser.email : 'Unknown';
-    const fromLabel = new Date(fromVal + 'T00:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
-    const toLabel   = new Date(toVal   + 'T00:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
- 
-    const printHTML = `<!DOCTYPE html>
-<html>
-<head>
-<meta charset="UTF-8">
-<title>Timecard – ${employeeName}</title>
-<style>
-  body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; color: #111; margin: 0; padding: 32px; }
-  .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 28px; border-bottom: 3px solid #0090ff; padding-bottom: 16px; }
-  .company { font-size: 22px; font-weight: 700; color: #0090ff; letter-spacing: -0.5px; }
-  .report-title { font-size: 15px; color: #555; margin-top: 4px; }
-  .meta { text-align: right; font-size: 13px; color: #555; line-height: 1.7; }
-  .meta strong { color: #111; }
-  table { width: 100%; border-collapse: collapse; margin-top: 8px; }
-  th { background: #0090ff; color: white; padding: 10px 14px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; text-align: left; }
-  td { padding: 10px 14px; border-bottom: 1px solid #e0e0e0; font-size: 13px; vertical-align: top; }
-  .date-cell { font-weight: 600; color: #333; white-space: nowrap; background: #f8f8f8; }
-  .time-cell { color: #333; }
-  .time-cell.out { color: #c62828; }
-  .hours-cell { font-weight: 700; color: #0d47a1; text-align: right; white-space: nowrap; background: #f0f7ff; }
-  .day-row td { background: #fafafa; }
-  .total-row td { background: #0090ff; color: white; font-weight: 700; font-size: 15px; border: none; }
-  .total-row .hours-cell { background: #0077dd; color: white; }
-  .footer { margin-top: 32px; font-size: 11px; color: #aaa; text-align: center; border-top: 1px solid #ddd; padding-top: 12px; }
-</style>
-</head>
-<body>
-  <div class="header">
-    <div>
-      <div class="company">BR▲▼E CWS</div>
-      <div class="report-title">Employee Timecard Report</div>
-    </div>
-    <div class="meta">
-      <div><strong>Employee:</strong> ${employeeName}</div>
-      <div><strong>Period:</strong> ${fromLabel} – ${toLabel}</div>
-      <div><strong>Generated:</strong> ${new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</div>
-    </div>
-  </div>
- 
-  <table>
-    <thead>
-      <tr>
-        <th style="width:180px;">Date</th>
-        <th>In Time</th>
-        <th>Out Time</th>
-        <th style="text-align:right;width:100px;">Hours</th>
-      </tr>
-    </thead>
-    <tbody>
-      ${rows}
-      <tr class="total-row">
-        <td colspan="3">TOTAL HOURS</td>
-        <td class="hours-cell" style="text-align:right;">${fmtHours(grandTotalMs)} hrs</td>
-      </tr>
-    </tbody>
-  </table>
- 
-  <div class="footer">Brave Custom Woodworking Solutions · Generated by BR▲▼E X</div>
-</body>
-</html>`;
- 
-    const win = window.open('', '_blank', 'width=900,height=700');
-    win.document.write(printHTML);
-    win.document.close();
-    win.focus();
-    setTimeout(() => win.print(), 500);
- 
-    closeModal('modal-tc-export');
-}
- 
 // ── Initialize ─────────────────────────────────────────────────
 async function initializeTimeCard() {
     if (!currentUser) return;
@@ -2055,6 +1977,664 @@ async function initializeTimeCard() {
     const picker = document.getElementById('admin-date-picker');
     if (picker) picker.value = getTodayDate();
 }
+
+<script id="admin-js-replacement">
+// ═══════════════════════════════════════════════════════════════
+// ADMIN TIME CARD SYSTEM
+// ═══════════════════════════════════════════════════════════════
+ 
+let adminPayPeriodOffset = 0;
+let adminSelectedDate    = getTodayDate();
+let adminAllUsers        = {};   // uid -> { email, entries per date }
+let editingTimeEntry     = null;
+ 
+// ── Pay period (reuse same logic as employee side) ─────────────
+function getAdminPayPeriod(offset) {
+    return getPayPeriod(offset); // defined in timecard JS
+}
+ 
+// ── Load all users' data for entire pay period ─────────────────
+async function adminLoadPayPeriod() {
+    const { days } = getAdminPayPeriod(adminPayPeriodOffset);
+    const allData = await loadFromFirebase('timeEntries');
+    adminAllUsers = {};
+ 
+    if (!allData) return;
+ 
+    Object.keys(allData).forEach(uid => {
+        const userData = allData[uid];
+        days.forEach(dateKey => {
+            if (userData[dateKey]) {
+                if (!adminAllUsers[uid]) {
+                    // get email from first entry found
+                    const firstEntries = Object.values(userData[dateKey]);
+                    adminAllUsers[uid] = {
+                        email: firstEntries[0]?.userEmail || uid,
+                        uid: uid,
+                        days: {}
+                    };
+                }
+                if (!adminAllUsers[uid].days) adminAllUsers[uid].days = {};
+                adminAllUsers[uid].days[dateKey] = Object.values(userData[dateKey]);
+            }
+        });
+        // Make sure we capture the user even if they have no entries today
+        // by scanning other days for their email
+        if (!adminAllUsers[uid]) {
+            const allDatesForUser = Object.keys(userData);
+            if (allDatesForUser.length > 0) {
+                const firstDate = allDatesForUser[0];
+                const firstEntry = Object.values(userData[firstDate])[0];
+                if (firstEntry) {
+                    adminAllUsers[uid] = {
+                        email: firstEntry.userEmail || uid,
+                        uid: uid,
+                        days: {}
+                    };
+                }
+            }
+        }
+    });
+}
+ 
+// ── Change pay period ──────────────────────────────────────────
+async function adminChangePayPeriod(dir) {
+    adminPayPeriodOffset += dir;
+    await adminRenderAll();
+}
+ 
+async function adminJumpToDate() {
+    const val = document.getElementById('admin-date-picker').value;
+    if (!val) return;
+    adminSelectedDate = val;
+ 
+    // Figure out which pay period this date falls in and switch to it
+    const target = new Date(val + 'T00:00:00');
+    const msPerPeriod = 14 * 86400000;
+    const msSinceEpoch = target - TC_EPOCH;
+    const targetPeriodIndex = Math.floor(msSinceEpoch / msPerPeriod);
+ 
+    const today = new Date(); today.setHours(0,0,0,0);
+    const currentPeriodIndex = Math.floor((today - TC_EPOCH) / msPerPeriod);
+    adminPayPeriodOffset = targetPeriodIndex - currentPeriodIndex;
+ 
+    await adminRenderAll();
+}
+ 
+// ── Main render ────────────────────────────────────────────────
+async function adminRenderAll() {
+    const { start, end, days } = getAdminPayPeriod(adminPayPeriodOffset);
+ 
+    const fmt = d => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    document.getElementById('admin-pay-period-label').textContent =
+        `Pay Period: ${fmt(start)} – ${fmt(end)}`;
+ 
+    await adminLoadPayPeriod();
+ 
+    const today = getTodayDate();
+ 
+    // Day grid
+    const grid = document.getElementById('admin-day-grid');
+    grid.innerHTML = days.map((dateKey, i) => {
+        const isToday = dateKey === today;
+        const isSel   = dateKey === adminSelectedDate;
+        const borderRight = (i === 6) ? 'border-right:2px solid #0090ff;' : 'border-right:1px solid #333;';
+        const d = new Date(dateKey + 'T00:00:00');
+ 
+        // Count how many employees have entries this day
+        const employeesWorked = Object.values(adminAllUsers).filter(u =>
+            u.days && u.days[dateKey] && u.days[dateKey].length > 0
+        ).length;
+ 
+        return `<div onclick="adminSelectDay('${dateKey}')" style="
+            cursor:pointer;
+            padding:10px 4px;
+            text-align:center;
+            background:${isSel ? '#1a3a4a' : isToday ? '#1a2a3a' : '#252525'};
+            border-bottom:${isSel ? '3px solid #0090ff' : '3px solid transparent'};
+            ${borderRight}
+            transition:background 0.15s;
+        ">
+            <div style="font-size:11px;color:${isToday ? '#0090ff' : '#888'};font-weight:${isToday ? '700':'400'};">
+                ${d.toLocaleDateString('en-US',{weekday:'short'})}
+            </div>
+            <div style="font-size:11px;color:${isToday ? '#fff' : '#aaa'};margin:2px 0;">
+                ${d.toLocaleDateString('en-US',{month:'short',day:'numeric'})}
+            </div>
+            <div style="font-size:12px;color:${employeesWorked > 0 ? '#0090ff' : '#444'};">
+                ${employeesWorked > 0 ? employeesWorked + ' 👤' : '—'}
+            </div>
+        </div>`;
+    }).join('');
+ 
+    await adminRenderEmployeeCards(adminSelectedDate);
+}
+ 
+async function adminSelectDay(dateKey) {
+    adminSelectedDate = dateKey;
+    await adminRenderEmployeeCards(dateKey);
+    // Re-render grid to update selection highlight
+    const { days } = getAdminPayPeriod(adminPayPeriodOffset);
+    const today = getTodayDate();
+    const grid = document.getElementById('admin-day-grid');
+    grid.querySelectorAll('div').forEach((el, i) => {
+        if (i < days.length) {
+            const dk = days[i];
+            const isSel = dk === adminSelectedDate;
+            const isToday = dk === today;
+            el.style.background = isSel ? '#1a3a4a' : isToday ? '#1a2a3a' : '#252525';
+            el.style.borderBottom = isSel ? '3px solid #0090ff' : '3px solid transparent';
+        }
+    });
+}
+ 
+// ── Employee cards for a selected day ─────────────────────────
+async function adminRenderEmployeeCards(dateKey) {
+    const d = new Date(dateKey + 'T00:00:00');
+    const label = d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+    document.getElementById('admin-selected-label').textContent = label;
+ 
+    const container = document.getElementById('admin-employee-grid');
+    const users = Object.values(adminAllUsers);
+ 
+    if (users.length === 0) {
+        container.innerHTML = `<div class="card" style="padding:40px;text-align:center;color:#888;grid-column:1/-1;">
+            No employee data found for this pay period.
+        </div>`;
+        return;
+    }
+ 
+    container.innerHTML = users.map(user => {
+        const entries = (user.days && user.days[dateKey]) ? user.days[dateKey] : [];
+        let dayTotalMs = 0;
+ 
+        const entryRows = entries.length === 0
+            ? `<div style="text-align:center;color:#555;font-size:13px;padding:16px;">No entries</div>`
+            : entries.map(entry => {
+                const ms = entry.clockOut ? (new Date(entry.clockOut) - new Date(entry.clockIn)) : 0;
+                dayTotalMs += ms;
+                const hrs = (ms / 3600000).toFixed(2);
+                return `<div style="display:grid;grid-template-columns:1fr 1fr 80px 60px;gap:4px;padding:10px 0;border-bottom:1px solid #2a2a2a;align-items:center;font-size:13px;">
+                    <div style="color:white;">${fmtTime(entry.clockIn)}</div>
+                    <div style="color:#ff6666;">${entry.clockOut ? fmtTime(entry.clockOut) : '<em style="color:#888">Active</em>'}</div>
+                    <div style="color:#0090ff;font-weight:600;text-align:right;">${hrs} hrs</div>
+                    <div style="text-align:right;">
+                        <button onclick="adminEditEntry('${user.uid}','${dateKey}','${entry.id}')" 
+                            style="background:none;border:1px solid #444;color:#aaa;border-radius:4px;padding:3px 8px;cursor:pointer;font-size:12px;"
+                            title="Edit entry">✎</button>
+                    </div>
+                </div>`;
+            }).join('');
+ 
+        const totalHrs = (dayTotalMs / 3600000).toFixed(2);
+ 
+        return `<div class="card" style="padding:0;overflow:hidden;">
+            <!-- Card header — clickable to view user detail -->
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 16px;background:#2a2a2a;border-bottom:1px solid #333;cursor:pointer;"
+                 onclick="adminViewUserDetail('${user.uid}')">
+                <div>
+                    <div style="font-size:14px;font-weight:700;color:white;">${user.email}</div>
+                    <div style="font-size:11px;color:#0090ff;margin-top:2px;">Click to view full history →</div>
+                </div>
+                <div style="text-align:right;">
+                    <div style="font-size:11px;color:#888;">Day Total</div>
+                    <div style="font-size:20px;font-weight:700;color:${dayTotalMs > 0 ? '#0090ff' : '#444'};">${totalHrs}</div>
+                </div>
+            </div>
+            <!-- Entry header -->
+            <div style="display:grid;grid-template-columns:1fr 1fr 80px 60px;gap:4px;padding:8px 16px;border-bottom:1px solid #333;">
+                <div style="font-size:10px;font-weight:700;color:#0090ff;text-transform:uppercase;letter-spacing:0.5px;">In</div>
+                <div style="font-size:10px;font-weight:700;color:#ff4444;text-transform:uppercase;letter-spacing:0.5px;">Out</div>
+                <div style="font-size:10px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:0.5px;text-align:right;">Hrs</div>
+                <div></div>
+            </div>
+            <!-- Entries -->
+            <div style="padding:0 16px 12px;">
+                ${entryRows}
+            </div>
+            ${entries.length > 0 ? `
+            <!-- Add entry button -->
+            <div style="padding:0 16px 14px;">
+                <button onclick="adminAddEntry('${user.uid}','${user.email}','${dateKey}')"
+                    style="width:100%;background:none;border:1px dashed #444;color:#888;border-radius:4px;padding:8px;cursor:pointer;font-size:12px;transition:all 0.2s;"
+                    onmouseover="this.style.borderColor='#0090ff';this.style.color='#0090ff'"
+                    onmouseout="this.style.borderColor='#444';this.style.color='#888'">
+                    + Add Entry
+                </button>
+            </div>` : `
+            <div style="padding:0 16px 14px;">
+                <button onclick="adminAddEntry('${user.uid}','${user.email}','${dateKey}')"
+                    style="width:100%;background:none;border:1px dashed #444;color:#888;border-radius:4px;padding:8px;cursor:pointer;font-size:12px;"
+                    onmouseover="this.style.borderColor='#0090ff';this.style.color='#0090ff'"
+                    onmouseout="this.style.borderColor='#444';this.style.color='#888'">
+                    + Add Entry
+                </button>
+            </div>`}
+        </div>`;
+    }).join('');
+}
+ 
+// ── User detail view (full history in a modal) ─────────────────
+async function adminViewUserDetail(uid) {
+    const user = adminAllUsers[uid];
+    if (!user) return;
+ 
+    // Load all data for this user across the pay period
+    const { days } = getAdminPayPeriod(adminPayPeriodOffset);
+ 
+    // Show a full-screen-style overlay
+    const overlay = document.createElement('div');
+    overlay.id = 'admin-user-detail-overlay';
+    overlay.style.cssText = `position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:600;overflow-y:auto;padding:32px;`;
+ 
+    const allData = await loadFromFirebase(`timeEntries/${uid}`);
+    const entriesByDay = allData || {};
+ 
+    let totalMs = 0;
+    const dayBlocks = days.map(dateKey => {
+        const dayEntries = entriesByDay[dateKey] ? Object.values(entriesByDay[dateKey]) : [];
+        const dayMs = dayEntries.reduce((s, e) => {
+            const ms = e.clockOut ? (new Date(e.clockOut) - new Date(e.clockIn)) : 0;
+            return s + ms;
+        }, 0);
+        totalMs += dayMs;
+ 
+        const d = new Date(dateKey + 'T00:00:00');
+        const dayLabel = d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+        const isToday  = dateKey === getTodayDate();
+ 
+        const entryRows = dayEntries.length === 0
+            ? `<span style="color:#555;font-size:13px;font-style:italic;">No entries</span>`
+            : dayEntries.map(entry => {
+                const ms = entry.clockOut ? (new Date(entry.clockOut) - new Date(entry.clockIn)) : 0;
+                const hrs = (ms / 3600000).toFixed(2);
+                return `<div style="display:flex;gap:16px;align-items:center;margin-top:6px;font-size:13px;">
+                    <span style="color:white;min-width:90px;">${fmtTime(entry.clockIn)}</span>
+                    <span style="color:#ff6666;min-width:90px;">${entry.clockOut ? fmtTime(entry.clockOut) : '<em style="color:#888">Active</em>'}</span>
+                    <span style="color:#0090ff;font-weight:600;min-width:70px;">${hrs} hrs</span>
+                    <button onclick="adminEditEntry('${uid}','${dateKey}','${entry.id}')"
+                        style="background:none;border:1px solid #444;color:#aaa;border-radius:4px;padding:2px 8px;cursor:pointer;font-size:12px;">✎ Edit</button>
+                    <button onclick="adminDeleteEntry('${uid}','${dateKey}','${entry.id}')"
+                        style="background:none;border:1px solid #c62828;color:#ff4444;border-radius:4px;padding:2px 8px;cursor:pointer;font-size:12px;">✕</button>
+                </div>`;
+            }).join('');
+ 
+        return `<div style="padding:14px 16px;border-bottom:1px solid #333;background:${isToday ? '#1a2a3a' : 'transparent'};">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:${dayEntries.length > 0 ? '8px' : '0'};">
+                <div style="font-size:13px;font-weight:600;color:${isToday ? '#0090ff' : '#aaa'};">${dayLabel}${isToday ? ' <span style="font-size:10px;background:#0090ff;color:white;padding:1px 6px;border-radius:10px;margin-left:6px;">TODAY</span>' : ''}</div>
+                <div style="display:flex;align-items:center;gap:10px;">
+                    <span style="font-size:13px;font-weight:700;color:${dayMs > 0 ? '#0090ff' : '#444'};">${dayMs > 0 ? (dayMs/3600000).toFixed(2) + ' hrs' : '—'}</span>
+                    <button onclick="adminAddEntry('${uid}','${user.email}','${dateKey}')"
+                        style="background:none;border:1px dashed #444;color:#888;border-radius:4px;padding:2px 10px;cursor:pointer;font-size:11px;"
+                        onmouseover="this.style.borderColor='#0090ff';this.style.color='#0090ff'"
+                        onmouseout="this.style.borderColor='#444';this.style.color='#888'">+ Add</button>
+                </div>
+            </div>
+            ${entryRows}
+        </div>`;
+    }).join('');
+ 
+    overlay.innerHTML = `
+        <div style="max-width:700px;margin:0 auto;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">
+                <div>
+                    <div style="font-size:20px;font-weight:700;color:white;">${user.email}</div>
+                    <div style="font-size:13px;color:#888;margin-top:4px;">Pay period detail view</div>
+                </div>
+                <div style="display:flex;gap:12px;align-items:center;">
+                    <div style="text-align:right;">
+                        <div style="font-size:11px;color:#888;">Period Total</div>
+                        <div style="font-size:22px;font-weight:700;color:#0090ff;">${(totalMs/3600000).toFixed(2)} hrs</div>
+                    </div>
+                    <button onclick="document.getElementById('admin-user-detail-overlay').remove()"
+                        style="background:#333;border:none;color:#fff;padding:10px 18px;border-radius:6px;cursor:pointer;font-size:14px;">
+                        ✕ Close
+                    </button>
+                </div>
+            </div>
+            <div class="card" style="overflow:hidden;">
+                ${dayBlocks}
+            </div>
+        </div>`;
+ 
+    document.body.appendChild(overlay);
+}
+ 
+// ── Edit entry ─────────────────────────────────────────────────
+async function adminEditEntry(uid, dateKey, entryId) {
+    const entryPath = `timeEntries/${uid}/${dateKey}/${entryId}`;
+    const entry = await loadFromFirebase(entryPath);
+    if (!entry) { showToast('Error', 'Could not load entry'); return; }
+ 
+    editingTimeEntry = { uid, dateKey, entryId, entry };
+ 
+    const user = adminAllUsers[uid];
+    document.getElementById('edit-time-employee').textContent = user ? user.email : entry.userEmail || uid;
+    document.getElementById('edit-time-date').value   = dateKey;
+    document.getElementById('edit-time-clockin').value  = new Date(entry.clockIn).toTimeString().slice(0, 5);
+    document.getElementById('edit-time-clockout').value = entry.clockOut ? new Date(entry.clockOut).toTimeString().slice(0, 5) : '';
+ 
+    updateEditDuration();
+ 
+    document.getElementById('edit-time-clockin').oninput  = updateEditDuration;
+    document.getElementById('edit-time-clockout').oninput = updateEditDuration;
+    document.getElementById('edit-time-date').oninput     = updateEditDuration;
+ 
+    openModal('modal-edit-time');
+}
+ 
+// ── Add new entry ──────────────────────────────────────────────
+function adminAddEntry(uid, email, dateKey) {
+    editingTimeEntry = { uid, dateKey, entryId: null, entry: { userEmail: email, userId: uid } };
+ 
+    document.getElementById('edit-time-employee').textContent = email;
+    document.getElementById('edit-time-date').value    = dateKey;
+    document.getElementById('edit-time-clockin').value  = '08:00';
+    document.getElementById('edit-time-clockout').value = '17:00';
+    updateEditDuration();
+ 
+    document.getElementById('edit-time-clockin').oninput  = updateEditDuration;
+    document.getElementById('edit-time-clockout').oninput = updateEditDuration;
+    document.getElementById('edit-time-date').oninput     = updateEditDuration;
+ 
+    openModal('modal-edit-time');
+}
+ 
+// ── Delete entry ───────────────────────────────────────────────
+async function adminDeleteEntry(uid, dateKey, entryId) {
+    if (!confirm('Delete this time entry? This cannot be undone.')) return;
+    await saveToFirebase(`timeEntries/${uid}/${dateKey}/${entryId}`, null);
+ 
+    // Invalidate cache
+    if (adminAllUsers[uid] && adminAllUsers[uid].days && adminAllUsers[uid].days[dateKey]) {
+        adminAllUsers[uid].days[dateKey] = adminAllUsers[uid].days[dateKey].filter(e => e.id !== entryId);
+    }
+    // Also invalidate employee-side cache
+    tcInvalidateDay(dateKey);
+ 
+    showToast('Deleted', 'Time entry removed');
+ 
+    // Refresh overlay if open
+    const overlay = document.getElementById('admin-user-detail-overlay');
+    if (overlay) {
+        overlay.remove();
+        await adminViewUserDetail(uid);
+    }
+    await adminRenderEmployeeCards(adminSelectedDate);
+}
+ 
+// ── Duration calc ──────────────────────────────────────────────
+function updateEditDuration() {
+    const date    = document.getElementById('edit-time-date').value;
+    const inTime  = document.getElementById('edit-time-clockin').value;
+    const outTime = document.getElementById('edit-time-clockout').value;
+    const el      = document.getElementById('edit-time-duration');
+ 
+    if (!date || !inTime || !outTime) { el.textContent = '—'; return; }
+ 
+    const ms = new Date(`${date}T${outTime}:00`) - new Date(`${date}T${inTime}:00`);
+    if (ms < 0) {
+        el.textContent = 'Invalid range';
+        el.style.color = '#ff4444';
+    } else {
+        el.textContent = (ms / 3600000).toFixed(2) + ' hrs';
+        el.style.color = '#0090ff';
+    }
+}
+ 
+// ── Save entry ─────────────────────────────────────────────────
+async function saveTimeEntry() {
+    if (!editingTimeEntry) return;
+ 
+    const date    = document.getElementById('edit-time-date').value;
+    const inTime  = document.getElementById('edit-time-clockin').value;
+    const outTime = document.getElementById('edit-time-clockout').value;
+ 
+    if (!date || !inTime || !outTime) { showToast('Error', 'Fill in all fields'); return; }
+ 
+    const clockIn  = new Date(`${date}T${inTime}:00`);
+    const clockOut = new Date(`${date}T${outTime}:00`);
+    if (clockOut <= clockIn) { showToast('Error', 'Clock out must be after clock in'); return; }
+ 
+    const { uid, dateKey, entryId, entry } = editingTimeEntry;
+    const isNew = !entryId;
+    const newId = isNew ? ('entry-' + Date.now()) : entryId;
+    const newDate = date;
+ 
+    const updatedEntry = {
+        id:        newId,
+        clockIn:   clockIn.toISOString(),
+        clockOut:  clockOut.toISOString(),
+        date:      newDate,
+        userId:    uid,
+        userEmail: entry.userEmail || uid
+    };
+ 
+    // If date changed, delete from old path
+    if (!isNew && dateKey !== newDate) {
+        await saveToFirebase(`timeEntries/${uid}/${dateKey}/${entryId}`, null);
+        tcInvalidateDay(dateKey);
+    }
+ 
+    await saveToFirebase(`timeEntries/${uid}/${newDate}/${newId}`, updatedEntry);
+    tcInvalidateDay(newDate);
+ 
+    // Update local cache
+    if (!adminAllUsers[uid]) {
+        adminAllUsers[uid] = { email: entry.userEmail || uid, uid, days: {} };
+    }
+    if (!adminAllUsers[uid].days[newDate]) adminAllUsers[uid].days[newDate] = [];
+ 
+    if (isNew) {
+        adminAllUsers[uid].days[newDate].push(updatedEntry);
+    } else {
+        const idx = adminAllUsers[uid].days[newDate].findIndex(e => e.id === entryId);
+        if (idx >= 0) adminAllUsers[uid].days[newDate][idx] = updatedEntry;
+        else adminAllUsers[uid].days[newDate].push(updatedEntry);
+    }
+ 
+    showToast(isNew ? 'Entry Added' : 'Entry Updated', `${fmtTime(updatedEntry.clockIn)} – ${fmtTime(updatedEntry.clockOut)}`);
+    closeModal('modal-edit-time');
+    editingTimeEntry = null;
+ 
+    // Refresh overlay if open
+    const overlay = document.getElementById('admin-user-detail-overlay');
+    if (overlay) {
+        overlay.remove();
+        await adminViewUserDetail(uid);
+    }
+    await adminRenderEmployeeCards(adminSelectedDate);
+}
+ 
+// ── Export modal ───────────────────────────────────────────────
+async function openAdminExportModal() {
+    const { start, end } = getAdminPayPeriod(adminPayPeriodOffset);
+    document.getElementById('admin-export-from').value = start.toISOString().split('T')[0];
+    document.getElementById('admin-export-to').value   = end.toISOString().split('T')[0];
+ 
+    // Load all known employees
+    const allData = await loadFromFirebase('timeEntries');
+    const empList = document.getElementById('admin-export-employee-list');
+ 
+    if (!allData) {
+        empList.innerHTML = '<div style="color:#888;font-size:13px;padding:8px;">No employees found.</div>';
+        openModal('modal-admin-export');
+        return;
+    }
+ 
+    // Gather all unique users
+    const userMap = {};
+    Object.keys(allData).forEach(uid => {
+        const days = Object.values(allData[uid]);
+        if (days.length > 0) {
+            const firstDay = days[0];
+            const firstEntry = Object.values(firstDay)[0];
+            if (firstEntry) userMap[uid] = firstEntry.userEmail || uid;
+        }
+    });
+ 
+    empList.innerHTML = Object.keys(userMap).map(uid => `
+        <label style="display:flex;align-items:center;gap:8px;padding:8px;cursor:pointer;border-radius:4px;"
+               onmouseover="this.style.background='#222'" onmouseout="this.style.background='none'">
+            <input type="checkbox" checked value="${uid}" style="width:16px;height:16px;cursor:pointer;">
+            <span style="font-size:13px;color:#d0d0d0;">${userMap[uid]}</span>
+        </label>
+    `).join('');
+ 
+    openModal('modal-admin-export');
+}
+ 
+// ── Generate admin PDF ─────────────────────────────────────────
+async function generateAdminPDF() {
+    const fromVal = document.getElementById('admin-export-from').value;
+    const toVal   = document.getElementById('admin-export-to').value;
+ 
+    if (!fromVal || !toVal || fromVal > toVal) {
+        alert('Please select a valid date range.');
+        return;
+    }
+ 
+    // Selected employees
+    const checkedBoxes = document.querySelectorAll('#admin-export-employee-list input[type=checkbox]:checked');
+    const selectedUids = Array.from(checkedBoxes).map(cb => cb.value);
+    if (selectedUids.length === 0) {
+        alert('Please select at least one employee.');
+        return;
+    }
+ 
+    // Build date array
+    const dates = [];
+    const cur = new Date(fromVal + 'T00:00:00');
+    const fin = new Date(toVal   + 'T00:00:00');
+    while (cur <= fin) {
+        dates.push(cur.toISOString().split('T')[0]);
+        cur.setDate(cur.getDate() + 1);
+    }
+ 
+    // Load all data
+    const allData = await loadFromFirebase('timeEntries');
+ 
+    const fromLabel = new Date(fromVal + 'T00:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+    const toLabel   = new Date(toVal   + 'T00:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+    const generated = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+ 
+    let pages = '';
+ 
+    for (const uid of selectedUids) {
+        const userData = allData?.[uid] || {};
+        const email = adminAllUsers[uid]?.email || uid;
+ 
+        let grandTotalMs = 0;
+        let rows = '';
+ 
+        for (const dateKey of dates) {
+            const dayEntries = userData[dateKey] ? Object.values(userData[dateKey]) : [];
+            const dayMs = dayEntries.reduce((s, e) => {
+                return s + (e.clockOut ? (new Date(e.clockOut) - new Date(e.clockIn)) : 0);
+            }, 0);
+            grandTotalMs += dayMs;
+ 
+            const d = new Date(dateKey + 'T00:00:00');
+            const dateLabel = d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+ 
+            if (dayEntries.length === 0) {
+                rows += `<tr class="day-empty">
+                    <td class="date-cell">${dateLabel}</td>
+                    <td colspan="2" style="color:#aaa;font-style:italic;">No entries</td>
+                    <td class="hours-cell">—</td>
+                </tr>`;
+            } else {
+                rows += dayEntries.map((entry, ei) => {
+                    const ms = entry.clockOut ? (new Date(entry.clockOut) - new Date(entry.clockIn)) : 0;
+                    const isFirst = ei === 0;
+                    return `<tr class="entry-row">
+                        ${isFirst ? `<td class="date-cell" rowspan="${dayEntries.length}">${dateLabel}</td>` : ''}
+                        <td class="time-cell">${fmtTime(entry.clockIn)}</td>
+                        <td class="time-cell out">${entry.clockOut ? fmtTime(entry.clockOut) : '—'}</td>
+                        ${isFirst ? `<td class="hours-cell" rowspan="${dayEntries.length}">${(dayMs/3600000).toFixed(2)} hrs</td>` : ''}
+                    </tr>`;
+                }).join('');
+            }
+        }
+ 
+        pages += `<div class="page-block">
+            <div class="header">
+                <div>
+                    <div class="company">BR▲▼E CWS</div>
+                    <div class="report-title">Employee Timecard Report</div>
+                </div>
+                <div class="meta">
+                    <div><strong>Employee:</strong> ${email}</div>
+                    <div><strong>Period:</strong> ${fromLabel} – ${toLabel}</div>
+                    <div><strong>Generated:</strong> ${generated}</div>
+                </div>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width:180px;">Date</th>
+                        <th>In Time</th>
+                        <th>Out Time</th>
+                        <th style="text-align:right;width:100px;">Hours</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${rows}
+                    <tr class="total-row">
+                        <td colspan="3">TOTAL HOURS</td>
+                        <td style="text-align:right;">${(grandTotalMs/3600000).toFixed(2)} hrs</td>
+                    </tr>
+                </tbody>
+            </table>
+            <div class="footer">Brave Custom Woodworking Solutions · Generated by BR▲▼E X</div>
+        </div>`;
+    }
+ 
+    const printHTML = `<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Timecards Export – ${fromLabel} to ${toLabel}</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; color:#111; }
+  .page-block { padding:36px; page-break-after:always; }
+  .page-block:last-child { page-break-after:auto; }
+  .header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:24px; border-bottom:3px solid #0090ff; padding-bottom:14px; }
+  .company { font-size:22px; font-weight:700; color:#0090ff; letter-spacing:-0.5px; }
+  .report-title { font-size:14px; color:#555; margin-top:3px; }
+  .meta { text-align:right; font-size:12px; color:#555; line-height:1.8; }
+  .meta strong { color:#111; }
+  table { width:100%; border-collapse:collapse; }
+  th { background:#0090ff; color:white; padding:9px 13px; font-size:11px; text-transform:uppercase; letter-spacing:0.5px; text-align:left; }
+  td { padding:9px 13px; border-bottom:1px solid #e0e0e0; font-size:13px; vertical-align:top; }
+  .date-cell { font-weight:600; color:#333; white-space:nowrap; background:#f8f8f8; }
+  .time-cell { color:#333; }
+  .time-cell.out { color:#c62828; }
+  .hours-cell { font-weight:700; color:#0d47a1; text-align:right; white-space:nowrap; background:#f0f7ff; }
+  .day-empty td { background:#fafafa; }
+  .total-row td { background:#0090ff; color:white; font-weight:700; font-size:14px; border:none; }
+  .footer { margin-top:28px; font-size:10px; color:#aaa; text-align:center; border-top:1px solid #ddd; padding-top:10px; }
+  @media print {
+    .page-block { padding:24px; }
+  }
+</style>
+</head>
+<body>${pages}</body>
+</html>`;
+ 
+    const win = window.open('', '_blank', 'width=960,height=720');
+    win.document.write(printHTML);
+    win.document.close();
+    win.focus();
+    setTimeout(() => win.print(), 600);
+ 
+    closeModal('modal-admin-export');
+}
+ 
+// ── Hook into showPage ─────────────────────────────────────────
+// Add this line alongside the existing  if (page === 'matrix') renderMatrix();
+// (The old loadAdminTimeCards() call can be removed)  
     
 // DATA
 const STATUSES = [
@@ -2424,7 +3004,7 @@ function showPage(page, btn) {
     }
     if (page === 'matrix') renderMatrix();
     if (page === 'timecard') tcRenderAll();
-    if (page === 'admin') loadAdminTimeCards();
+    if (page === 'admin') adminRenderAll();
 }
     
 function openAdminAccess() {

@@ -1139,7 +1139,21 @@ tbody tr:last-child td { border-bottom: none; }
                 <span class="order-total-value" id="order-modal-total">$0.00</span>
             </div>
         </div>
+        
+        <!-- CUSTOM WORK SECTION -->
+        <div class="section-divider">
+            <div class="section-title">Custom Work</div>
+        </div>
 
+        <div style="margin-bottom:18px;">
+            <button class="btn btn-primary" style="width:100%;justify-content:center;margin-bottom:12px;" onclick="addCustomWorkItem()">
+                + Add Custom Work Item
+            </button>
+            <div class="selected-builtins" id="order-custom-work-list">
+                <div class="empty-state">No custom work items added yet</div>
+            </div>
+        </div>
+        
         <div class="form-actions">
             <button class="btn btn-primary" onclick="saveOrder()">Save Order</button>
             <button class="btn btn-ghost" onclick="closeModal('modal-order')">Cancel</button>
@@ -1269,6 +1283,39 @@ tbody tr:last-child td { border-bottom: none; }
     </div>
 </div>
 
+<!-- CUSTOM WORK MODAL -->
+<div class="modal" id="modal-custom-work">
+    <div class="modal-box" style="max-width:500px;">
+        <div class="modal-header">
+            <h2 class="modal-title" id="custom-work-modal-title">Add Custom Work</h2>
+            <button class="modal-close" onclick="closeModal('modal-custom-work')">×</button>
+        </div>
+        <div class="form-group">
+            <label class="form-label">Description</label>
+            <textarea class="form-input" id="custom-work-desc" rows="3" placeholder="Describe the custom work item…" style="resize:vertical;min-height:70px;"></textarea>
+        </div>
+        <div class="form-group">
+            <label class="form-label">Price</label>
+            <input type="number" class="form-input" id="custom-work-price" placeholder="0.00" step="0.01" min="0">
+        </div>
+        <div class="form-group">
+            <label class="form-label">Reference Image or Link <span style="color:#666;font-weight:400;font-size:12px;">(optional)</span></label>
+            <input type="text" class="form-input" id="custom-work-link" placeholder="Paste a URL…" style="margin-bottom:8px;">
+            <div style="display:flex;align-items:center;gap:10px;">
+                <label style="font-size:13px;color:#888;">or upload image:</label>
+                <input type="file" id="custom-work-image" accept="image/*" style="font-size:13px;color:#888;">
+            </div>
+            <div id="custom-work-image-preview" style="margin-top:10px;display:none;">
+                <img id="custom-work-preview-img" style="max-width:100%;max-height:160px;border-radius:6px;border:1px solid #444;" src="">
+            </div>
+        </div>
+        <div class="form-actions" style="display:flex;gap:10px;margin-top:8px;">
+            <button class="btn btn-primary" onclick="confirmCustomWork()">Add to Order</button>
+            <button class="btn btn-ghost" onclick="closeModal('modal-custom-work')">Cancel</button>
+        </div>
+    </div>
+</div>
+    
 <!-- ADD/EDIT TRIM ITEM MODAL -->
 <div class="modal" id="modal-trim-item">
     <div class="modal-box" style="max-width:500px;">
@@ -2808,6 +2855,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     trimLinearFeetInput?.addEventListener('input', updateTrimLivePrice);
+    document.getElementById('custom-work-image')?.addEventListener('change', handleCustomWorkImagePreview);
 });
 
 // Confirm trim quantity
@@ -2864,6 +2912,117 @@ function removeTrimFromOrder(idx) {
     orderTrimList.splice(idx, 1);
     renderOrderTrimList();
 }
+
+// ── CUSTOM WORK ────────────────────────────────────────────────
+let orderCustomWorkList = [];
+let editingCustomWorkIdx = null;
+
+function addCustomWorkItem() {
+    editingCustomWorkIdx = null;
+    document.getElementById('custom-work-modal-title').textContent = 'Add Custom Work';
+    document.getElementById('custom-work-desc').value = '';
+    document.getElementById('custom-work-price').value = '';
+    document.getElementById('custom-work-link').value = '';
+    document.getElementById('custom-work-image').value = '';
+    document.getElementById('custom-work-image-preview').style.display = 'none';
+    document.getElementById('custom-work-preview-img').src = '';
+    openModal('modal-custom-work');
+}
+
+// Image preview listener — add inside your DOMContentLoaded block
+// document.getElementById('custom-work-image').addEventListener('change', handleCustomWorkImagePreview);
+function handleCustomWorkImagePreview() {
+    const file = document.getElementById('custom-work-image').files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+        document.getElementById('custom-work-preview-img').src = e.target.result;
+        document.getElementById('custom-work-image-preview').style.display = 'block';
+    };
+    reader.readAsDataURL(file);
+}
+
+function confirmCustomWork() {
+    const desc = document.getElementById('custom-work-desc').value.trim();
+    const price = parseFloat(document.getElementById('custom-work-price').value);
+    const link = document.getElementById('custom-work-link').value.trim();
+    const imgSrc = document.getElementById('custom-work-preview-img').src;
+    const hasImage = document.getElementById('custom-work-image-preview').style.display !== 'none' && imgSrc;
+
+    if (!desc) { alert('Please enter a description.'); return; }
+    if (isNaN(price) || price < 0) { alert('Please enter a valid price.'); return; }
+
+    const item = {
+        desc,
+        price,
+        link: link || null,
+        image: hasImage ? imgSrc : null
+    };
+
+    if (editingCustomWorkIdx !== null) {
+        orderCustomWorkList[editingCustomWorkIdx] = item;
+    } else {
+        orderCustomWorkList.push(item);
+    }
+
+    renderOrderCustomWorkList();
+    closeModal('modal-custom-work');
+}
+
+function renderOrderCustomWorkList() {
+    const container = document.getElementById('order-custom-work-list');
+    if (!orderCustomWorkList.length) {
+        container.innerHTML = '<div class="empty-state">No custom work items added yet</div>';
+        // Also update order total
+        updateOrderModalTotal();
+        return;
+    }
+
+    container.innerHTML = orderCustomWorkList.map((item, idx) => `
+        <div class="selected-builtin-item">
+            <div style="flex:1;">
+                <div style="font-weight:600;color:#0090ff;margin-bottom:4px;">Custom Work</div>
+                <div style="font-size:13px;color:#d0d0d0;margin-bottom:4px;">${item.desc}</div>
+                ${item.link ? `<a href="${item.link}" target="_blank" style="font-size:11px;color:#888;">🔗 Reference link</a>` : ''}
+                ${item.image ? `<div style="margin-top:6px;"><img src="${item.image}" style="max-height:50px;border-radius:4px;border:1px solid #444;"></div>` : ''}
+            </div>
+            <span class="selected-builtin-price">${fmt(item.price)}</span>
+            <button class="selected-builtin-remove" onclick="editCustomWorkItem(${idx})" style="font-size:14px;color:#888;margin-right:4px;" title="Edit">✎</button>
+            <button class="selected-builtin-remove" onclick="removeCustomWorkItem(${idx})">×</button>
+        </div>
+    `).join('');
+
+    updateOrderModalTotal();
+}
+
+function editCustomWorkItem(idx) {
+    const item = orderCustomWorkList[idx];
+    if (!item) return;
+    editingCustomWorkIdx = idx;
+    document.getElementById('custom-work-modal-title').textContent = 'Edit Custom Work';
+    document.getElementById('custom-work-desc').value = item.desc;
+    document.getElementById('custom-work-price').value = item.price;
+    document.getElementById('custom-work-link').value = item.link || '';
+    if (item.image) {
+        document.getElementById('custom-work-preview-img').src = item.image;
+        document.getElementById('custom-work-image-preview').style.display = 'block';
+    } else {
+        document.getElementById('custom-work-image-preview').style.display = 'none';
+    }
+    openModal('modal-custom-work');
+}
+
+function removeCustomWorkItem(idx) {
+    orderCustomWorkList.splice(idx, 1);
+    renderOrderCustomWorkList();
+}
+
+function updateOrderModalTotal() {
+    const builtinsTotal = calculateOrderTotal(orderBuiltinsList);
+    const trimTotal = orderTrimList.reduce((s, i) => s + i.totalPrice, 0);
+    const customTotal = orderCustomWorkList.reduce((s, i) => s + i.price, 0);
+    document.getElementById('order-modal-total').textContent = fmt(builtinsTotal + trimTotal + customTotal);
+}    
 
 // PDF VIEWER VARIABLES
 let currentPDF = null;
@@ -3312,14 +3471,22 @@ function renderDetailBuiltins(o) {
             <td class="num-right">${fmt(item.totalPrice)}</td>
         </tr>`;
     }).join('');
-    
-    // Combine both
-    tbody.innerHTML = builtinsHTML + trimHTML;
+   
+    const customHTML = (o.customWork || []).map(item => `<tr>
+    <td>Custom Work – ${item.desc}${item.link ? ` <a href="${item.link}" target="_blank" style="color:#0090ff;font-size:11px;">🔗</a>` : ''}</td>
+    <td colspan="3" style="color:#888;font-style:italic;">—</td>
+    <td class="num-right">${fmt(item.price)}</td>
+    <td class="num-right">${fmt(item.price)}</td>
+</tr>`).join('');
+
+tbody.innerHTML = builtinsHTML + trimHTML + customHTML;
+
     
     // Calculate totals
     const builtinsSubtotal = calculateOrderTotal(o.builtins);
     const trimSubtotal = (o.trimItems || []).reduce((sum, item) => sum + item.totalPrice, 0);
-    const finalSubtotal = builtinsSubtotal + trimSubtotal;
+    const customSubtotal = (o.customWork || []).reduce((sum, item) => sum + item.price, 0);
+    const finalSubtotal = builtinsSubtotal + trimSubtotal + customSubtotal;
     const tax = finalSubtotal * (taxRate / 100);
     const total = finalSubtotal + tax;
     
@@ -3453,6 +3620,7 @@ function openOrderModal() {
     editingOrderId = null;
     orderBuiltinsList = [];
     orderTrimList = [];
+    orderCustomWorkList = [];
     const maxOrderId = orders.length > 0 ? Math.max(...orders.map(o => o.id)) : 2226;
     document.getElementById('order-number').value = maxOrderId + 1;
     document.getElementById('order-company').value = '';
@@ -3493,6 +3661,7 @@ function openOrderModal() {
     
     renderOrderBuiltinsList();
     renderOrderTrimList();
+    renderOrderCustomWorkList();
     openModal('modal-order');
 }
 
@@ -3504,6 +3673,7 @@ function editOrder(id) {
     editingOrderId = id;
     orderBuiltinsList = JSON.parse(JSON.stringify(o.builtins || []));
     orderTrimList = JSON.parse(JSON.stringify(o.trimItems || []));
+    orderCustomWorkList = JSON.parse(JSON.stringify(o.customWork || []));
     
     // OPEN THE MODAL FIRST
     openModal('modal-order');
@@ -3552,6 +3722,7 @@ function editOrder(id) {
     // Render built-ins and trim lists
     renderOrderBuiltinsList();
     renderOrderTrimList();
+    renderOrderCustomWorkList();
 }
 
 function renderOrderBuiltinsList() {
@@ -3599,8 +3770,7 @@ function renderOrderBuiltinsList() {
             </div>`;
         }).join('');
     }
-    const total = calculateOrderTotal(orderBuiltinsList);
-    document.getElementById('order-modal-total').textContent = fmt(total);
+    updateOrderModalTotal();
 }
 
 function updateModalBuiltinDimension(builtinIndex, field, value) {
@@ -3707,7 +3877,8 @@ function saveOrder() {
             shipZip, 
             shipInstructions,
             builtins: orderBuiltinsList,
-            trimItems: orderTrimList
+            trimItems: orderTrimList,
+            customWork: orderCustomWorkList
         });
         showToast('Order Updated', `Order #${orderNumber} saved`);
     } else {
@@ -3743,6 +3914,7 @@ function saveOrder() {
             shipInstructions,
             builtins: orderBuiltinsList,
             trimItems: orderTrimList,
+            customWork: orderCustomWorkList,
             pdfs: []
         });
         showToast('Order Created', `Order #${orderNumber} created`);

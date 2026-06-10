@@ -2368,6 +2368,15 @@ async function adminLoadNotes() {
     });
     allFlat.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
 
+    // Auto-delete oldest notes beyond the 10 limit
+    if (allFlat.length > 10) {
+        const toDelete = allFlat.slice(10); // everything beyond the first 10
+        for (const note of toDelete) {
+            await saveToFirebase(`employeeNotes/${note.userId}/${note.id}`, null);
+        }
+        allFlat.splice(10); // trim the local array too
+    }
+
     if (allFlat.length === 0) {
         container.innerHTML = '<div class="card" style="padding:24px;text-align:center;color:#888;">No notes from employees yet.</div>';
         return;

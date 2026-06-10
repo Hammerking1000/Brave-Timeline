@@ -687,6 +687,7 @@ tbody tr:last-child td { border-bottom: none; }
             <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
                 <button class="btn btn-ghost btn-sm" onclick="adminChangePayPeriod(-1)">← Prev</button>
                 <button class="btn btn-ghost btn-sm" onclick="adminChangePayPeriod(1)">Next →</button>
+                <button class="btn btn-primary btn-sm" onclick="openAdminExportModal()" style="display:flex;align-items:center;gap:6px;">⬇ Export PDF</button>
             </div>
         </div>
  
@@ -2080,18 +2081,18 @@ async function adminRenderAll() {
 async function adminSelectDay(dateKey) {
     adminSelectedDate = dateKey;
     await adminRenderEmployeeCards(dateKey);
-    // Re-render grid to update selection highlight
+    // Re-render the full grid so highlights update cleanly (avoids index offset from week-label divs)
     const { days } = getAdminPayPeriod(adminPayPeriodOffset);
     const today = getTodayDate();
     const grid = document.getElementById('admin-day-grid');
-    grid.querySelectorAll('div').forEach((el, i) => {
-        if (i < days.length) {
-            const dk = days[i];
-            const isSel = dk === adminSelectedDate;
-            const isToday = dk === today;
-            el.style.background = isSel ? '#1a3a4a' : isToday ? '#1a2a3a' : '#252525';
-            el.style.borderBottom = isSel ? '3px solid #0090ff' : '3px solid transparent';
-        }
+    const dayCells = grid.querySelectorAll(':scope > div');
+    dayCells.forEach((el, i) => {
+        if (i >= days.length) return;
+        const dk = days[i];
+        const isSel = dk === adminSelectedDate;
+        const isToday = dk === today;
+        el.style.background = isSel ? '#1a3a4a' : isToday ? '#1a2a3a' : '#252525';
+        el.style.borderBottom = isSel ? '3px solid #0090ff' : '3px solid transparent';
     });
 }
  

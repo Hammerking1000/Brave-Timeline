@@ -2641,7 +2641,8 @@ async function generateAdminPDF() {
  
     // Load all data
     const allData = await loadFromFirebase('timeEntries');
- 
+    const allNotes = await loadFromFirebase('employeeNotes');
+     
     const fromLabel = new Date(fromVal + 'T00:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
     const toLabel   = new Date(toVal   + 'T00:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
     const generated = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });

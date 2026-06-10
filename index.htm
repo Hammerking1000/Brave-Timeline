@@ -2124,6 +2124,7 @@ function getAdminPayPeriod(offset) {
 async function adminLoadPayPeriod() {
     const { days } = getAdminPayPeriod(adminPayPeriodOffset);
     const allData = await loadFromFirebase('timeEntries');
+    const allNotes = await loadFromFirebase('employeeNotes');
     adminAllUsers = {};
  
     if (!allData) return;
@@ -2664,25 +2665,34 @@ async function generateAdminPDF() {
             const d = new Date(dateKey + 'T00:00:00');
             const dateLabel = d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
  
-            if (dayEntries.length === 0) {
-                rows += `<tr class="day-empty">
-                    <td class="date-cell">${dateLabel}</td>
-                    <td colspan="2" style="color:#aaa;font-style:italic;">No entries</td>
-                    <td class="hours-cell">—</td>
-                </tr>`;
-            } else {
-                rows += dayEntries.map((entry, ei) => {
-                    const ms = entry.clockOut ? (new Date(entry.clockOut) - new Date(entry.clockIn)) : 0;
-                    const isFirst = ei === 0;
-                    return `<tr class="entry-row">
-                        ${isFirst ? `<td class="date-cell" rowspan="${dayEntries.length}">${dateLabel}</td>` : ''}
-                        <td class="time-cell">${fmtTime(entry.clockIn)}</td>
-                        <td class="time-cell out">${entry.clockOut ? fmtTime(entry.clockOut) : '—'}</td>
-                        ${isFirst ? `<td class="hours-cell" rowspan="${dayEntries.length}">${(dayMs/3600000).toFixed(2)} hrs</td>` : ''}
-                    </tr>`;
-                }).join('');
-            }
-        }
+            // Check if this user has any notes for this date
+const userNotes = allNotes?.[uid] ? Object.values(allNotes[uid]) : [];
+const hasNote = userNotes.some(n => n.timestamp && n.timestamp.split('T')[0] === dateKey);
+const noteCell = hasNote
+    ? `<td style="text-align:center;color:#c62828;font-weight:700;font-size:15px;">✱</td>`
+    : `<td style="text-align:center;color:#ccc;">—</td>`;
+
+if (dayEntries.length === 0) {
+    rows += `<tr class="day-empty">
+        <td class="date-cell">${dateLabel}</td>
+        <td colspan="2" style="color:#aaa;font-style:italic;">No entries</td>
+        <td class="hours-cell">—</td>
+        ${noteCell}
+    </tr>`;
+} else {
+    rows += dayEntries.map((entry, ei) => {
+        const ms = entry.clockOut ? (new Date(entry.clockOut) - new Date(entry.clockIn)) : 0;
+        const isFirst = ei === 0;
+        return `<tr class="entry-row">
+            ${isFirst ? `<td class="date-cell" rowspan="${dayEntries.length}">${dateLabel}</td>` : ''}
+            <td class="time-cell">${fmtTime(entry.clockIn)}</td>
+            <td class="time-cell out">${entry.clockOut ? fmtTime(entry.clockOut) : '—'}</td>
+            ${isFirst ? `<td class="hours-cell" rowspan="${dayEntries.length}">${(dayMs/3600000).toFixed(2)} hrs</td>` : ''}
+            ${isFirst ? `<td class="note-cell" rowspan="${dayEntries.length}">${hasNote ? '✱' : '—'}</td>` : ''}
+        </tr>`;
+    }).join('');
+   }
+}
  
         pages += `<div class="page-block">
             <div class="header">
@@ -2698,17 +2708,18 @@ async function generateAdminPDF() {
             </div>
             <table>
                 <thead>
-                    <tr>
-                        <th style="width:180px;">Date</th>
-                        <th>In Time</th>
-                        <th>Out Time</th>
-                        <th style="text-align:right;width:100px;">Hours</th>
-                    </tr>
-                </thead>
+                        <tr>
+                            <th style="width:180px;">Date</th>
+                            <th>In Time</th>
+                            <th>Out Time</th>
+                            <th style="text-align:right;width:100px;">Hours</th>
+                            <th style="text-align:center;width:60px;">Note?</th>
+                        </tr>
+                    </thead>
                 <tbody>
                     ${rows}
                     <tr class="total-row">
-                        <td colspan="3">TOTAL HOURS</td>
+                        <td colspan="4">TOTAL HOURS</td>
                         <td style="text-align:right;">${(grandTotalMs/3600000).toFixed(2)} hrs</td>
                     </tr>
                 </tbody>
@@ -2739,6 +2750,7 @@ async function generateAdminPDF() {
   .time-cell { color:#333; }
   .time-cell.out { color:#c62828; }
   .hours-cell { font-weight:700; color:#0d47a1; text-align:right; white-space:nowrap; background:#f0f7ff; }
+  .note-cell { text-align:center; color:#c62828; font-weight:700; font-size:15px; }
   .day-empty td { background:#fafafa; }
   .total-row td { background:#0090ff; color:white; font-weight:700; font-size:14px; border:none; }
   .footer { margin-top:28px; font-size:10px; color:#aaa; text-align:center; border-top:1px solid #ddd; padding-top:10px; }

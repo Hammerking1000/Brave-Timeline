@@ -2266,6 +2266,7 @@ async function adminSelectDay(dateKey) {
  
 // ── Employee cards for a selected day ─────────────────────────
 async function adminRenderEmployeeCards(dateKey) {
+    const activeClockIns = await loadFromFirebase('activeClockIns');
     const d = new Date(dateKey + 'T00:00:00');
     const label = d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
     document.getElementById('admin-selected-label').textContent = label;
@@ -2303,8 +2304,12 @@ async function adminRenderEmployeeCards(dateKey) {
             }).join('');
  
         const totalHrs = (dayTotalMs / 3600000).toFixed(2);
+        const isClockedIn = (activeClockIns && activeClockIns[user.uid]) ? true : false;
+        const cardGlow = isClockedIn
+            ? 'box-shadow:0 0 0 2px #4caf50, 0 0 16px rgba(76,175,80,0.35);'
+            : '';
  
-        return `<div class="card" style="padding:0;overflow:hidden;">
+        return `<div class="card" style="padding:0;overflow:hidden;${cardGlow}">
             <!-- Card header — clickable to view user detail -->
             <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 16px;background:#2a2a2a;border-bottom:1px solid #333;cursor:pointer;"
                  onclick="adminViewUserDetail('${user.uid}')">

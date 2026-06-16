@@ -4489,25 +4489,29 @@ function handlePDFUpload(e) {
     const files = Array.from(e.target.files);
     const o = getOrder(currentOrderId);
     if (!o) return;
-    
     if (!o.pdfs) o.pdfs = [];
-    
+
     files.forEach(file => {
-        const reader = new FileReader();
-        reader.onload = (ev) => {
-            const pdfData = {
+        const storageRef = firebase.storage().ref(`orderPDFs/${currentOrderId}/${Date.now()}_${file.name}`);
+        showToast('Uploading...', file.name);
+
+        storageRef.put(file).then(snapshot => {
+            return snapshot.ref.getDownloadURL();
+        }).then(url => {
+            o.pdfs.push({
                 name: file.name,
-                data: ev.target.result,
+                url: url,
                 annotations: []
-            };
-            o.pdfs.push(pdfData);
+            });
             renderPDFList(o);
             syncOrders();
             showToast('PDF Uploaded', file.name);
-        };
-        reader.readAsDataURL(file);
+        }).catch(err => {
+            console.error('Upload error:', err);
+            showToast('Upload Failed', file.name);
+        });
     });
-    
+
     e.target.value = '';
 }
 
@@ -4539,7 +4543,7 @@ function openPDFViewer(pdfIndex) {
     document.getElementById('pdf-viewer-title').textContent = currentPDFData.name;
     document.getElementById('pdf-viewer-modal').classList.add('open');
     
-    loadPDF(currentPDFData.data);
+loadPDF(currentPDFData.url || currentPDFData.data);
 }
 
 function closePDFViewer() {

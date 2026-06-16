@@ -928,7 +928,7 @@ tbody tr:last-child td { border-bottom: none; }
 <div class="modal" id="modal-order">
     <div class="modal-box">
         <div class="modal-header">
-            <h2 class="modal-title">New Order</h2>
+            <h2 class="modal-title" id="modal-order-title">New Order</h2>
             <button class="modal-close" onclick="closeModal('modal-order')">×</button>
         </div>
         <div class="form-group">
@@ -3139,7 +3139,6 @@ function addCustomWorkItem() {
     openModal('modal-custom-work');
 }
 
-// Image preview listener — add inside your DOMContentLoaded block
 // document.getElementById('custom-work-image').addEventListener('change', handleCustomWorkImagePreview);
 function handleCustomWorkImagePreview() {
     const file = document.getElementById('custom-work-image').files[0];
@@ -3884,6 +3883,7 @@ function openOrderModal() {
     document.getElementById('order-ship-state').value = '';
     document.getElementById('order-ship-zip').value = '';
     document.getElementById('order-ship-instructions').value = '';
+    document.getElementById('modal-order-title').textContent = 'New Order';
     
     renderOrderBuiltinsList();
     renderOrderTrimList();
@@ -3941,6 +3941,8 @@ function editOrder(id) {
     document.getElementById('order-ship-state').value = o.shipState || '';
     document.getElementById('order-ship-zip').value = o.shipZip || '';
     document.getElementById('order-ship-instructions').value = o.shipInstructions || '';
+
+    document.getElementById('modal-order-title').textContent = 'Edit Order';
     
     // Update conditional field visibility
     handleMaterialsChange();
@@ -4820,7 +4822,19 @@ depthSelect?.addEventListener('change', updateLivePrice);
             setTimeout(syncNotificationSettings, 100);
         });
     });
-   
+   ['order-painted', 'order-delivery', 'order-installation-fee'].forEach(id => {
+        document.getElementById(id)?.addEventListener('change', () => {
+            if (currentOrderId) {
+                const o = getOrder(currentOrderId);
+                if (o) {
+                    o.painted = document.getElementById('order-painted').value;
+                    o.delivery = document.getElementById('order-delivery').value;
+                    o.installationFee = document.getElementById('order-installation-fee').value;
+                    renderDetailBuiltins(o);
+                }
+            }
+        });
+    });
     renderOrders();
 });
 </script>

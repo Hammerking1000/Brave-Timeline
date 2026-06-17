@@ -839,10 +839,16 @@ tbody tr:last-child td { border-bottom: none; }
                     </tr>
                 </thead>
                     <tbody id="detail-builtins-tbody"></tbody>
-                        <tfoot>
+                       <tfoot>
                             <tr style="background:#2a2a2a;">
                                 <td colspan="5" style="text-align:right;color:#d0d0d0;font-weight:600;padding:14px;">SUBTOTAL</td>
                                 <td class="num-right" style="font-weight:600;color:#d0d0d0;" id="detail-subtotal">$0.00</td>
+                            </tr>
+                            <tr style="background:#2a2a2a;">
+                                <td colspan="5" style="text-align:right;color:#d0d0d0;font-weight:600;padding:14px;">
+                                    TAX (<span id="detail-tax-rate">6.0</span>%)
+                                </td>
+                                <td class="num-right" style="font-weight:600;color:#d0d0d0;" id="detail-tax">$0.00</td>
                             </tr>
                             <tr id="detail-painted-row" style="background:#2a2a2a;display:none;">
                                 <td colspan="5" style="text-align:right;color:#d0d0d0;font-weight:600;padding:14px;">PAINTED (25%, min $75)</td>
@@ -855,12 +861,6 @@ tbody tr:last-child td { border-bottom: none; }
                             <tr id="detail-install-row" style="background:#2a2a2a;display:none;">
                                 <td colspan="5" style="text-align:right;color:#d0d0d0;font-weight:600;padding:14px;">INSTALLATION (25%, min $75)</td>
                                 <td class="num-right" style="font-weight:600;color:#d0d0d0;" id="detail-install-fee">$0.00</td>
-                            </tr>
-                            <tr style="background:#2a2a2a;">
-                                <td colspan="5" style="text-align:right;color:#d0d0d0;font-weight:600;padding:14px;">
-                                    TAX (<span id="detail-tax-rate">6.0</span>%)
-                                </td>
-                                <td class="num-right" style="font-weight:600;color:#d0d0d0;" id="detail-tax">$0.00</td>
                             </tr>
                             <tr style="background:#0090ff;">
                                 <td colspan="5" style="text-align:right;color:white;font-weight:700;padding:14px;">ORDER TOTAL</td>
@@ -3696,14 +3696,13 @@ const trimSubtotal = (o.trimItems || []).reduce((sum, item) => sum + item.totalP
 const customSubtotal = (o.customWork || []).reduce((sum, item) => sum + item.price, 0);
 const finalSubtotal = builtinsSubtotal + trimSubtotal + customSubtotal;
 
-// Add-on fees (applied before tax)
+// Add-on fees (NOT taxed — added after tax)
 const paintedFee  = o.painted === 'yes'        ? Math.max(75, finalSubtotal * 0.25) : 0;
 const deliveryFee = o.delivery === 'yes'        ? Math.max(95, finalSubtotal * 0.05) : 0;
 const installFee  = o.installationFee === 'yes' ? Math.max(75, finalSubtotal * 0.25) : 0;
-const totalBeforeTax = finalSubtotal + paintedFee + deliveryFee + installFee;
 
-const tax = totalBeforeTax * (taxRate / 100);
-const total = totalBeforeTax + tax;
+const tax = finalSubtotal * (taxRate / 100);
+const total = finalSubtotal + tax + paintedFee + deliveryFee + installFee;
 
 const showHide = (rowId, feeId, fee) => {
     document.getElementById(rowId).style.display = fee > 0 ? '' : 'none';

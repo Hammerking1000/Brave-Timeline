@@ -3245,7 +3245,15 @@ let lastX = 0;
 let lastY = 0;
 let currentPDFData = null;
 let currentPDFAnnotations = [];
+let pendingAnnotationSave = null;
 
+window.addEventListener('beforeunload', (e) => {
+    if (pendingAnnotationSave) {
+        e.preventDefault();
+        e.returnValue = '';
+    }
+});
+    
 // Initialize PDF.js worker
 if (typeof pdfjsLib !== 'undefined') {
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
@@ -4544,7 +4552,12 @@ function openPDFViewer(pdfIndex) {
 loadPDF(currentPDFData.url || currentPDFData.data);
 }
 
-function closePDFViewer() {
+async function closePDFViewer() {
+    if (pendingAnnotationSave) {
+        showToast('Saving...', 'Finishing annotation save');
+        await pendingAnnotationSave;
+        pendingAnnotationSave = null;
+    }
     document.getElementById('pdf-viewer-modal').classList.remove('open');
     currentPDFDoc = null;
     currentPDFPage = 1;
@@ -4604,25 +4617,27 @@ function setupAnnotationEvents() {
         const x = e.clientX - rect.left;
         const y = e.clientY - rect.top;
         
-        if (currentTool === 'pen') {
-            annotationCtx.strokeStyle = '#e53935';
-            annotationCtx.lineWidth = 3;
-            annotationCtx.lineCap = 'round';
-            annotationCtx.beginPath();
-            annotationCtx.moveTo(lastX, lastY);
-            annotationCtx.lineTo(x, y);
-            annotationCtx.stroke();
-            
-            currentPDFAnnotations.push({
-                page: currentPDFPage,
-                tool: 'pen',
-                from: {x: lastX, y: lastY},
-                to: {x, y}
-            });
-        } else if (currentTool === 'highlighter') {
+     if (currentTool === 'pen') {
+    annotationCtx.strokeStyle = '#e53935';
+    annotationCtx.lineWidth = 3;
+    annotationCtx.lineCap = 'round';
+    annotationCtx.lineJoin = 'round';
+    annotationCtx.beginPath();
+    annotationCtx.moveTo(lastX, lastY);
+    annotationCtx.lineTo(x, y);
+    annotationCtx.stroke();
+
+    currentPDFAnnotations.push({
+        page: currentPDFPage,
+        tool: 'pen',
+        from: {x: lastX, y: lastY},
+        to: {x, y}
+    });
+} else if (currentTool === 'highlighter') {
             annotationCtx.strokeStyle = 'rgba(255, 255, 0, 0.4)';
             annotationCtx.lineWidth = 20;
             annotationCtx.lineCap = 'round';
+            annotationCtx.lineJoin = 'round';
             annotationCtx.beginPath();
             annotationCtx.moveTo(lastX, lastY);
             annotationCtx.lineTo(x, y);
@@ -4636,16 +4651,22 @@ function setupAnnotationEvents() {
             });
 } else if (currentTool === 'eraser') {
     const eraseRadius = 12;
+
+    function pointToSegmentDist(px, py, x1, y1, x2, y2) {
+        const dx = x2 - x1, dy = y2 - y1;
+        const lenSq = dx * dx + dy * dy;
+        if (lenSq === 0) return Math.hypot(px - x1, py - y1);
+        let t = ((px - x1) * dx + (py - y1) * dy) / lenSq;
+        t = Math.max(0, Math.min(1, t));
+        const closestX = x1 + t * dx;
+        const closestY = y1 + t * dy;
+        return Math.hypot(px - closestX, py - closestY);
+    }
+
     currentPDFAnnotations = currentPDFAnnotations.filter(ann => {
         if (ann.page !== currentPDFPage) return true;
-        // distance from eraser point to the line segment midpoint (simple proximity check)
-        const midX = (ann.from.x + ann.to.x) / 2;
-        const midY = (ann.from.y + ann.to.y) / 2;
-        const distFrom = Math.hypot(ann.from.x - x, ann.from.y - y);
-        const distTo = Math.hypot(ann.to.x - x, ann.to.y - y);
-        const distMid = Math.hypot(midX - x, midY - y);
-        const minDist = Math.min(distFrom, distTo, distMid);
-        return minDist > eraseRadius;
+        const dist = pointToSegmentDist(x, y, ann.from.x, ann.from.y, ann.to.x, ann.to.y);
+        return dist > eraseRadius;
     });
     redrawAnnotations();
 }
@@ -4656,7 +4677,7 @@ function setupAnnotationEvents() {
     
     annotationCanvas.onmouseup = () => {
     isDrawing = false;
-    autosavePDFAnnotations();
+    pendingAnnotationSave = autosavePDFAnnotations();
 };
     
     annotationCanvas.onmouseleave = () => {
@@ -4665,18 +4686,17 @@ function setupAnnotationEvents() {
 }
 
 function autosavePDFAnnotations() {
-    if (!currentPDFData || !currentOrderId) return;
+    if (!currentPDFData || !currentOrderId) return Promise.resolve();
     const o = getOrder(currentOrderId);
-    if (!o || !o.pdfs) return;
+    if (!o || !o.pdfs) return Promise.resolve();
 
-    // Find the live pdf object inside the current order (avoids stale references)
     const livePdf = o.pdfs.find(p => p.url === currentPDFData.url || p.name === currentPDFData.name);
-    if (!livePdf) return;
+    if (!livePdf) return Promise.resolve();
 
     livePdf.annotations = currentPDFAnnotations;
-    currentPDFData = livePdf; // re-sync local reference to the live object
+    currentPDFData = livePdf;
 
-    syncOrders();
+    return saveToFirebase('orders', orders).catch(err => console.error('Error saving orders:', err));
 }
     
 function redrawAnnotations() {

@@ -4715,6 +4715,7 @@ function clearPDFAnnotations() {
     if (!confirm('Clear all annotations on this page?')) return;
     currentPDFAnnotations = currentPDFAnnotations.filter(ann => ann.page !== currentPDFPage);
     redrawAnnotations();
+    autosavePDFAnnotations();
 }
 
 function savePDFAnnotations() {

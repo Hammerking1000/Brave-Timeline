@@ -910,7 +910,6 @@ tbody tr:last-child td { border-bottom: none; }
             <button class="pdf-tool-btn" onclick="setPDFTool('highlighter')" id="tool-highlighter">Highlight</button>
             <button class="pdf-tool-btn" onclick="setPDFTool('eraser')" id="tool-eraser">Erase</button>
             <button class="pdf-tool-btn" onclick="clearPDFAnnotations()">Clear All</button>
-            <button class="pdf-tool-btn" onclick="savePDFAnnotations()">Save</button>
         </div>
         <button class="pdf-viewer-close" onclick="closePDFViewer()">✕ Close</button>
     </div>
@@ -4656,14 +4655,30 @@ function setupAnnotationEvents() {
     };
     
     annotationCanvas.onmouseup = () => {
-        isDrawing = false;
-    };
+    isDrawing = false;
+    autosavePDFAnnotations();
+};
     
     annotationCanvas.onmouseleave = () => {
         isDrawing = false;
     };
 }
 
+function autosavePDFAnnotations() {
+    if (!currentPDFData || !currentOrderId) return;
+    const o = getOrder(currentOrderId);
+    if (!o || !o.pdfs) return;
+
+    // Find the live pdf object inside the current order (avoids stale references)
+    const livePdf = o.pdfs.find(p => p.url === currentPDFData.url || p.name === currentPDFData.name);
+    if (!livePdf) return;
+
+    livePdf.annotations = currentPDFAnnotations;
+    currentPDFData = livePdf; // re-sync local reference to the live object
+
+    syncOrders();
+}
+    
 function redrawAnnotations() {
     annotationCtx.clearRect(0, 0, annotationCanvas.width, annotationCanvas.height);
     

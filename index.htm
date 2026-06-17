@@ -4636,9 +4636,21 @@ function setupAnnotationEvents() {
                 from: {x: lastX, y: lastY},
                 to: {x, y}
             });
-        } else if (currentTool === 'eraser') {
-            annotationCtx.clearRect(x - 10, y - 10, 20, 20);
-        }
+} else if (currentTool === 'eraser') {
+    const eraseRadius = 12;
+    currentPDFAnnotations = currentPDFAnnotations.filter(ann => {
+        if (ann.page !== currentPDFPage) return true;
+        // distance from eraser point to the line segment midpoint (simple proximity check)
+        const midX = (ann.from.x + ann.to.x) / 2;
+        const midY = (ann.from.y + ann.to.y) / 2;
+        const distFrom = Math.hypot(ann.from.x - x, ann.from.y - y);
+        const distTo = Math.hypot(ann.to.x - x, ann.to.y - y);
+        const distMid = Math.hypot(midX - x, midY - y);
+        const minDist = Math.min(distFrom, distTo, distMid);
+        return minDist > eraseRadius;
+    });
+    redrawAnnotations();
+}
         
         lastX = x;
         lastY = y;

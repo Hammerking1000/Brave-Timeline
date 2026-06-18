@@ -4174,7 +4174,6 @@ function saveOrder() {
             document.getElementById('di-drawers').textContent = updatedOrder.drawers + (updatedOrder.drawerSpecial ? ` - ${updatedOrder.drawerSpecial}` : '') || '–';
             document.getElementById('di-hardware').textContent = updatedOrder.hardware || '–';
             document.getElementById('di-countertops').textContent = updatedOrder.countertops === 'Yes' ? `Yes - ${updatedOrder.countertopMaterial || ''}` : 'No';
-            document.getElementById('di-installation').textContent = updatedOrder.installation || '–';
             document.getElementById('di-doors').textContent = updatedOrder.doors || '–';
             document.getElementById('di-drawer-fronts').textContent = updatedOrder.drawerFronts || '–';
             renderDetailBuiltins(updatedOrder);

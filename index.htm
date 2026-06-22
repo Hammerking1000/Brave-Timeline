@@ -311,6 +311,8 @@ tbody tr:last-child td { border-bottom: none; }
 .pdf-item-icon { font-size: 32px; text-align: center; margin-bottom: 8px; }
 .pdf-item-name { font-size: 13px; font-weight: 500; color: #333; text-align: center; word-break: break-word; }
 .pdf-item-actions { display: flex; gap: 4px; margin-top: 8px; justify-content: center; }
+.pdf-viewer-modal.open { touch-action: none; }
+.pdf-viewer-body { touch-action: none; overscroll-behavior: none; }
         
 /* PDF modal*/
 .pdf-viewer-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 1000; }
@@ -892,7 +894,6 @@ tbody tr:last-child td { border-bottom: none; }
             <button class="btn btn-primary" onclick="submitEmployeeNote()">Send Note</button>
             <button class="btn btn-ghost" onclick="closeModal('modal-employee-note')">Cancel</button>
         </div>
-    </div>
     </div>
 </div>
     
@@ -1764,16 +1765,17 @@ async function loadFromFirebaseOnStartup() {
 // Listen for real-time updates from other users
 function setupRealtimeListeners() {
     if (!firebaseInitialized) return;
-    
-    // Listen for order changes
+
+    db.ref('orders').off();
+    db.ref('pricingMatrix').off();
+
     listenToFirebase('orders', (data) => {
         if (data) {
             orders = data;
             renderOrders();
         }
     });
-    
-    // Listen for pricing matrix changes
+
     listenToFirebase('pricingMatrix', (data) => {
         if (data) {
             pricingMatrix = data;
@@ -1821,29 +1823,27 @@ function formatDisplayDate(dateStr) {
  
 // ── Pay-period math ────────────────────────────────────────────
 // Anchor: Mon 2026-01-05 = start of a known pay period
-const TC_EPOCH = new Date('2026-01-05T00:00:00');
+const TC_EPOCH = new Date('2026-01-05T00:00:00Z');
  
 function getPayPeriod(offsetPeriods) {
-    // Each period = 14 days
     const msPerPeriod = 14 * 86400000;
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
- 
-    // How many full periods since epoch to find current period start
+    const now = new Date();
+    // Normalize "today" to UTC midnight based on local calendar date
+    const today = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
+
     const msSinceEpoch = today - TC_EPOCH;
     const currentPeriodIndex = Math.floor(msSinceEpoch / msPerPeriod);
     const targetIndex = currentPeriodIndex + offsetPeriods;
- 
+
     const start = new Date(TC_EPOCH.getTime() + targetIndex * msPerPeriod);
     const end   = new Date(start.getTime() + 13 * 86400000);
- 
-    // Build array of 14 date keys
+
     const days = [];
     for (let i = 0; i < 14; i++) {
         const d = new Date(start.getTime() + i * 86400000);
         days.push(d.toISOString().split('T')[0]);
     }
- 
+
     return { start, end, days };
 }
  
@@ -2120,21 +2120,22 @@ async function loadTCNotes() {
 }
     
 // ── Initialize ─────────────────────────────────────────────────
+let tcClockInterval = null;
+
 async function initializeTimeCard() {
     if (!currentUser) return;
- 
-    // Update clock every minute (for live "in progress" display)
-    setInterval(() => {
+
+    if (tcClockInterval) clearInterval(tcClockInterval);
+    tcClockInterval = setInterval(() => {
         if (document.getElementById('page-timecard').classList.contains('active')) {
             tcRenderDayEntries(tcSelectedDate);
         }
     }, 60000);
- 
+
     await tcCheckActive();
     await tcRenderAll();
     await loadTCNotes();
- 
-    // Set admin date picker to today
+
     const picker = document.getElementById('admin-date-picker');
     if (picker) picker.value = getTodayDate();
 }
@@ -2208,17 +2209,17 @@ async function adminJumpToDate() {
     const val = document.getElementById('admin-date-picker').value;
     if (!val) return;
     adminSelectedDate = val;
- 
-    // Figure out which pay period this date falls in and switch to it
-    const target = new Date(val + 'T00:00:00');
+
+    const target = new Date(val + 'T00:00:00Z');
     const msPerPeriod = 14 * 86400000;
     const msSinceEpoch = target - TC_EPOCH;
     const targetPeriodIndex = Math.floor(msSinceEpoch / msPerPeriod);
- 
-    const today = new Date(); today.setHours(0,0,0,0);
+
+    const now = new Date();
+    const today = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
     const currentPeriodIndex = Math.floor((today - TC_EPOCH) / msPerPeriod);
     adminPayPeriodOffset = targetPeriodIndex - currentPeriodIndex;
- 
+
     await adminRenderAll();
 }
  
@@ -3236,9 +3237,9 @@ function updateOrderModalTotal() {
 let currentPDF = null;
 let currentPDFPage = 1;
 let currentPDFDoc = null;
-let pdfScale = 1.1;
+let pdfScale = null;
 let isDrawing = false;
-let currentTool = 'pen';
+let currentTool = null;
 let annotationCanvas = null;
 let annotationCtx = null;
 let lastX = 0;
@@ -3246,7 +3247,34 @@ let lastY = 0;
 let currentPDFData = null;
 let currentPDFAnnotations = [];
 let pendingAnnotationSave = null;
+let touchPoints = [];
+let pinchStartDist = 0;
+let panX = 0;
+let panY = 0;
+let isPanning = false;
+let panStartX = 0;
+let panStartY = 0;
+let pinchStartMidX = 0;
+let pinchStartMidY = 0;
+let pinchStartPanX = 0;
+let pinchStartPanY = 0;
+let pinchStartScale = 1;
+let pendingLiveScale = null;
 
+function getCanvasPos(clientX, clientY) {
+    const rect = annotationCanvas.getBoundingClientRect();
+    const scaleX = annotationCanvas.width / rect.width;
+    const scaleY = annotationCanvas.height / rect.height;
+    return {
+        x: (clientX - rect.left) * scaleX,
+        y: (clientY - rect.top) * scaleY
+    };
+}
+    
+function getTouchPos(touch) {
+    return getCanvasPos(touch.clientX, touch.clientY);
+}
+    
 window.addEventListener('beforeunload', (e) => {
     if (pendingAnnotationSave) {
         e.preventDefault();
@@ -4527,30 +4555,45 @@ function renderPDFList(order) {
         return;
     }
     
-    container.innerHTML = order.pdfs.map((pdf, idx) => `
-        <div class="pdf-item" onclick="openPDFViewer(${idx})">
-            <div class="pdf-item-icon">▲</div>
-            <div class="pdf-item-name">${pdf.name}</div>
-            <div class="pdf-item-actions">
-                <button class="btn btn-danger btn-sm" onclick="event.stopPropagation(); deletePDF(${idx})" style="font-size:11px;padding:4px 8px;">Delete</button>
-            </div>
+  container.innerHTML = order.pdfs.map((pdf, idx) => `
+    <div class="pdf-item" onclick="openPDFViewer(${idx})">
+        <div class="pdf-item-icon">▲</div>
+        <div class="pdf-item-name">${pdf.name}</div>
+        <div class="pdf-item-actions">
+            <button onclick="event.stopPropagation(); downloadPDF(${idx})" 
+                style="background:none;border:1px solid #444;color:#0090ff;border-radius:4px;padding:4px 10px;font-size:11px;cursor:pointer;">
+                ⬇ Download
+            </button>
+            <button onclick="event.stopPropagation(); deletePDF(${idx})" 
+                style="background:none;border:none;color:#666;font-size:10px;cursor:pointer;padding:4px 6px;text-decoration:underline;opacity:0.6;">
+                delete
+            </button>
         </div>
-    `).join('');
+    </div>
+`).join('');
 }
 
 function openPDFViewer(pdfIndex) {
     const o = getOrder(currentOrderId);
     if (!o || !o.pdfs || !o.pdfs[pdfIndex]) return;
-    
+
     currentPDFData = o.pdfs[pdfIndex];
     currentPDFAnnotations = currentPDFData.annotations || [];
-    
+    pdfScale = null;
+    panY = 0;
+
     document.getElementById('pdf-viewer-title').textContent = currentPDFData.name;
     document.getElementById('pdf-viewer-modal').classList.add('open');
-    
-loadPDF(currentPDFData.url || currentPDFData.data);
+
+    loadPDF(currentPDFData.url || currentPDFData.data);
 }
 
+function applyPanZoomTransform() {
+    const container = document.querySelector('.pdf-canvas-container');
+    container.style.transform = `translate(${panX}px, ${panY}px)`;
+    container.style.transformOrigin = 'center center';
+}
+    
 async function closePDFViewer() {
     if (pendingAnnotationSave) {
         showToast('Saving...', 'Finishing annotation save');
@@ -4576,113 +4619,228 @@ async function loadPDF(pdfData) {
 
 async function renderPDFPage(pageNum) {
     if (!currentPDFDoc) return;
-    
+
     const page = await currentPDFDoc.getPage(pageNum);
-    const viewport = page.getViewport({ scale: pdfScale });    
+
+    // On first render of a page-load session, compute a "fit" scale
+    if (pdfScale === null) {
+        const baseViewport = page.getViewport({ scale: 1 });
+        const body = document.querySelector('.pdf-viewer-body');
+        const availW = body.clientWidth - 40;  // margin
+        const availH = body.clientHeight - 40;
+        const fitScale = Math.min(availW / baseViewport.width, availH / baseViewport.height);
+        pdfScale = fitScale;
+        panX = 0;
+        panY = 0;
+    }
+
+    const viewport = page.getViewport({ scale: pdfScale });
     const canvas = document.getElementById('pdf-canvas');
     const context = canvas.getContext('2d');
     canvas.width = viewport.width;
     canvas.height = viewport.height;
-    
-    const renderContext = {
-        canvasContext: context,
-        viewport: viewport
-    };
+
+    const renderContext = { canvasContext: context, viewport: viewport };
     await page.render(renderContext).promise;
-    
+
     annotationCanvas = document.getElementById('pdf-annotation-canvas');
     annotationCtx = annotationCanvas.getContext('2d');
     annotationCanvas.width = viewport.width;
     annotationCanvas.height = viewport.height;
-    
+
     redrawAnnotations();
-    
+    applyPanZoomTransform();
+
     document.getElementById('pdf-page-info').textContent = `Page ${pageNum} of ${currentPDFDoc.numPages}`;
-    
+
     setupAnnotationEvents();
 }
 
 function setupAnnotationEvents() {
-    annotationCanvas.onmousedown = (e) => {
-        isDrawing = true;
-        const rect = annotationCanvas.getBoundingClientRect();
-        lastX = e.clientX - rect.left;
-        lastY = e.clientY - rect.top;
-    };
     
-    annotationCanvas.onmousemove = (e) => {
-        if (!isDrawing) return;
-        const rect = annotationCanvas.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
-        
-     if (currentTool === 'pen') {
-    annotationCtx.strokeStyle = '#e53935';
-    annotationCtx.lineWidth = 3;
-    annotationCtx.lineCap = 'round';
-    annotationCtx.lineJoin = 'round';
-    annotationCtx.beginPath();
-    annotationCtx.moveTo(lastX, lastY);
-    annotationCtx.lineTo(x, y);
-    annotationCtx.stroke();
+annotationCanvas.onmousedown = (e) => {
+    if (!currentTool) {
+        isPanning = true;
+        panStartX = e.clientX;
+        panStartY = e.clientY;
+        pinchStartPanX = panX;
+        pinchStartPanY = panY;
+        return;
+    }
+    isDrawing = true;
+    const pos = getCanvasPos(e.clientX, e.clientY);
+    lastX = pos.x;
+    lastY = pos.y;
+};
 
-    currentPDFAnnotations.push({
-        page: currentPDFPage,
-        tool: 'pen',
-        from: {x: lastX, y: lastY},
-        to: {x, y}
-    });
-} else if (currentTool === 'highlighter') {
-            annotationCtx.strokeStyle = 'rgba(255, 255, 0, 0.4)';
-            annotationCtx.lineWidth = 20;
-            annotationCtx.lineCap = 'round';
-            annotationCtx.lineJoin = 'round';
-            annotationCtx.beginPath();
-            annotationCtx.moveTo(lastX, lastY);
-            annotationCtx.lineTo(x, y);
-            annotationCtx.stroke();
-            
-            currentPDFAnnotations.push({
-                page: currentPDFPage,
-                tool: 'highlighter',
-                from: {x: lastX, y: lastY},
-                to: {x, y}
-            });
-} else if (currentTool === 'eraser') {
-    const eraseRadius = 12;
+annotationCanvas.onmousemove = (e) => {
+    if (isDrawing && currentTool) {
+        const pos = getCanvasPos(e.clientX, e.clientY);
+        drawStroke(lastX, lastY, pos.x, pos.y);
+        lastX = pos.x;
+        lastY = pos.y;
+    } else if (isPanning) {
+        panX = pinchStartPanX + (e.clientX - panStartX);
+        panY = pinchStartPanY + (e.clientY - panStartY);
+        applyPanZoomTransform();
+    }
+};
 
-    function pointToSegmentDist(px, py, x1, y1, x2, y2) {
-        const dx = x2 - x1, dy = y2 - y1;
-        const lenSq = dx * dx + dy * dy;
-        if (lenSq === 0) return Math.hypot(px - x1, py - y1);
-        let t = ((px - x1) * dx + (py - y1) * dy) / lenSq;
-        t = Math.max(0, Math.min(1, t));
-        const closestX = x1 + t * dx;
-        const closestY = y1 + t * dy;
-        return Math.hypot(px - closestX, py - closestY);
+annotationCanvas.onmouseup = () => {
+    if (isDrawing) {
+        isDrawing = false;
+        pendingAnnotationSave = autosavePDFAnnotations();
+    }
+    isPanning = false;
+};
+
+annotationCanvas.onmouseleave = () => {
+    isDrawing = false;
+    isPanning = false;
+};
+
+annotationCanvas.ontouchstart = (e) => {
+    e.preventDefault();
+    touchPoints = Array.from(e.touches);
+
+    if (touchPoints.length === 1) {
+        const pos = getTouchPos(touchPoints[0]);
+        if (currentTool) {
+            isDrawing = true;
+            lastX = pos.x;
+            lastY = pos.y;
+        } else {
+            isPanning = true;
+            panStartX = touchPoints[0].clientX;
+            panStartY = touchPoints[0].clientY;
+            pinchStartPanX = panX;
+            pinchStartPanY = panY;
+        }
+    } else if (touchPoints.length === 2) {
+        isDrawing = false;
+        isPanning = false;
+        const dx = touchPoints[0].clientX - touchPoints[1].clientX;
+        const dy = touchPoints[0].clientY - touchPoints[1].clientY;
+        pinchStartDist = Math.hypot(dx, dy);
+        pinchStartScale = pdfScale;
+        pinchStartMidX = (touchPoints[0].clientX + touchPoints[1].clientX) / 2;
+        pinchStartMidY = (touchPoints[0].clientY + touchPoints[1].clientY) / 2;
+        pinchStartPanX = panX;
+        pinchStartPanY = panY;
+    }
+};
+
+annotationCanvas.ontouchmove = (e) => {
+    e.preventDefault();
+    touchPoints = Array.from(e.touches);
+
+    if (touchPoints.length === 1) {
+        if (currentTool && isDrawing) {
+            const pos = getTouchPos(touchPoints[0]);
+            drawStroke(lastX, lastY, pos.x, pos.y);
+            lastX = pos.x;
+            lastY = pos.y;
+        } else if (isPanning) {
+            panX = pinchStartPanX + (touchPoints[0].clientX - panStartX);
+            panY = pinchStartPanY + (touchPoints[0].clientY - panStartY);
+            applyPanZoomTransform();
+        }
+    } else if (touchPoints.length === 2) {
+        const dx = touchPoints[0].clientX - touchPoints[1].clientX;
+        const dy = touchPoints[0].clientY - touchPoints[1].clientY;
+        const dist = Math.hypot(dx, dy);
+        const liveScale = Math.min(Math.max(pinchStartScale * (dist / pinchStartDist), 0.3), 5);
+
+        const midX = (touchPoints[0].clientX + touchPoints[1].clientX) / 2;
+        const midY = (touchPoints[0].clientY + touchPoints[1].clientY) / 2;
+
+        // Pan adjusts to keep the pinch midpoint visually anchored
+        const scaleRatio = liveScale / pinchStartScale;
+        panX = pinchStartPanX + (midX - pinchStartMidX) + (pinchStartMidX - midX) * (1 - scaleRatio);
+        panY = pinchStartPanY + (midY - pinchStartMidY) + (pinchStartMidY - midY) * (1 - scaleRatio);
+
+        pendingLiveScale = liveScale;
+
+        const container = document.querySelector('.pdf-canvas-container');
+        container.style.transform = `translate(${panX}px, ${panY}px) scale(${scaleRatio})`;
+        container.style.transformOrigin = `${midX - container.getBoundingClientRect().left}px ${midY - container.getBoundingClientRect().top}px`;
+    }
+};
+
+annotationCanvas.ontouchend = (e) => {
+    e.preventDefault();
+
+    if (isDrawing) {
+        isDrawing = false;
+        pendingAnnotationSave = autosavePDFAnnotations();
+    }
+    isPanning = false;
+
+    if (pendingLiveScale !== null) {
+        pdfScale = Math.min(Math.max(pendingLiveScale, 0.3), 5);
+        pendingLiveScale = null;
+        renderPDFPage(currentPDFPage); // re-render crisp at new scale, transform resets via applyPanZoomTransform
     }
 
-    currentPDFAnnotations = currentPDFAnnotations.filter(ann => {
-        if (ann.page !== currentPDFPage) return true;
-        const dist = pointToSegmentDist(x, y, ann.from.x, ann.from.y, ann.to.x, ann.to.y);
-        return dist > eraseRadius;
-    });
-    redrawAnnotations();
-}
-        
-        lastX = x;
-        lastY = y;
-    };
-    
-    annotationCanvas.onmouseup = () => {
-    isDrawing = false;
-    pendingAnnotationSave = autosavePDFAnnotations();
+    touchPoints = Array.from(e.touches);
 };
-    
-    annotationCanvas.onmouseleave = () => {
-        isDrawing = false;
-    };
 }
+
+function drawStroke(fromX, fromY, toX, toY) {
+    if (currentTool === 'pen') {
+        annotationCtx.strokeStyle = '#e53935';
+        annotationCtx.lineWidth = 3;
+        annotationCtx.lineCap = 'round';
+        annotationCtx.lineJoin = 'round';
+        annotationCtx.beginPath();
+        annotationCtx.moveTo(fromX, fromY);
+        annotationCtx.lineTo(toX, toY);
+        annotationCtx.stroke();
+
+        currentPDFAnnotations.push({
+            page: currentPDFPage,
+            tool: 'pen',
+            from: {x: fromX, y: fromY},
+            to: {x: toX, y: toY}
+        });
+    } else if (currentTool === 'highlighter') {
+        annotationCtx.strokeStyle = 'rgba(255, 255, 0, 0.4)';
+        annotationCtx.lineWidth = 20;
+        annotationCtx.lineCap = 'round';
+        annotationCtx.lineJoin = 'round';
+        annotationCtx.beginPath();
+        annotationCtx.moveTo(fromX, fromY);
+        annotationCtx.lineTo(toX, toY);
+        annotationCtx.stroke();
+
+        currentPDFAnnotations.push({
+            page: currentPDFPage,
+            tool: 'highlighter',
+            from: {x: fromX, y: fromY},
+            to: {x: toX, y: toY}
+        });
+    } else if (currentTool === 'eraser') {
+        const eraseRadius = 12;
+
+        function pointToSegmentDist(px, py, x1, y1, x2, y2) {
+            const dx = x2 - x1, dy = y2 - y1;
+            const lenSq = dx * dx + dy * dy;
+            if (lenSq === 0) return Math.hypot(px - x1, py - y1);
+            let t = ((px - x1) * dx + (py - y1) * dy) / lenSq;
+            t = Math.max(0, Math.min(1, t));
+            const closestX = x1 + t * dx;
+            const closestY = y1 + t * dy;
+            return Math.hypot(px - closestX, py - closestY);
+        }
+
+        currentPDFAnnotations = currentPDFAnnotations.filter(ann => {
+            if (ann.page !== currentPDFPage) return true;
+            const dist = pointToSegmentDist(toX, toY, ann.from.x, ann.from.y, ann.to.x, ann.to.y);
+            return dist > eraseRadius;
+        });
+        redrawAnnotations();
+    }
+}    
 
 function autosavePDFAnnotations() {
     if (!currentPDFData || !currentOrderId) return Promise.resolve();
@@ -4725,11 +4883,16 @@ function redrawAnnotations() {
 }
 
 function setPDFTool(tool) {
-    currentTool = tool;
+    if (currentTool === tool) {
+        currentTool = null; // clicking the active tool again turns it off
+    } else {
+        currentTool = tool;
+    }
     document.querySelectorAll('.pdf-tool-btn').forEach(btn => btn.classList.remove('active'));
-    document.getElementById('tool-' + tool)?.classList.add('active');
+    if (currentTool) {
+        document.getElementById('tool-' + currentTool)?.classList.add('active');
+    }
 }
-
 function clearPDFAnnotations() {
     if (!confirm('Clear all annotations on this page?')) return;
     currentPDFAnnotations = currentPDFAnnotations.filter(ann => ann.page !== currentPDFPage);
@@ -4760,17 +4923,50 @@ function nextPDFPage() {
     }
 }
 
+function downloadPDF(pdfIndex) {
+    const o = getOrder(currentOrderId);
+    if (!o || !o.pdfs || !o.pdfs[pdfIndex]) return;
+    
+    const pdf = o.pdfs[pdfIndex];
+    const url = pdf.url || pdf.data;
+    
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = pdf.name;
+    a.target = '_blank';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+}
+    
 function deletePDF(pdfIndex) {
     const o = getOrder(currentOrderId);
     if (!o || !o.pdfs) return;
-    
     const pdfName = o.pdfs[pdfIndex].name;
-    if (!confirm(`Delete "${pdfName}"?`)) return;
-    
-    o.pdfs.splice(pdfIndex, 1);
-    renderPDFList(o);
-    syncOrders();
-    showToast('PDF Deleted', pdfName);
+
+    const overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:2000;display:flex;align-items:center;justify-content:center;';
+    overlay.innerHTML = `
+        <div style="background:#252525;border:2px solid #c62828;border-radius:8px;padding:28px;max-width:420px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.6);">
+            <div style="color:#ff5252;font-size:18px;font-weight:700;margin-bottom:12px;">⚠ Delete this document?</div>
+            <div style="color:#d0d0d0;font-size:14px;margin-bottom:24px;">
+                Are you sure you want to delete <strong style="color:white;">"${pdfName}"</strong>?
+            </div>
+            <div style="display:flex;gap:10px;justify-content:flex-end;">
+                <button id="delete-pdf-cancel" style="background:none;border:1px solid #666;color:#ccc;padding:8px 16px;border-radius:4px;cursor:pointer;">Cancel</button>
+                <button id="delete-pdf-confirm" style="background:#c62828;border:none;color:white;padding:8px 16px;border-radius:4px;cursor:pointer;font-weight:600;">Delete</button>
+            </div>
+        </div>`;
+    document.body.appendChild(overlay);
+
+    overlay.querySelector('#delete-pdf-cancel').onclick = () => overlay.remove();
+    overlay.querySelector('#delete-pdf-confirm').onclick = () => {
+        o.pdfs.splice(pdfIndex, 1);
+        renderPDFList(o);
+        syncOrders();
+        showToast('PDF Deleted', pdfName);
+        overlay.remove();
+    };
 }
 
 // SETTINGS
